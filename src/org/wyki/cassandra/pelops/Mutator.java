@@ -190,6 +190,106 @@ public class Mutator extends KeyspaceOperand {
 	}
 	
 	/**
+	 * Delete a column or super column.
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param colName					The name of the super column to modify.
+	 * @param subColName				The name of the sub-column to delete.
+	 */
+	public void deleteSubColumn(String rowKey, String colFamily, String colName, String subColName) {
+		deleteSubColumn(rowKey, colFamily, toBytes(colName), toBytes(subColName));
+	}
+	
+	/**
+	 * Delete a column or super column.
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param colName					The name of the super column to modify.
+	 * @param subColName				The name of the sub-column to delete.
+	 */
+	public void deleteSubColumn(String rowKey, String colFamily, byte[] colName, String subColName) {
+		deleteSubColumn(rowKey, colFamily, colName, toBytes(subColName));
+	}
+	
+	/**
+	 * Delete a column or super column.
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param colName					The name of the super column to modify.
+	 * @param subColName				The name of the sub-column to delete.
+	 */
+	public void deleteSubColumn(String rowKey, String colFamily, String colName, byte[] subColName) {
+		deleteSubColumn(rowKey, colFamily, toBytes(colName), subColName);
+	}
+	
+	/**
+	 * Delete a column or super column.
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param colName					The name of the super column to modify.
+	 * @param subColName				The name of the sub-column to delete.
+	 */
+	public void deleteSubColumn(String rowKey, String colFamily, byte[] colName, byte[] subColName) {
+		List<byte[]> subColNames = new ArrayList<byte[]>(1);
+		subColNames.add(subColName);
+		deleteSubColumns(rowKey, colFamily, colName, subColNames);
+	}
+	
+	/**
+	 * Delete a list of sub-columns
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param column name				The name of the super column to modify
+	 * @param subColNames				The sub-column names to delete
+	 */
+	public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
+		deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
+	}
+	
+	/**
+	 * Delete a list of sub-columns
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param column name				The name of the super column to modify
+	 * @param subColNames				The sub-column names to delete
+	 */
+	public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, String... subColNames) {
+		List<byte[]> subColNamesList = new ArrayList<byte[]>(subColNames.length);
+		for (String subColName : subColNames) 
+			subColNamesList.add(toBytes(subColName));
+		deleteSubColumns(rowKey, colFamily, colName, subColNamesList);
+	}
+	
+	/**
+	 * Delete a list of sub-columns
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param column name				The name of the super column to modify
+	 * @param subColNames				The sub-column names to delete
+	 */
+	public void deleteSubColumns(String rowKey, String colFamily, String colName, List<byte[]> subColNames) {
+		deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
+	}
+	
+	/**
+	 * Delete a list of sub-columns
+	 * @param rowKey					The key of the row to modify
+	 * @param colFamily					The name of the column family to modify
+	 * @param column name				The name of the super column to modify
+	 * @param subColNames				The sub-column names to delete
+	 */
+	public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, List<byte[]> subColNames) {
+		SlicePredicate pred = new SlicePredicate();
+		pred.setColumn_names(subColNames);
+		Deletion deletion = new Deletion(timestamp);
+		deletion.setSuper_column(colName);
+		deletion.setPredicate(pred);
+		Mutation mutation = new Mutation();
+		mutation.setDeletion(deletion);
+		getMutationList(rowKey, colFamily).add(mutation);
+	}
+	
+	/**
 	 * Create new Column object with the time stamp passed to the constructor
 	 * @param colName					The column name
 	 * @param colValue					The column value

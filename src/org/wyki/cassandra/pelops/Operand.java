@@ -1,6 +1,11 @@
 package org.wyki.cassandra.pelops;
 
+import org.apache.cassandra.thrift.AuthenticationException;
+import org.apache.cassandra.thrift.AuthorizationException;
+import org.apache.cassandra.thrift.InvalidRequestException;
+import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.TimedOutException;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransportException;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
 
@@ -29,14 +34,25 @@ public class Operand {
 			try {
 				// Execute operation
 				Object result = operation.execute(conn);
-				// Release connection
+				// Release unbroken connection
 				conn.release(false);
-				// Return, we are done!
+				// Return result!
 				return result;
 			} catch (Exception e) {
-				// Release broken connection
+				// Is this a logic/application or system error?
+				if (e instanceof NotFoundException ||
+					e instanceof InvalidRequestException ||
+					e instanceof TApplicationException ||
+					e instanceof AuthenticationException ||
+					e instanceof AuthorizationException) {
+					// Yup, so we can release unbroken connection
+					conn.release(false);
+					// Re-throw application-level exceptions immediately.
+					throw e;
+				}
+				// This connection is "broken" by network timeout or other problem.
 				conn.release(true);
-				// Can try continue?
+				// Should we try again?
 				if (e instanceof TimedOutException ||
 					e instanceof TTransportException) {
 					retries++;

@@ -19,6 +19,15 @@ public class Policy {
 	
 	int defaultTargetRefillCheckPause = 2500;
 	
+	/**
+	 * On some networks, for some unknown reason, the Thrift TSocket is not able to detect when it
+	 * has been disconnected. The Cassandra node can be shutdown, and the TSocket still thinks
+	 * it is connected! The only way around this it seems is to remove all connections to the
+	 * node when the problem occurs.
+	 * TODO find out what is going on with Thrift 
+	 */
+	boolean killNodeConnsOnException = true;
+	
 	int maxOpRetries = 3;
 	
 	public Policy() {
@@ -75,5 +84,13 @@ public class Policy {
 	
 	public int getMaxOpRetries() {
 		return maxOpRetries;
+	}
+	
+	public void setKillNodeConnsOnException(boolean value) {
+		killNodeConnsOnException = value;
+	}
+	
+	public boolean getKillNodeConnsOnException() {
+		return killNodeConnsOnException;
 	}
 }

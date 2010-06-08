@@ -272,6 +272,7 @@ public class ThriftPool {
 		private final TTransport transport;
 		private final TProtocol protocol;
 		private final Client client;
+		int nodeSessionId = 0;
 		
 		Connection(NodeContext nodeContext, int port) throws SocketException {
 			this.nodeContext = nodeContext;
@@ -319,19 +320,24 @@ public class ThriftPool {
 			nodeContext.onConnectionRelease(this, afterException);
 		}
 		
-		boolean open() {
+		boolean isOpen() {
+			return transport.isOpen();
+		}
+		
+		boolean open(int nodeSessionId) {
 			try {
 				transport.open();
+				this.nodeSessionId = nodeSessionId;
 			} catch (TTransportException e) {
-				e.printStackTrace();
+		 		e.printStackTrace();
 				return false;
 			}
 			return true;
 		}
 		
-		boolean isOpen() {
-			return transport.isOpen();
-		}		
+		void close() {
+			transport.close();
+		}
 	}
 	
 	@SuppressWarnings("serial")
@@ -346,6 +352,7 @@ public class ThriftPool {
 		private final ConnectionList connCache = new ConnectionList();
 		private ExecutorService refillExec = Executors.newSingleThreadExecutor();
 		private AutoResetEvent refillNow = new AutoResetEvent(true);
+		private final AtomicInteger sessionId = new AtomicInteger(0);
 		
 		NodeContext(String node) {
 			this.node = node;
@@ -401,15 +408,22 @@ public class ThriftPool {
 			// This connection is no longer in use
 			countInUse.decrementAndGet();
 			// Is this connection still open/reusable?
-			if (conn.isOpen() && !afterException) {
+			if (!afterException && conn.isOpen()) {
 				// Do we want this connection?
 				if ((countInUse.get() + countCached.get()) < policy.getTargetConnectionsPerNode()) {
 					connCache.add(conn);
 					countCached.incrementAndGet();
 				}
-			} else
+			} else if (afterException) {
+				// close connection
+				conn.close();
+				// kill all connections to this node?
+				if (policy.getKillNodeConnsOnException())
+					if (sessionId.compareAndSet(conn.nodeSessionId, sessionId.get()+1))
+						killPooledConnectionsToNode(conn.nodeSessionId);
 				// Since this connection has died, prompt refiller to check pool parameters
 				refillNow.set();
+			}
 		}
 		
 		private Connection createConnection() {
@@ -421,10 +435,22 @@ public class ThriftPool {
 				return null;
 			}
 			
-			if (conn.open())
+			if (conn.open(sessionId.get()))
 				return conn;
 			
 			return null;
+		}
+		
+		private void killPooledConnectionsToNode(int nodeSessionId) {
+			logger.warn("{} NodeContext killing all pooled connections for session {}", node, nodeSessionId);
+			int killedCount = 0;
+			Connection c = null;
+			while ((c = connCache.poll()) != null) {
+				countCached.decrementAndGet();
+				c.close();
+				killedCount++;
+			}
+			logger.trace("{} NodeContext killed {}", node, killedCount);
 		}
 		
 		private Runnable poolRefiller = new Runnable () {
