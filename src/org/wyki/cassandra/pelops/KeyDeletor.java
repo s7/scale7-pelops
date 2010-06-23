@@ -2,7 +2,6 @@ package org.wyki.cassandra.pelops;
 
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.commons.lang.NotImplementedException;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
 
 /**
@@ -21,9 +20,7 @@ public class KeyDeletor extends KeyspaceOperand {
 	 * @param rowKey					The key of the rows to be deleted
 	 * @param cLevel					The Cassandra consistency level to be used
 	 * @throws Exception
-	 */
 	public void deleteKey(final String rowKey, final ConsistencyLevel cLevel) throws Exception {
-		/*
 		IOperation operation = new IOperation() {
 			@Override
 			public Object execute(Connection conn) throws Exception {
@@ -34,9 +31,9 @@ public class KeyDeletor extends KeyspaceOperand {
 			}
 		};
 		tryOperation(operation);
-		*/
 		throw new NotImplementedException();
 	}
+	*/
 
 	/**
 	 * Delete a row with a specified key from a specified column family. The function succeeds even if
