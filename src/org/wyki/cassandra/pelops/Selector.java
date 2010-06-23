@@ -4,10 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
@@ -473,6 +472,9 @@ public class Selector extends KeyspaceOperand {
 
     /**
      * Retrieve columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
      * @param keyRange                        A key range selecting the rows
      * @param columnFamily                    The name of the column family containing the columns
      * @param colPredicate                    The column selector predicate
@@ -480,13 +482,16 @@ public class Selector extends KeyspaceOperand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws Exception
      */
-    public SortedMap<String, List<Column>> getColumnsFromRows(KeyRange keyRange, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getColumnsFromRows(KeyRange keyRange, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily), colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
      * @param keyRange                        A key range selecting the rows
      * @param columnFamily                    The name of the column family containing the super columns
      * @param superColName                    The name of the super column
@@ -495,13 +500,16 @@ public class Selector extends KeyspaceOperand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws Exception
      */
-    public SortedMap<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, byte[] superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, byte[] superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
      * @param keyRange                        A key range selecting the rows
      * @param columnFamily                    The name of the column family containing the super columns
      * @param superColName                    The name of the super column
@@ -510,13 +518,16 @@ public class Selector extends KeyspaceOperand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws Exception
      */
-    public SortedMap<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
 
     /**
      * Retrieve super columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of super columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
      * @param keyRange                        A key range selecting the rows
      * @param columnFamily                    The name of the column family containing the super columns
      * @param colPredicate                    The super column selector predicate
@@ -525,12 +536,12 @@ public class Selector extends KeyspaceOperand {
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
-    public SortedMap<String, List<SuperColumn>> getSuperColumnsFromRows(final KeyRange keyRange, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRows(final KeyRange keyRange, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(keyspace, newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
-                SortedMap<String, List<SuperColumn>> result = new TreeMap<String, List<SuperColumn>>();
+                Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
@@ -541,16 +552,16 @@ public class Selector extends KeyspaceOperand {
                 return result;
             }
         };
-        return (SortedMap<String, List<SuperColumn>>) tryOperation(operation);
+        return (Map<String, List<SuperColumn>>) tryOperation(operation);
     }
 
     @SuppressWarnings("unchecked")
-    private SortedMap<String, List<Column>> getColumnsFromRows(final KeyRange keyRange, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<String, List<Column>> getColumnsFromRows(final KeyRange keyRange, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(keyspace, colParent, colPredicate, keyRange, cLevel);
-                SortedMap<String, List<Column>> result = new TreeMap<String, List<Column>>();
+                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<Column> colList = new ArrayList<Column>(coscList.size());
@@ -561,7 +572,7 @@ public class Selector extends KeyspaceOperand {
                 return result;
             }
         };
-        return (SortedMap<String, List<Column>>) tryOperation(operation);
+        return (Map<String, List<Column>>) tryOperation(operation);
     }
 
     /**
