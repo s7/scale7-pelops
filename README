@@ -1,0 +1,25 @@
+This is basically just a fork of http://code.google.com/p/pelops/ that's been mavenized.
+
+The following steps will build and publish pelops to you local repo:
+1. git clone git@github.com:danwashusen/pelops.git pelops
+2. cd pelops
+3. mvn clean install
+
+To use pelops in a maven project:
+1. Deploy pelops to your local repo using the steps above
+2. Add the following repository to project's repositories:
+<repository>
+  <id>pelops-mvn</id>
+  <name>Pelops Maven Repo</name>
+  <url>http://github.com/danwashusen/pelops/raw/master/lib</url>
+  <snapshots>
+    <enabled>false</enabled>
+  </snapshots>
+</repository>
+3. Add the following dep to you project:
+<dependency>
+  <groupId>org.wyki</groupId>
+  <artifactId>pelops</artifactId>
+  <version>0.804-SNAPSHOT</version> 
+</dependency>
+4. Start using pelops
