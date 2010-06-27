@@ -3,7 +3,7 @@ This is basically just a fork of http://code.google.com/p/pelops/ that's been ma
 The following steps will build and publish pelops to you local repo:
 1. git clone git@github.com:danwashusen/pelops.git pelops
 2. cd pelops
-3. mvn clean install
+3. mvn clean install -DperformRelease=true # install source and javadoc as well
 
 To use pelops in a maven project:
 1. Deploy pelops to your local repo using the steps above

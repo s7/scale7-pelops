@@ -43,7 +43,7 @@
         <repository>
             <id>pelops-mvn</id>
             <name>Pelops Maven Repo</name>
-            <url>http://github.com/danwashusen/pelops/tree/master/lib/</url>
+            <url>http://github.com/danwashusen/pelops/raw/master/lib</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
