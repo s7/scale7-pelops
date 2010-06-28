@@ -13,9 +13,7 @@ public class StringHelper {
 		try {
 			return string.getBytes("utf-8");
 		} catch (UnsupportedEncodingException e) {
-			assert false;
-			e.printStackTrace();
-			return new byte[] {};
+			throw new IllegalStateException(e);
 		}
 	}
 	
@@ -23,11 +21,14 @@ public class StringHelper {
 	 * Create a <code>String</code> from an array of UTF-8 bytes
 	 * @param bytes							The array of UTF-8 bytes
 	 * @return								The <code>String</code> object
-	 * @throws UnsupportedEncodingException	Thrown if the bytes are not represent an UTF-8 encoding
 	 */
-	public static String toUTF8(byte[] bytes) throws UnsupportedEncodingException {
+	public static String toUTF8(byte[] bytes) {
 		if (bytes == null)
 			return null;
-		return new String(bytes, "utf-8");
-	}
+        try {
+            return new String(bytes, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 }

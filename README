@@ -11,7 +11,7 @@ To use pelops in a maven project:
 <repository>
   <id>pelops-mvn</id>
   <name>Pelops Maven Repo</name>
-  <url>http://github.com/danwashusen/pelops/raw/master/lib</url>
+  <url>http://github.com/danwashusen/pelops/raw/master/lib/</url>
   <snapshots>
     <enabled>false</enabled>
   </snapshots>
@@ -19,7 +19,7 @@ To use pelops in a maven project:
 3. Add the following dep to you project:
 <dependency>
   <groupId>org.wyki</groupId>
-  <artifactId>pelops</artifactId>
-  <version>0.804-SNAPSHOT</version> 
+  <artifactId>pelops-mvn</artifactId>
+  <version>0.805-SNAPSHOT</version>
 </dependency>
 4. Start using pelops

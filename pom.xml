@@ -2,9 +2,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wyki</groupId>
-    <artifactId>pelops</artifactId>
+    <artifactId>pelops-mvn</artifactId>
     <packaging>jar</packaging>
-    <version>0.804-SNAPSHOT</version>
+    <version>0.805-SNAPSHOT</version>
     <name>Pelops Mavenized</name>
     <url>http://github.com/danwashusen/pelops</url>
     <properties>
