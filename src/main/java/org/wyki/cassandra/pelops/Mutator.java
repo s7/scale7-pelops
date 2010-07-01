@@ -164,7 +164,6 @@ public class Mutator extends KeyspaceOperand {
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
-     * @throws UnsupportedEncodingException
      */
     public void deleteColumns(String rowKey, String colFamily, String... colNames) {
         List<byte[]> colNameList = new ArrayList<byte[]>(colNames.length);
@@ -239,8 +238,8 @@ public class Mutator extends KeyspaceOperand {
      * Delete a list of sub-columns
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
-     * @param column name               The name of the super column to modify
-     * @param subColNames               The sub-column names to delete
+     * @param colName               The name of the super column to modify
+     * @param subColNames               The sub-column names to delete (no
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
         deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
@@ -250,7 +249,7 @@ public class Mutator extends KeyspaceOperand {
      * Delete a list of sub-columns
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
-     * @param column name               The name of the super column to modify
+     * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, String... subColNames) {
@@ -261,10 +260,20 @@ public class Mutator extends KeyspaceOperand {
     }
 
     /**
+     * Delete all sub-columns
+     * @param rowKey                    The key of the row to modify
+     * @param colFamily                 The name of the column family to modify
+     * @param colName               The name of the super column to modify
+     */
+    public void deleteSubColumns(String rowKey, String colFamily, String colName) {
+        deleteSubColumns(rowKey, colFamily, colName, (List<byte[]>) null);
+    }
+
+    /**
      * Delete a list of sub-columns
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
-     * @param column name               The name of the super column to modify
+     * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, List<byte[]> subColNames) {
@@ -272,18 +281,30 @@ public class Mutator extends KeyspaceOperand {
     }
 
     /**
+     * Delete all sub-columns
+     * @param rowKey                    The key of the row to modify
+     * @param colFamily                 The name of the column family to modify
+     * @param colName               The name of the super column to modify
+     */
+    public void deleteSubColumns(String rowKey, String colFamily, byte[] colName) {
+        deleteSubColumns(rowKey, colFamily, colName, (List<byte[]>) null);
+    }
+
+    /**
      * Delete a list of sub-columns
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
-     * @param column name               The name of the super column to modify
+     * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, List<byte[]> subColNames) {
-        SlicePredicate pred = new SlicePredicate();
-        pred.setColumn_names(subColNames);
         Deletion deletion = new Deletion(timestamp);
         deletion.setSuper_column(colName);
-        deletion.setPredicate(pred);
+        // CASSANDRA-1027 allows for a null predicate
+        deletion.setPredicate(
+                subColNames != null && !subColNames.isEmpty() ?
+                        new SlicePredicate().setColumn_names(subColNames) : null
+        );
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
         getMutationList(rowKey, colFamily).add(mutation);
@@ -294,7 +315,6 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                    The column name
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
-     * @throws UnsupportedEncodingException
      */
     public Column newColumn(String colName, String colValue) {
         return newColumn(colName, toBytes(colValue));
@@ -305,7 +325,6 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                    The column name
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
-     * @throws UnsupportedEncodingException
      */
     public Column newColumn(byte[] colName, String colValue) {
         return newColumn(colName, toBytes(colValue));
@@ -316,7 +335,6 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                    The column name
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
-     * @throws UnsupportedEncodingException
      */
     public Column newColumn(String colName, byte[] colValue) {
         return newColumn(toBytes(colName), colValue);
@@ -327,7 +345,6 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                    The column name
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
-     * @throws UnsupportedEncodingException
      */
     public Column newColumn(byte[] colName, byte[] colValue) {
         return new Column(colName, colValue, timestamp);
