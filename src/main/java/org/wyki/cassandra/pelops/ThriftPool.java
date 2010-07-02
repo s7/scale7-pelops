@@ -247,7 +247,7 @@ public class ThriftPool {
 					for (String node : clusterNodes)
 						touchNodeContext(node);
 				} catch (Exception e) {
-					e.printStackTrace();
+                    SystemProxy.getLoggerFromFactory(getClass()).error(e.getMessage(), e);
 				}
 				// Sleep awhile
 				try {
@@ -329,7 +329,7 @@ public class ThriftPool {
 				transport.open();
 				this.nodeSessionId = nodeSessionId;
 			} catch (TTransportException e) {
-		 		e.printStackTrace();
+                logger.error(e.getMessage(), e);
 				return false;
 			}
 			return true;
@@ -408,13 +408,15 @@ public class ThriftPool {
 			// This connection is no longer in use
 			countInUse.decrementAndGet();
 			// Is this connection still open/reusable?
-			if (!afterException && conn.isOpen()) {
+			if (!afterException) {
 				// Do we want this connection?
-				if ((countInUse.get() + countCached.get()) < policy.getTargetConnectionsPerNode()) {
+				if (conn.isOpen() && (countInUse.get() + countCached.get()) < policy.getTargetConnectionsPerNode()) {
 					connCache.add(conn);
 					countCached.incrementAndGet();
-				}
-			} else if (afterException) {
+				} else {
+                    conn.close();
+                }
+			} else {
 				// close connection
 				conn.close();
 				// kill all connections to this node?
@@ -431,7 +433,7 @@ public class ThriftPool {
 			try {
 				conn = new Connection(this, defaultPort);
 			} catch (SocketException e) {
-				e.printStackTrace();
+                logger.error(e.getMessage(), e);
 				return null;
 			}
 			
