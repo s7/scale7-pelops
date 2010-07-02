@@ -41,11 +41,11 @@
     </dependencies>
     <repositories>
         <repository>
-            <id>pelops-mvn</id>
-            <name>Pelops Maven Repo</name>
-            <url>http://github.com/danwashusen/pelops/raw/master/lib</url>
+            <id>maven.sixtydigits.com</id>
+            <name>Sixty Digits Maven Repo</name>
+            <url>http://maven.sixtydigits.com</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -65,5 +65,13 @@
             </plugins>
         </pluginManagement>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>maven.sixtydigits.com</id>
+            <name>Sixty Digits Maven Repo</name>
+            <url>scp://maven.sixtydigits.com/var/www/maven</url>
+            <layout>default</layout>
+        </repository>
+    </distributionManagement>
 </project>
 

@@ -6,20 +6,19 @@ The following steps will build and publish pelops to you local repo:
 3. mvn clean install -DperformRelease=true # install source and javadoc as well
 
 To use pelops in a maven project:
-1. Deploy pelops to your local repo using the steps above
-2. Add the following repository to project's repositories:
+1. Add the following repository to your project repositories:
 <repository>
-  <id>pelops-mvn</id>
-  <name>Pelops Maven Repo</name>
-  <url>http://github.com/danwashusen/pelops/raw/master/lib/</url>
-  <snapshots>
-    <enabled>false</enabled>
-  </snapshots>
+    <id>maven.sixtydigits.com</id>
+    <name>Sixty Digits Maven Repo</name>
+    <url>http://maven.sixtydigits.com</url>
+    <snapshots>
+        <enabled>true</enabled>
+    </snapshots>
 </repository>
-3. Add the following dep to you project:
+2. Add the following dep to your project:
 <dependency>
   <groupId>org.wyki</groupId>
   <artifactId>pelops-mvn</artifactId>
   <version>0.805-SNAPSHOT</version>
 </dependency>
-4. Start using pelops
+3. Start using pelops
