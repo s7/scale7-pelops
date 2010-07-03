@@ -5,6 +5,7 @@ import org.apache.cassandra.thrift.AuthorizationException;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.TimedOutException;
+import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransportException;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
@@ -54,7 +55,8 @@ public class Operand {
 				conn.release(true);
 				// Should we try again?
 				if (e instanceof TimedOutException ||
-					e instanceof TTransportException) {
+                        e instanceof TTransportException ||
+                        e instanceof UnavailableException) {
 					retries++;
 					lastException = e;
 				} else // nope, throw
