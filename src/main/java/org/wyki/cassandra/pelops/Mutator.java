@@ -239,7 +239,7 @@ public class Mutator extends KeyspaceOperand {
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
      * @param colName               The name of the super column to modify
-     * @param subColNames               The sub-column names to delete (no
+     * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
         deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
@@ -250,7 +250,7 @@ public class Mutator extends KeyspaceOperand {
      * @param rowKey                    The key of the row to modify
      * @param colFamily                 The name of the column family to modify
      * @param colName               The name of the super column to modify
-     * @param subColNames               The sub-column names to delete
+     * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
     public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, String... subColNames) {
         List<byte[]> subColNamesList = new ArrayList<byte[]>(subColNames.length);
