@@ -18,16 +18,54 @@ public class Pelops {
 	 * @param poolName				A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
 	 * @param contactNodes			An array of IP or DNS addresses identifying "known" nodes in this Cassandra cluster
 	 * @param defaultPort			The port upon which Cassandra instances in this cluster will be listening
-	 * @param maxOpRetries			If a connection fails while an operation is being performed, the maximum number of retries it may make using a new connection from the pool
 	 * @param dynamicNodeDiscovery  Whether the pool should dynamically discover the cluster node members using describe_ring(). Note: due to a Cassandra bug this cannot be used on single node clusters or clusters with a replication factor of 1 prior to 6.1
-	 * @param defaultKeyspace		If dynamic cluster node discovery is on, a default keyspace to be queried using describe_ring() to discover the nodes
+	 * @param discoveryKeyspace		If dynamic cluster node discovery is on, a default keyspace to be queried using describe_ring() to discover the nodes
 	 * @param policy				Policy object controlling behavior
+     * @deprecated Use the {@link #addPool(String, String[], int, boolean, String, GeneralPolicy, org.wyki.cassandra.pelops.ThriftPoolComplex.Policy)} method instead
 	 */
-	public static void addPool(String poolName, String[] contactNodes, int defaultPort, boolean dynamicNodeDiscovery, String discoveryKeyspace, Policy policy) {
-		logger.info("Pelops adds new pool {}", poolName);
-		ThriftPool newPool = new ThriftPool(contactNodes, defaultPort, dynamicNodeDiscovery, discoveryKeyspace, policy);
-		poolMap.put(poolName, newPool);
+	public static void addPool(String poolName, String[] contactNodes, int defaultPort, boolean dynamicNodeDiscovery,
+                               String discoveryKeyspace, Policy policy) {
+        GeneralPolicy generalPolicy = new GeneralPolicy();
+        generalPolicy.setMaxOpRetries(policy.getMaxOpRetries());
+
+        ThriftPoolComplex.Policy poolPolicy = new ThriftPoolComplex.Policy();
+        poolPolicy.setKillNodeConnsOnException(policy.getKillNodeConnsOnException());
+        poolPolicy.setMaxConnectionsPerNode(policy.getMaxConnectionsPerNode());
+        poolPolicy.setMinCachedConnectionsPerNode(policy.getMinCachedConnectionsPerNode());
+        poolPolicy.setTargetConnectionsPerNode(policy.getTargetConnectionsPerNode());
+
+		addPool(poolName, contactNodes, defaultPort, dynamicNodeDiscovery, discoveryKeyspace, generalPolicy, poolPolicy);
 	}
+
+    /**
+	 * Add a new Thrift connection pool and give it a name. The name is later used to identify the pool from which to request
+	 * a connection when creating operands such as <code>Mutator</code> and <code>Selector</code>. A pool maintains connections to
+	 * a specific Cassandra cluster instance. Typically a pool is created for each Cassandra cluster that must be accessed.
+	 * @param poolName				A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
+	 * @param contactNodes			An array of IP or DNS addresses identifying "known" nodes in this Cassandra cluster
+	 * @param defaultPort			The port upon which Cassandra instances in this cluster will be listening
+	 * @param dynamicNodeDiscovery  Whether the pool should dynamically discover the cluster node members using describe_ring(). Note: due to a Cassandra bug this cannot be used on single node clusters or clusters with a replication factor of 1 prior to 6.1
+	 * @param discoveryKeyspace		If dynamic cluster node discovery is on, a default keyspace to be queried using describe_ring() to discover the nodes
+     * @param generalPolicy		    General pelops policy object controlling behavior
+     * @param poolPolicy            Pool policy object controlling pool behavior
+	 */
+	public static void addPool(String poolName, String[] contactNodes, int defaultPort, boolean dynamicNodeDiscovery,
+                               String discoveryKeyspace, GeneralPolicy generalPolicy, ThriftPoolComplex.Policy poolPolicy) {
+		ThriftPoolComplex newPool = new ThriftPoolComplex(
+                contactNodes, defaultPort, dynamicNodeDiscovery, discoveryKeyspace, poolPolicy, generalPolicy
+        );
+        addPool(poolName, newPool);
+	}
+
+    /**
+     * Add an already instantiated instance of {@link org.wyki.cassandra.pelops.ThriftPool} to pelops.
+     * @param poolName A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
+     * @param thriftPool an instance of the {@link org.wyki.cassandra.pelops.ThriftPool} interface
+     */
+    public static void addPool(String poolName, ThriftPool thriftPool) {
+        logger.info("Pelops adds new pool {}", poolName);
+        poolMap.put(poolName, thriftPool);
+    }
 	
 	/**
 	 * Shutdown Pelops. This proceeds by shutting down all connection pools.

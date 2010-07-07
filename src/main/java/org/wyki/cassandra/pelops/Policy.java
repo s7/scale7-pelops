@@ -5,8 +5,9 @@ package org.wyki.cassandra.pelops;
  * pool and related operations.
  * 
  * @author dominicwilliams
- *
+ * @deprecated Use the more specific {@link org.wyki.cassandra.pelops.ThriftPoolPolicy}
  */
+@Deprecated
 public class Policy {
 	
 	int minCachedConnectionsPerNode = 50;

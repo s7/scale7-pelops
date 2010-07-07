@@ -62,7 +62,7 @@ public class Operand {
 				} else // nope, throw
 					throw e;
 			}
-		} while (retries < thrift.getPolicy().getMaxOpRetries());
+		} while (retries < thrift.getGeneralPolicy().getMaxOpRetries());
 		
 		throw lastException;
 	}
