@@ -6,14 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnOrSuperColumn;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.Deletion;
-import org.apache.cassandra.thrift.Mutation;
-import org.apache.cassandra.thrift.SlicePredicate;
-import org.apache.cassandra.thrift.SuperColumn;
+import org.apache.cassandra.thrift.*;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
+
+import static org.wyki.cassandra.pelops.Bytes.from;
+import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
+import static org.wyki.cassandra.pelops.Bytes.transform;
 import static org.wyki.cassandra.pelops.StringHelper.toBytes;
 
 /**
@@ -33,11 +31,16 @@ public class Mutator extends KeyspaceOperand {
      * @throws Exception
      */
     public void execute(final ConsistencyLevel cLevel) throws Exception {
+        final HashMap<byte[], Map<String, List<Mutation>>> convertedBatch = new HashMap<byte[], Map<String, List<Mutation>>>(batch.size());
+        for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
+            convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
+        }
+
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 // Send batch mutation job to Thrift connection
-                conn.getAPI().batch_mutate(keyspace, batch, cLevel);
+                conn.getAPI().batch_mutate(convertedBatch, cLevel);
                 // Flush connection
                 conn.flush();
                 // Nothing to return
@@ -54,6 +57,16 @@ public class Mutator extends KeyspaceOperand {
      * @param column                    The value of the column
      */
     public void writeColumn(String rowKey, String colFamily, Column column) {
+        writeColumn(from(rowKey), colFamily, column);
+    }
+
+    /**
+     * Write a column value.
+     * @param rowKey                    The key of the row to modify
+     * @param colFamily                 The name of the column family to modify
+     * @param column                    The value of the column
+     */
+    public void writeColumn(Bytes rowKey, String colFamily, Column column) {
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setColumn(column);
         Mutation mutation = new Mutation();
@@ -82,7 +95,7 @@ public class Mutator extends KeyspaceOperand {
      * @param subColumn                 The sub-column
      */
     public void writeSubColumn(String rowKey, String colFamily, String colName, Column subColumn) {
-        writeSubColumn(rowKey, colFamily, toBytes(colName), subColumn);
+        writeSubColumn(rowKey, colFamily, from(colName), subColumn);
     }
 
     /**
@@ -93,10 +106,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String rowKey, String colFamily, byte[] colName, Column subColumn) {
-        List<Column> subColumns = new ArrayList<Column>(1);
-        subColumns.add(subColumn);
-        writeSubColumns(rowKey, colFamily, colName, subColumns);
+    public void writeSubColumn(String rowKey, String colFamily, Bytes colName, Column subColumn) {
+        writeSubColumns(rowKey, colFamily, colName, Arrays.asList(subColumn));
     }
 
     /**
@@ -107,7 +118,7 @@ public class Mutator extends KeyspaceOperand {
      * @param subColumns                A list of the sub-columns to write
      */
     public void writeSubColumns(String rowKey, String colFamily, String colName, List<Column> subColumns) {
-        writeSubColumns(rowKey, colFamily, toBytes(colName), subColumns);
+        writeSubColumns(rowKey, colFamily, from(colName), subColumns);
     }
 
     /**
@@ -117,8 +128,19 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String rowKey, String colFamily, byte[] colName, List<Column> subColumns) {
-        SuperColumn scol = new SuperColumn(colName, subColumns);
+    public void writeSubColumns(String rowKey, String colFamily, Bytes colName, List<Column> subColumns) {
+        writeSubColumns(from(rowKey), colFamily, colName, subColumns);
+    }
+
+    /**
+     * Write multiple sub-column values to a super column.
+     * @param rowKey                    The key of the row to modify
+     * @param colFamily                 The name of the super column family to operate on
+     * @param colName                   The name of the super column
+     * @param subColumns                A list of the sub-columns to write
+     */
+    public void writeSubColumns(Bytes rowKey, String colFamily, Bytes colName, List<Column> subColumns) {
+        SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setSuper_column(scol);
         Mutation mutation = new Mutation();
@@ -133,7 +155,7 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the column or super column to delete.
      */
     public void deleteColumn(String rowKey, String colFamily, String colName) {
-        deleteColumn(rowKey, colFamily, toBytes(colName));
+        deleteColumn(rowKey, colFamily, from(colName));
     }
 
     /**
@@ -142,10 +164,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String rowKey, String colFamily, byte[] colName) {
-        List<byte[]> colNames = new ArrayList<byte[]>(1);
-        colNames.add(colName);
-        deleteColumns(rowKey, colFamily, colNames);
+    public void deleteColumn(String rowKey, String colFamily, Bytes colName) {
+        deleteColumns(rowKey, colFamily, Arrays.asList(colName));
     }
 
     /**
@@ -154,9 +174,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String rowKey, String colFamily, byte[]... colNames) {
-        List<byte[]> colNameList = new ArrayList<byte[]>(Arrays.asList(colNames));
-        deleteColumns(rowKey, colFamily, colNameList);
+    public void deleteColumns(String rowKey, String colFamily, Bytes... colNames) {
+        deleteColumns(rowKey, colFamily, Arrays.asList(colNames));
     }
 
     /**
@@ -166,9 +185,9 @@ public class Mutator extends KeyspaceOperand {
      * @param colNames                  The column and/or super column names to delete
      */
     public void deleteColumns(String rowKey, String colFamily, String... colNames) {
-        List<byte[]> colNameList = new ArrayList<byte[]>(colNames.length);
+        List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
-            colNameList.add(toBytes(colName));
+            colNameList.add(from(colName));
         deleteColumns(rowKey, colFamily, colNameList);
     }
 
@@ -178,14 +197,14 @@ public class Mutator extends KeyspaceOperand {
      * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String rowKey, String colFamily, List<byte[]> colNames) {
+    public void deleteColumns(String rowKey, String colFamily, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
-        pred.setColumn_names(colNames);
-        Deletion deletion = new Deletion(timestamp);
+        pred.setColumn_names(transform(colNames));
+        Deletion deletion = new Deletion(clock);
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
-        getMutationList(rowKey, colFamily).add(mutation);
+        getMutationList(from(rowKey), colFamily).add(mutation);
     }
 
     /**
@@ -196,7 +215,7 @@ public class Mutator extends KeyspaceOperand {
      * @param subColName                The name of the sub-column to delete.
      */
     public void deleteSubColumn(String rowKey, String colFamily, String colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, toBytes(colName), toBytes(subColName));
+        deleteSubColumn(rowKey, colFamily, from(colName), from(subColName));
     }
 
     /**
@@ -206,8 +225,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, byte[] colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, colName, toBytes(subColName));
+    public void deleteSubColumn(String rowKey, String colFamily, Bytes colName, String subColName) {
+        deleteSubColumn(rowKey, colFamily, colName, from(subColName));
     }
 
     /**
@@ -217,8 +236,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, String colName, byte[] subColName) {
-        deleteSubColumn(rowKey, colFamily, toBytes(colName), subColName);
+    public void deleteSubColumn(String rowKey, String colFamily, String colName, Bytes subColName) {
+        deleteSubColumn(rowKey, colFamily, from(colName), subColName);
     }
 
     /**
@@ -228,8 +247,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, byte[] colName, byte[] subColName) {
-        List<byte[]> subColNames = new ArrayList<byte[]>(1);
+    public void deleteSubColumn(String rowKey, String colFamily, Bytes colName, Bytes subColName) {
+        List<Bytes> subColNames = new ArrayList<Bytes>(1);
         subColNames.add(subColName);
         deleteSubColumns(rowKey, colFamily, colName, subColNames);
     }
@@ -242,7 +261,7 @@ public class Mutator extends KeyspaceOperand {
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
-        deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
+        deleteSubColumns(rowKey, colFamily, from(colName), subColNames);
     }
 
     /**
@@ -252,10 +271,10 @@ public class Mutator extends KeyspaceOperand {
      * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, String... subColNames) {
-        List<byte[]> subColNamesList = new ArrayList<byte[]>(subColNames.length);
+    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, String... subColNames) {
+        List<Bytes> subColNamesList = new ArrayList<Bytes>(subColNames.length);
         for (String subColName : subColNames)
-            subColNamesList.add(toBytes(subColName));
+            subColNamesList.add(from(subColName));
         deleteSubColumns(rowKey, colFamily, colName, subColNamesList);
     }
 
@@ -266,7 +285,7 @@ public class Mutator extends KeyspaceOperand {
      * @param colName               The name of the super column to modify
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName) {
-        deleteSubColumns(rowKey, colFamily, colName, (List<byte[]>) null);
+        deleteSubColumns(from(rowKey), colFamily, from(colName), (List<Bytes>) null);
     }
 
     /**
@@ -276,8 +295,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String rowKey, String colFamily, String colName, List<byte[]> subColNames) {
-        deleteSubColumns(rowKey, colFamily, toBytes(colName), subColNames);
+    public void deleteSubColumns(String rowKey, String colFamily, String colName, List<Bytes> subColNames) {
+        deleteSubColumns(from(rowKey), colFamily, from(colName), subColNames);
     }
 
     /**
@@ -286,8 +305,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colFamily                 The name of the column family to modify
      * @param colName               The name of the super column to modify
      */
-    public void deleteSubColumns(String rowKey, String colFamily, byte[] colName) {
-        deleteSubColumns(rowKey, colFamily, colName, (List<byte[]>) null);
+    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName) {
+        deleteSubColumns(from(rowKey), colFamily, colName, (List<Bytes>) null);
     }
 
     /**
@@ -297,13 +316,24 @@ public class Mutator extends KeyspaceOperand {
      * @param colName               The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String rowKey, String colFamily, byte[] colName, List<byte[]> subColNames) {
-        Deletion deletion = new Deletion(timestamp);
-        deletion.setSuper_column(colName);
+    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, List<Bytes> subColNames) {
+        deleteSubColumns(from(rowKey), colFamily, colName, subColNames);
+    }
+
+    /**
+     * Delete a list of sub-columns
+     * @param rowKey                    The key of the row to modify
+     * @param colFamily                 The name of the column family to modify
+     * @param colName               The name of the super column to modify
+     * @param subColNames               The sub-column names to delete
+     */
+    public void deleteSubColumns(Bytes rowKey, String colFamily, Bytes colName, List<Bytes> subColNames) {
+        Deletion deletion = new Deletion(clock);
+        deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
         deletion.setPredicate(
                 subColNames != null && !subColNames.isEmpty() ?
-                        new SlicePredicate().setColumn_names(subColNames) : null
+                        new SlicePredicate().setColumn_names(transform(subColNames)) : null
         );
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
@@ -317,7 +347,7 @@ public class Mutator extends KeyspaceOperand {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(String colName, String colValue) {
-        return newColumn(colName, toBytes(colValue));
+        return newColumn(from(colName), from(colValue));
     }
 
     /**
@@ -326,8 +356,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
      */
-    public Column newColumn(byte[] colName, String colValue) {
-        return newColumn(colName, toBytes(colValue));
+    public Column newColumn(Bytes colName, String colValue) {
+        return newColumn(colName, from(colValue));
     }
 
     /**
@@ -336,8 +366,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
      */
-    public Column newColumn(String colName, byte[] colValue) {
-        return newColumn(toBytes(colName), colValue);
+    public Column newColumn(String colName, Bytes colValue) {
+        return newColumn(from(colName), colValue);
     }
 
     /**
@@ -346,8 +376,8 @@ public class Mutator extends KeyspaceOperand {
      * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
      */
-    public Column newColumn(byte[] colName, byte[] colValue) {
-        return new Column(colName, colValue, timestamp);
+    public Column newColumn(Bytes colName, Bytes colValue) {
+        return new Column(nullSafeGet(colName), nullSafeGet(colValue), clock);
     }
 
     /**
@@ -368,7 +398,7 @@ public class Mutator extends KeyspaceOperand {
      * @return                           A byte array containing the time stamp <code>long</code> value
      */
     public byte[] getMutationTimestamp(boolean microsToMillis) {
-        long result = timestamp;
+        long result = clock.getTimestamp();
         if (microsToMillis)
             result /= 1000;
         return NumberHelper.toBytes(result);
@@ -379,7 +409,7 @@ public class Mutator extends KeyspaceOperand {
      * @return                            The raw time stamp value being used
      */
     public long getMutationTimestampValue() {
-        return timestamp;
+        return clock.getTimestamp();
     }
 
     @SuppressWarnings("serial")
@@ -387,31 +417,32 @@ public class Mutator extends KeyspaceOperand {
     @SuppressWarnings("serial")
     class MutationsByCf extends HashMap<String, List<Mutation>> {}
     @SuppressWarnings("serial")
-    class MutationsByKey extends HashMap<String, Map<String, List<Mutation>>> {}
+    class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
 
-    private final Map<String, Map<String, List<Mutation>>> batch;
-    private final long timestamp;
+    private final Map<Bytes, Map<String, List<Mutation>>> batch;
+    private final Clock clock;
 
     /**
      * Create a batch mutation operation.
      * @param keyspace                    The keyspace the batch mutation will modify
      */
     protected Mutator(ThriftPool thrift, String keyspace) {
-        this(thrift, keyspace, System.currentTimeMillis() * 1000);
+        this(thrift, keyspace, new Clock(System.currentTimeMillis() * 1000));
     }
 
     /**
      * Create a batch mutation operation.
      * @param keyspace                    The keyspace the batch mutation will modify
-     * @param timestamp                   The time stamp to use for the operation. This should be in microseconds.
+     * @param clock                   The clock that encapsulates the time stamp to use for the operation.
+     *                                This should be in microseconds.
      */
-    protected Mutator(ThriftPool thrift, String keyspace, long timestamp) {
+    protected Mutator(ThriftPool thrift, String keyspace, Clock clock) {
         super(thrift, keyspace);
-        this.timestamp = timestamp;
+        this.clock = clock;
         batch = new MutationsByKey();
     }
 
-    private MutationList getMutationList(String key, String colFamily) {
+    private MutationList getMutationList(Bytes key, String colFamily) {
         MutationsByCf mutsByCf = (MutationsByCf) batch.get(key);
         if (mutsByCf == null) {
             mutsByCf = new MutationsByCf();

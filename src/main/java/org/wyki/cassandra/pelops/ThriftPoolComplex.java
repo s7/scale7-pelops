@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.cassandra.thrift.Clock;
 import org.apache.cassandra.thrift.TokenRange;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -68,7 +69,19 @@ public class ThriftPoolComplex implements ThriftPool {
 	 */
 	@Override
     public Mutator createMutator(String keyspace, long timestamp) {
-		return new Mutator(this, keyspace, timestamp);
+		return new Mutator(this, keyspace, new Clock(timestamp));
+	}
+
+	/**
+	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+	 * must only be used to execute 1 mutation operation.
+	 * @param keyspace				The keyspace to operate on
+     * @param clock				    The default clock instance to use for operations
+	 * @return						A new <code>Mutator</code> object
+	 */
+	@Override
+    public Mutator createMutator(String keyspace, Clock clock) {
+		return new Mutator(this, keyspace, clock);
 	}
 	
 	/**
@@ -89,7 +102,18 @@ public class ThriftPoolComplex implements ThriftPool {
 	 */
 	@Override
     public KeyDeletor createKeyDeletor(String keyspace, long timestamp) {
-		return new KeyDeletor(this, keyspace, timestamp);
+		return new KeyDeletor(this, keyspace, new Clock(timestamp));
+	}
+
+	/**
+	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
+	 * @param keyspace				The keyspace to operate on
+	 * @param clock				    The default clock instance to use for operations
+	 * @return						A new <code>KeyDeletor</code> object
+	 */
+	@Override
+    public KeyDeletor createKeyDeletor(String keyspace, Clock clock) {
+		return new KeyDeletor(this, keyspace, clock);
 	}
 	
 	/**

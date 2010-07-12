@@ -2,6 +2,7 @@ package org.wyki.cassandra.pelops;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.cassandra.thrift.Clock;
 import org.slf4j.Logger;
 import org.wyki.portability.SystemProxy;
 
@@ -109,6 +110,18 @@ public class Pelops {
 	public static Mutator createMutator(String poolName, String keyspace, long timestamp) {
 		return poolMap.get(poolName).createMutator(keyspace, timestamp);
 	}
+
+	/**
+	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+	 * must only be used to execute 1 mutation operation.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+	 * @param keyspace				The keyspace to operate on
+	 * @param clock				    The default clock instance to use for operations
+	 * @return						A new <code>Mutator</code> object
+	 */
+	public static Mutator createMutator(String poolName, String keyspace, Clock clock) {
+		return poolMap.get(poolName).createMutator(keyspace, clock);
+	}
 	
 	/**
 	 * Create a <code>KeyDeletor</code> object using the current time as the operation time stamp.
@@ -124,10 +137,22 @@ public class Pelops {
 	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
 	 * @param keyspace				The keyspace to operate on
-	 * @return						A new <code>KeyDeletor</code> object
+     * @param timestamp				The default time stamp to use for operations
+     * @return						A new <code>KeyDeletor</code> object
 	 */
 	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, long timestamp) {
 		return poolMap.get(poolName).createKeyDeletor(keyspace, timestamp);
+	}
+
+	/**
+	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+	 * @param keyspace				The keyspace to operate on
+     * @param clock				    The default clock instance to use for operations
+	 * @return						A new <code>KeyDeletor</code> object
+	 */
+	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, Clock clock) {
+		return poolMap.get(poolName).createKeyDeletor(keyspace, clock);
 	}
 	
 	/**

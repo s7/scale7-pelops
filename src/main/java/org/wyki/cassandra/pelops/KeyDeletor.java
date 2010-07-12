@@ -1,8 +1,12 @@
 package org.wyki.cassandra.pelops;
 
+import org.apache.cassandra.thrift.Clock;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
+
+import static org.wyki.cassandra.pelops.Bytes.from;
+import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
 
 /**
  * Facilitates the removal of data at a key-level.
@@ -12,7 +16,7 @@ import org.wyki.cassandra.pelops.ThriftPool.Connection;
  */
 public class KeyDeletor extends KeyspaceOperand {
 
-	private final long timestamp;
+	private final Clock clock;
 
 	/**
 	 * Delete all rows with the specified key (that is, for each column family, remove any row that has the
@@ -44,12 +48,24 @@ public class KeyDeletor extends KeyspaceOperand {
 	 * @throws Exception
 	 */
 	public void deleteRow(final String rowKey, final String columnFamily, final ConsistencyLevel cLevel) throws Exception {
+		deleteRow(from(rowKey), columnFamily, cLevel);
+	}
+
+	/**
+	 * Delete a row with a specified key from a specified column family. The function succeeds even if
+	 * the row does not exist.
+	 * @param rowKey					The key of the row
+	 * @param columnFamily				The column family from which to delete the row
+	 * @param cLevel					The Cassandra consistency level to be used
+	 * @throws Exception
+	 */
+	public void deleteRow(final Bytes rowKey, final String columnFamily, final ConsistencyLevel cLevel) throws Exception {
 		IOperation operation = new IOperation() {
 			@Override
 			public Object execute(Connection conn) throws Exception {
 
 				ColumnPath path = new ColumnPath(columnFamily);
-				conn.getAPI().remove(keyspace, rowKey, path, timestamp, cLevel);
+				conn.getAPI().remove(nullSafeGet(rowKey), path, clock, cLevel);
 				return null;
 			}
 		};
@@ -57,11 +73,11 @@ public class KeyDeletor extends KeyspaceOperand {
 	}
 
 	protected KeyDeletor(ThriftPool thrift, String keyspace) {
-		this(thrift, keyspace, System.currentTimeMillis() * 1000);
+		this(thrift, keyspace, new Clock(System.currentTimeMillis() * 1000));
 	}
 
-	protected KeyDeletor(ThriftPool thrift, String keyspace, long timestamp) {
+	protected KeyDeletor(ThriftPool thrift, String keyspace, Clock clock) {
 		super(thrift, keyspace);
-		this.timestamp = timestamp;
+		this.clock = new Clock(clock);
 	}
 }

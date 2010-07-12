@@ -1,6 +1,7 @@
 package org.wyki.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.Clock;
 import org.apache.thrift.transport.TTransportException;
 
 /**
@@ -95,6 +96,23 @@ public interface ThriftPool {
      * @return the current policy
      */
     GeneralPolicy getGeneralPolicy();
+
+    /**
+     * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
+     * @param keyspace				The keyspace to operate on
+     * @param clock				    The default clock instance to use for operations
+     * @return						A new <code>KeyDeletor</code> object
+     */
+    KeyDeletor createKeyDeletor(String keyspace, Clock clock);
+
+    /**
+     * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+     * must only be used to execute 1 mutation operation.
+     * @param keyspace				The keyspace to operate on
+* @param clock				    The default clock instance to use for operations
+     * @return						A new <code>Mutator</code> object
+     */
+    Mutator createMutator(String keyspace, Clock clock);
 
     /**
      * Defines an encapsulation for a connection to a Cassandra node.

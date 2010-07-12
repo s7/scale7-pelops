@@ -30,14 +30,14 @@ public class Operand {
 		int retries = 0;
 		do {
 			// Get a connection to a Cassandra node
-			Connection conn = thrift.getConnectionExcept(lastNode);
-			lastNode = conn.getNode();
+            Connection conn = acquireConnection(lastNode);
+            lastNode = conn.getNode();
 			try {
 				// Execute operation
 				Object result = operation.execute(conn);
 				// Release unbroken connection
-				conn.release(false);
-				// Return result!
+                releaseConnection(conn, false);
+                // Return result!
 				return result;
 			} catch (Exception e) {
 				// Is this a logic/application or system error?
@@ -47,12 +47,12 @@ public class Operand {
 					e instanceof AuthenticationException ||
 					e instanceof AuthorizationException) {
 					// Yup, so we can release unbroken connection
-					conn.release(false);
-					// Re-throw application-level exceptions immediately.
+                    releaseConnection(conn, false);
+                    // Re-throw application-level exceptions immediately.
 					throw e;
 				}
 				// This connection is "broken" by network timeout or other problem.
-				conn.release(true);
+                releaseConnection(conn, true);
 				// Should we try again?
 				if (e instanceof TimedOutException ||
                         e instanceof TTransportException ||
@@ -66,5 +66,13 @@ public class Operand {
 		
 		throw lastException;
 	}
-	
+
+    protected void releaseConnection(Connection conn, boolean afterException) {
+        conn.release(afterException);
+    }
+
+    protected Connection acquireConnection(String lastNode) throws Exception {
+        return thrift.getConnectionExcept(lastNode);
+    }
+
 }

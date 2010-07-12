@@ -8,20 +8,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnOrSuperColumn;
-import org.apache.cassandra.thrift.ColumnParent;
-import org.apache.cassandra.thrift.ColumnPath;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.KeyRange;
-import org.apache.cassandra.thrift.KeySlice;
-import org.apache.cassandra.thrift.SlicePredicate;
-import org.apache.cassandra.thrift.SliceRange;
-import org.apache.cassandra.thrift.SuperColumn;
+import org.apache.cassandra.thrift.*;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
 
-import static org.wyki.cassandra.pelops.StringHelper.toBytes;
-import static org.wyki.cassandra.pelops.StringHelper.toUTF8;
+import static org.wyki.cassandra.pelops.Bytes.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.
@@ -40,7 +30,7 @@ public class Selector extends KeyspaceOperand {
      * @throws Exception
      */
     public int getColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(rowKey, newColumnParent(columnFamily), cLevel);
+        return getColumnCount(from(rowKey), newColumnParent(columnFamily), null, cLevel);
     }
 
     /**
@@ -52,8 +42,8 @@ public class Selector extends KeyspaceOperand {
      * @return                              The count of the sub-columns
      * @throws Exception
      */
-    public int getSubColumnCount(String rowKey, String columnFamily, byte[] superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(rowKey, newColumnParent(columnFamily, superColName), cLevel);
+    public int getSubColumnCount(String rowKey, String columnFamily, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(from(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
     }
 
     /**
@@ -63,10 +53,10 @@ public class Selector extends KeyspaceOperand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String rowKey, String columnFamily, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(rowKey, newColumnParent(columnFamily, superColName), cLevel);
+        return getColumnCount(from(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
     }
 
     /**
@@ -75,17 +65,17 @@ public class Selector extends KeyspaceOperand {
      * @param columnFamily                  The column family containing the super columns
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(rowKey, newColumnParent(columnFamily), cLevel);
+        return getColumnCount(from(rowKey), newColumnParent(columnFamily), null, cLevel);
     }
 
-    private int getColumnCount(final String rowKey, final ColumnParent colParent, final ConsistencyLevel cLevel) throws Exception {
+    private int getColumnCount(final Bytes rowKey, final ColumnParent colParent, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                return conn.getAPI().get_count(keyspace, rowKey, colParent, cLevel);
+                return conn.getAPI().get_count(nullSafeGet(rowKey), colParent, predicate, cLevel);
             }
         };
         return (Integer) tryOperation(operation);
@@ -98,10 +88,10 @@ public class Selector extends KeyspaceOperand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public Column getColumnFromRow(final String rowKey, final String columnFamily, final String colName, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnFromRow(rowKey, columnFamily, toBytes(colName), cLevel);
+        return getColumnFromRow(rowKey, columnFamily, from(colName), cLevel);
     }
 
     /**
@@ -111,15 +101,28 @@ public class Selector extends KeyspaceOperand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Column getColumnFromRow(final String rowKey, final String columnFamily, final byte[] colName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getColumnFromRow(final String rowKey, final String columnFamily, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
+        return getColumnFromRow(from(rowKey), columnFamily, colName, cLevel);
+    }
+
+    /**
+     * Retrieve a column from a row.
+     * @param rowKey                        The key of the row
+     * @param columnFamily                  The name of the column family containing the column
+     * @param colName                       The name of the column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The requested <code>Column</code>
+     * @throws Exception if an error occurs
+     */
+    public Column getColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setColumn(colName);
-                ColumnOrSuperColumn cosc = conn.getAPI().get(keyspace, rowKey, cp, cLevel);
+                cp.setColumn(nullSafeGet(colName));
+                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
         };
@@ -130,13 +133,13 @@ public class Selector extends KeyspaceOperand {
      * Retrieve a super column from a row.
      * @param rowKey                        The key of the row
      * @param columnFamily                  The name of the column family containing the super column
-     * @param colName                       The name of the super column to retrieve
+     * @param superColName                       The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnFromRow(rowKey, columnFamily, toBytes(superColName), cLevel);
+        return getSuperColumnFromRow(rowKey, columnFamily, from(superColName), cLevel);
     }
 
     /**
@@ -146,15 +149,28 @@ public class Selector extends KeyspaceOperand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final byte[] superColName, final ConsistencyLevel cLevel) throws Exception {
+    public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSuperColumnFromRow(from(rowKey), columnFamily, superColName, cLevel);
+    }
+
+    /**
+     * Retrieve a super column from a row.
+     * @param rowKey                        The key of the row
+     * @param columnFamily                  The name of the column family containing the super column
+     * @param superColName                  The name of the super column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The requested <code>SuperColumn</code>
+     * @throws Exception if an error occurs
+     */
+    public SuperColumn getSuperColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setSuper_column(superColName);
-                ColumnOrSuperColumn cosc = conn.getAPI().get(keyspace, rowKey, cp, cLevel);
+                cp.setSuper_column(nullSafeGet(superColName));
+                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.super_column;
             }
         };
@@ -169,10 +185,10 @@ public class Selector extends KeyspaceOperand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final byte[] superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(rowKey, columnFamily, superColName, toBytes(subColName), cLevel);
+    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(from(rowKey), columnFamily, superColName, from(subColName), cLevel);
     }
 
     /**
@@ -183,10 +199,10 @@ public class Selector extends KeyspaceOperand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(rowKey, columnFamily, toBytes(superColName), toBytes(subColName), cLevel);
+        return getSubColumnFromRow(from(rowKey), columnFamily, from(superColName), from(subColName), cLevel);
     }
 
     /**
@@ -197,10 +213,10 @@ public class Selector extends KeyspaceOperand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final byte[] subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(rowKey, columnFamily, toBytes(superColName), subColName, cLevel);
+    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(from(rowKey), columnFamily, from(superColName), subColName, cLevel);
     }
 
     /**
@@ -211,16 +227,30 @@ public class Selector extends KeyspaceOperand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final byte[] superColName, final byte[] subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(from(rowKey), columnFamily, superColName, subColName, cLevel);
+    }
+
+    /**
+     * Retrieve a sub column from a super column in a row.
+     * @param rowKey                        The key of the row
+     * @param columnFamily                  The name of the column family containing the super column
+     * @param superColName                  The name of the super column containing the sub column
+     * @param subColName                    The name of the sub column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The requested <code>Column</code>
+     * @throws Exception if an error occurs
+     */
+    public Column getSubColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setSuper_column(superColName);
-                cp.setColumn(subColName);
-                ColumnOrSuperColumn cosc = conn.getAPI().get(keyspace, rowKey, cp, cLevel);
+                cp.setSuper_column(nullSafeGet(superColName));
+                cp.setColumn(nullSafeGet(subColName));
+                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
         };
@@ -234,7 +264,7 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                  The column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public List<Column> getColumnsFromRow(String rowKey, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
@@ -249,9 +279,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String rowKey, String columnFamily, byte[] superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String rowKey, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRow(rowKey, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
@@ -264,7 +294,7 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public List<Column> getSubColumnsFromRow(String rowKey, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
@@ -273,10 +303,15 @@ public class Selector extends KeyspaceOperand {
 
     @SuppressWarnings("unchecked")
     private List<Column> getColumnsFromRow(final String rowKey, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        return getColumnsFromRow(from(rowKey), colParent, colPredicate, cLevel);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Column> getColumnsFromRow(final Bytes rowKey, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(keyspace, rowKey, colParent, colPredicate, cLevel);
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), colParent, colPredicate, cLevel);
                 List<Column> result = new ArrayList<Column>(apiResult.size());
                 for (ColumnOrSuperColumn cosc : apiResult)
                     result.add(cosc.column);
@@ -293,14 +328,28 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                  The super column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     @SuppressWarnings("unchecked")
     public List<SuperColumn> getSuperColumnsFromRow(final String rowKey, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        return getSuperColumnsFromRow(from(rowKey), columnFamily, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve super columns from a row.
+     * @param rowKey                        The key of the row
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param colPredicate                  The super column selector predicate
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws Exception if an error occurs
+     */
+    @SuppressWarnings("unchecked")
+    public List<SuperColumn> getSuperColumnsFromRow(final Bytes rowKey, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(keyspace, rowKey, newColumnParent(columnFamily), colPredicate, cLevel);
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), newColumnParent(columnFamily), colPredicate, cLevel);
                 List<SuperColumn> result = new ArrayList<SuperColumn>(apiResult.size());
                 for (ColumnOrSuperColumn cosc : apiResult)
                     result.add(cosc.super_column);
@@ -329,21 +378,21 @@ public class Selector extends KeyspaceOperand {
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(final String rowKey, final String columnFamily, final byte[] startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(final String rowKey, final String columnFamily, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
         SlicePredicate predicate;
         if (startBeyondName == null)
             predicate = Selector.newColumnsPredicateAll(reversed, count);
         else {
-            byte[] startName;
+            Bytes startName;
             if (reversed)
                 startName = Selector.bumpDownColumnName(startBeyondName, orderType);
             else
                 startName = Selector.bumpUpColumnName(startBeyondName, orderType);
 
-            predicate = Selector.newColumnsPredicate(startName, new byte[] {}, reversed, count);
+            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
         }
         return getColumnsFromRow(rowKey, columnFamily, predicate, cLevel);
     }
@@ -358,21 +407,21 @@ public class Selector extends KeyspaceOperand {
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String rowKey, final String columnFamily, final byte[] startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String rowKey, final String columnFamily, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
         SlicePredicate predicate;
         if (startBeyondName == null)
             predicate = Selector.newColumnsPredicateAll(reversed, count);
         else {
-            byte[] startName;
+            Bytes startName;
             if (reversed)
                 startName = Selector.bumpDownColumnName(startBeyondName, orderType);
             else
                 startName = Selector.bumpUpColumnName(startBeyondName, orderType);
 
-            predicate = Selector.newColumnsPredicate(startName, new byte[] {}, reversed, count);
+            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
         }
         return getSuperColumnsFromRow(rowKey, columnFamily, predicate, cLevel);
     }
@@ -384,9 +433,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRows(List<String> rowKeys, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(List<Bytes> rowKeys, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(rowKeys, newColumnParent(columnFamily), colPredicate, cLevel);
     }
@@ -399,9 +448,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRows(List<String> rowKeys, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(List<Bytes> rowKeys, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(rowKeys, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
@@ -414,9 +463,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRows(List<String> rowKeys, String columnFamily, byte[] superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(List<Bytes> rowKeys, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(rowKeys, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
@@ -428,46 +477,46 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                   The super column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of super columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     @SuppressWarnings("unchecked")
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRows(final List<String> rowKeys, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final List<Bytes> rowKeys, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                Map<String, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keyspace, rowKeys, newColumnParent(columnFamily), colPredicate, cLevel);
-                Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
-                for (String rowKey : apiResult.keySet()) {
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
+                for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.super_column);
-                    result.put(rowKey, columns);
+                    result.put(Bytes.from(rowKey), columns);
                 }
                 return result;
             }
         };
-        return (Map<String, List<SuperColumn>>) tryOperation(operation);
+        return (Map<Bytes, List<SuperColumn>>) tryOperation(operation);
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, List<Column>> getColumnsFromRows(final List<String> rowKeys, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<Bytes, List<Column>> getColumnsFromRows(final List<Bytes> rowKeys, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                Map<String, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keyspace, rowKeys, colParent, colPredicate, cLevel);
-                Map<String, List<Column>> result = new HashMap<String, List<Column>>();
-                for (String rowKey : apiResult.keySet()) {
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), colParent, colPredicate, cLevel);
+                Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
+                for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<Column> columns = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.column);
-                    result.put(rowKey, columns);
+                    result.put(Bytes.from(rowKey), columns);
                 }
                 return result;
             }
         };
-        return (Map<String, List<Column>>) tryOperation(operation);
+        return (Map<Bytes, List<Column>>) tryOperation(operation);
     }
 
     /**
@@ -480,9 +529,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRows(KeyRange keyRange, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(KeyRange keyRange, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily), colPredicate, cLevel);
     }
@@ -498,9 +547,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, byte[] superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
@@ -516,9 +565,9 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
         return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
     }
@@ -533,46 +582,46 @@ public class Selector extends KeyspaceOperand {
      * @param colPredicate                    The super column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of super columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     @SuppressWarnings("unchecked")
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRows(final KeyRange keyRange, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final KeyRange keyRange, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                List<KeySlice> apiResult = conn.getAPI().get_range_slices(keyspace, newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
-                Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
+                Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.super_column);
-                    result.put(ks.key, colList);
+                    result.put(from(ks.key), colList);
                 }
                 return result;
             }
         };
-        return (Map<String, List<SuperColumn>>) tryOperation(operation);
+        return (Map<Bytes, List<SuperColumn>>) tryOperation(operation);
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, List<Column>> getColumnsFromRows(final KeyRange keyRange, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<Bytes, List<Column>> getColumnsFromRows(final KeyRange keyRange, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
         IOperation operation = new IOperation() {
             @Override
             public Object execute(Connection conn) throws Exception {
-                List<KeySlice> apiResult = conn.getAPI().get_range_slices(keyspace, colParent, colPredicate, keyRange, cLevel);
-                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(colParent, colPredicate, keyRange, cLevel);
+                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<Column> colList = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.column);
-                    result.put(ks.key, colList);
+                    result.put(from(ks.key), colList);
                 }
                 return result;
             }
         };
-        return (Map<String, List<Column>>) tryOperation(operation);
+        return (Map<Bytes, List<Column>>) tryOperation(operation);
     }
 
     /**
@@ -595,9 +644,9 @@ public class Selector extends KeyspaceOperand {
      * @param maxColCount                     The maximum number of columns to return
      * @return                                The new <code>SlicePredicate</code>
      */
-    public static SlicePredicate newColumnsPredicate(byte[] startName, byte[] finishName, boolean reversed, int maxColCount) {
+    public static SlicePredicate newColumnsPredicate(Bytes startName, Bytes finishName, boolean reversed, int maxColCount) {
         SlicePredicate predicate = new SlicePredicate();
-        predicate.setSlice_range(new SliceRange(startName, finishName, reversed, maxColCount));
+        predicate.setSlice_range(new SliceRange(nullSafeGet(startName), nullSafeGet(finishName), reversed, maxColCount));
         return predicate;
     }
 
@@ -610,9 +659,7 @@ public class Selector extends KeyspaceOperand {
      * @return                                The new <code>SlicePredicate</code>
      */
     public static SlicePredicate newColumnsPredicate(String startName, String finishName, boolean reversed, int maxColCount) {
-        SlicePredicate predicate = new SlicePredicate();
-        predicate.setSlice_range(new SliceRange(toBytes(startName), toBytes(finishName), reversed, maxColCount));
-        return predicate;
+        return newColumnsPredicate(from(startName), from(finishName), reversed, maxColCount);
     }
 
     /**
@@ -623,7 +670,7 @@ public class Selector extends KeyspaceOperand {
     public static SlicePredicate newColumnsPredicate(String... colNames) {
         List<byte[]> asList = new ArrayList<byte[]>(32);
         for (String colName : colNames)
-            asList.add(toBytes(colName));
+            asList.add(from(colName).getBytes());
         SlicePredicate predicate = new SlicePredicate();
         predicate.setColumn_names(asList);
         return predicate;
@@ -634,10 +681,10 @@ public class Selector extends KeyspaceOperand {
      * @param colNames                        The specific columns names to select in the slice
      * @return                                The new <code>SlicePredicate</code>
      */
-    public static SlicePredicate newColumnsPredicate(byte[]... colNames) {
+    public static SlicePredicate newColumnsPredicate(Bytes... colNames) {
         List<byte[]> asList = new ArrayList<byte[]>(32);
-        for (byte[] colName : colNames)
-            asList.add(colName);
+        for (Bytes colName : colNames)
+            asList.add(nullSafeGet(colName));
         SlicePredicate predicate = new SlicePredicate();
         predicate.setColumn_names(asList);
         return predicate;
@@ -651,9 +698,20 @@ public class Selector extends KeyspaceOperand {
      * @return                                The new <code>KeyRange</code> instance
      */
     public static KeyRange newKeyRange(String startKey, String finishKey, int maxKeyCount) {
+        return newKeyRange(from(startKey), from(finishKey), maxKeyCount);
+    }
+
+    /**
+     * Create a new <code>KeyRange</code> instance.
+     * @param startKey                        The inclusive start key of the range
+     * @param finishKey                       The inclusive finish key of the range
+     * @param maxKeyCount                     The maximum number of keys to be scanned
+     * @return                                The new <code>KeyRange</code> instance
+     */
+    public static KeyRange newKeyRange(Bytes startKey, Bytes finishKey, int maxKeyCount) {
         KeyRange keyRange = new KeyRange(maxKeyCount);
-        keyRange.setStart_key(startKey);
-        keyRange.setEnd_key(finishKey);
+        keyRange.setStart_key(nullSafeGet(startKey));
+        keyRange.setEnd_key(nullSafeGet(finishKey));
         return keyRange;
     }
 
@@ -678,7 +736,7 @@ public class Selector extends KeyspaceOperand {
      * @return                                Whether the super column is present
      */
     public static boolean superColumnExists(List<SuperColumn> superColumns, String superColName) {
-        return superColumnExists(superColumns, toBytes(superColName));
+        return superColumnExists(superColumns, from(superColName));
     }
 
     /**
@@ -687,9 +745,9 @@ public class Selector extends KeyspaceOperand {
      * @param superColName                    The name of the super column
      * @return                                Whether the super column is present
      */
-    public static boolean superColumnExists(List<SuperColumn> superColumns, byte[] superColName) {
+    public static boolean superColumnExists(List<SuperColumn> superColumns, Bytes superColName) {
         for (SuperColumn superColumn : superColumns)
-            if (Arrays.equals(superColumn.name, superColName))
+            if (Arrays.equals(superColumn.name, nullSafeGet(superColName)))
                 return true;
         return false;
     }
@@ -701,9 +759,9 @@ public class Selector extends KeyspaceOperand {
      * @return                                The super column
      * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a super column with the specified name
      */
-    public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, byte[] superColName) throws ArrayIndexOutOfBoundsException {
+    public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, Bytes superColName) throws ArrayIndexOutOfBoundsException {
         for (SuperColumn superColumn : superColumns)
-            if (Arrays.equals(superColumn.name, superColName))
+            if (Arrays.equals(superColumn.name, nullSafeGet(superColName)))
                 return superColumn;
         throw new ArrayIndexOutOfBoundsException();
     }
@@ -716,7 +774,7 @@ public class Selector extends KeyspaceOperand {
      * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a super column with the specified name
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, String superColName) throws ArrayIndexOutOfBoundsException {
-        return getSuperColumn(superColumns, toBytes(superColName));
+        return getSuperColumn(superColumns, from(superColName));
     }
 
     /**
@@ -728,7 +786,7 @@ public class Selector extends KeyspaceOperand {
      * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
     public static String getColumnValue(List<Column> columns, String colName, String defaultValue) throws UnsupportedEncodingException {
-        return getColumnValue(columns, toBytes(colName), defaultValue);
+        return getColumnValue(columns, from(colName), defaultValue);
     }
 
     /**
@@ -738,8 +796,8 @@ public class Selector extends KeyspaceOperand {
      * @param defaultValue                    A default value to return if a column with the specified name is not present in the list
      * @return                                The column value
      */
-    public static byte[] getColumnValue(List<Column> columns, String colName, byte[] defaultValue) {
-        return getColumnValue(columns, toBytes(colName), defaultValue);
+    public static Bytes getColumnValue(List<Column> columns, String colName, Bytes defaultValue) {
+        return getColumnValue(columns, from(colName), defaultValue);
     }
 
     /**
@@ -749,10 +807,10 @@ public class Selector extends KeyspaceOperand {
      * @param defaultValue                   A default value to return if a column with the specified name is not present in the list
      * @return                                The column value
      */
-    public static byte[] getColumnValue(List<Column> columns, byte[] colName, byte[] defaultValue) {
+    public static Bytes getColumnValue(List<Column> columns, Bytes colName, Bytes defaultValue) {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
-                return column.value;
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
+                return from(column.value);
         return defaultValue;
     }
 
@@ -764,34 +822,34 @@ public class Selector extends KeyspaceOperand {
      * @return                               The column value
      * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
-    public static String getColumnValue(List<Column> columns, byte[] colName, String defaultValue) throws UnsupportedEncodingException {
+    public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) throws UnsupportedEncodingException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
-                return toUTF8(column.value);
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
+                return from(column.value).toUTF8();
         return defaultValue;
     }
 
     /**
      * Determines if a column with a particular name exist in the list of columns.
-     * @param superColumns                    The list of columns
-     * @param superColName                    The name of the column
+     * @param columns                    The list of columns
+     * @param colName                    The name of the column
      * @return                                Whether the column is present
      */
-    public static boolean columnExists(List<Column> columns, byte[] colName) {
+    public static boolean columnExists(List<Column> columns, Bytes colName) {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
                 return true;
         return false;
     }
 
     /**
      * Determines if a column with a particular name exist in the list of columns.
-     * @param superColumns                    The list of columns
-     * @param superColName                    The name of the column
+     * @param columns                    The list of columns
+     * @param colName                    The name of the column
      * @return                                Whether the column is present
      */
     public static boolean columnExists(List<Column> columns, String colName) {
-        return columnExists(columns, toBytes(colName));
+        return columnExists(columns, from(colName));
     }
 
     /**
@@ -801,10 +859,10 @@ public class Selector extends KeyspaceOperand {
      * @return                               The column value
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
      */
-    public static byte[] getColumnValue(List<Column> columns, byte[] colName) throws ArrayIndexOutOfBoundsException {
+    public static Bytes getColumnValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
-                return column.value;
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
+                return from(column.value);
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -815,8 +873,8 @@ public class Selector extends KeyspaceOperand {
      * @return                               The column value
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
      */
-    public static byte[] getColumnValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
-        return getColumnValue(columns, toBytes(colName));
+    public static Bytes getColumnValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
+        return getColumnValue(columns, from(colName));
     }
 
     /**
@@ -828,7 +886,7 @@ public class Selector extends KeyspaceOperand {
      * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
     public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
-        return getColumnStringValue(columns, toBytes(colName));
+        return getColumnStringValue(columns, from(colName));
     }
 
     /**
@@ -839,10 +897,10 @@ public class Selector extends KeyspaceOperand {
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
      * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
-    public static String getColumnStringValue(List<Column> columns, byte[] colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
+    public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
-                return toUTF8(column.value);
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
+                return from(column.value).toUTF8();
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -853,10 +911,21 @@ public class Selector extends KeyspaceOperand {
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
      * @throws ArrayIndexOutOfBoundsException
      */
-    public static long getColumnTimestamp(List<Column> columns, byte[] colName) throws ArrayIndexOutOfBoundsException {
+    public static long getColumnTimestamp(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
+        return getColumnClock(columns, colName).getTimestamp();
+    }
+
+    /**
+     * Get the time stamp of a column in a list of columns.
+     * @param columns                        The list of columns
+     * @param colName                        The name of the column from which to retrieve the timestamp
+     * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
+     * @throws ArrayIndexOutOfBoundsException
+     */
+    public static Clock getColumnClock(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, colName))
-                return column.timestamp;
+            if (Arrays.equals(column.name, nullSafeGet(colName)))
+                return column.getClock();
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -868,7 +937,7 @@ public class Selector extends KeyspaceOperand {
      * @throws ArrayIndexOutOfBoundsException
      */
     public static long getColumnTimestamp(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
-        return getColumnTimestamp(columns, toBytes(colName));
+        return getColumnTimestamp(columns, from(colName));
     }
 
     /**
@@ -876,9 +945,9 @@ public class Selector extends KeyspaceOperand {
      * <code>null</code> is returned if no such value exists.
      * @param colName                        The column name
      * @return                               The bumped up column name, or same value if there is no higher value
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException if an error occurs
      */
-    public static byte[] bumpUpColumnName(String colName, OrderType orderType) {
+    public static Bytes bumpUpColumnName(String colName, OrderType orderType) {
         if (orderType != OrderType.UTF8Type)
             throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
         StringBuilder sb = new StringBuilder(32);
@@ -893,7 +962,7 @@ public class Selector extends KeyspaceOperand {
             }
         }
         sb.reverse();
-        return toBytes(sb.toString());
+        return from(sb.toString());
     }
 
     /**
@@ -901,33 +970,33 @@ public class Selector extends KeyspaceOperand {
      * <code>null</code> is returned if no such value exists.
      * @param colName                        The column name
      * @return                               The bumped up column name, or same value if there is no higher value
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException if an error occurs
      */
-    public static byte[] bumpUpColumnName(byte[] colName, OrderType orderType) {
+    public static Bytes bumpUpColumnName(Bytes colName, OrderType orderType) {
 
         if (orderType == OrderType.BytesType) {
-            byte[] newName = Arrays.copyOf(colName, colName.length);
+            byte[] newName = Arrays.copyOf(nullSafeGet(colName), colName.length());
             for (int i=newName.length-1; i >= 0; i--) {
                 if ((newName[i] & 0xFF) < 255) {
                     newName[i] = (byte)((newName[i] & 0xFF) + 1);
                     break;
                 }
             }
-            return newName;
+            return from(newName);
         }
         else if (orderType == OrderType.LongType) {
-            if (colName.length != 8)
+            if (colName.length() != 8)
                 throw new IllegalArgumentException("A Long argument should be 8 bytes");
-            long l = NumberHelper.toLong(colName);
+            long l = colName.toLong();
             if (l < Long.MAX_VALUE)
                 l++;
-            return NumberHelper.toBytes(l);
+            return from(l);
         }
         else if (orderType == OrderType.LexicalUUIDType) {
-            if (colName.length != 16)
+            if (colName.length() != 16)
                 throw new IllegalArgumentException("A lexical UUID argument should be 16 bytes");
-            long msb = NumberHelper.toLong(colName, 0, 8);
-            long lsb = NumberHelper.toLong(colName, 8, 8);
+            long msb = NumberHelper.toLong(nullSafeGet(colName), 0, 8);
+            long lsb = NumberHelper.toLong(nullSafeGet(colName), 8, 8);
             if (lsb < Long.MAX_VALUE)
                 lsb++;
             else
@@ -936,23 +1005,23 @@ public class Selector extends KeyspaceOperand {
             byte[] newName = new byte[16];
             NumberHelper.toBytes(msb, newName, 0, 8);
             NumberHelper.toBytes(lsb, newName, 8, 8);
-            return newName;
+            return from(newName);
         }
         else if (orderType == OrderType.TimeUUIDType) {
-            if (colName.length != 16)
+            if (colName.length() != 16)
                 throw new IllegalArgumentException("A time UUID argument should be 16 bytes");
-            byte[] newName = Arrays.copyOf(colName, 16);
+            byte[] newName = Arrays.copyOf(nullSafeGet(colName), 16);
             for (int i=15; i >= 8; i--) {
                 if ((newName[i] & 0xFF) < 255) {
                     newName[i] = (byte)((newName[i] & 0xFF) + 1);
-                    return newName;
+                    return from(newName);
                 }
             }
             long timestamp = NumberHelper.toLong(newName, 0, 8);
             if (timestamp < Long.MAX_VALUE)
                 timestamp++;
             NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return newName;
+            return from(newName);
         }
         throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
     }
@@ -963,7 +1032,7 @@ public class Selector extends KeyspaceOperand {
      * @param colName                        The column name
      * @return                               The bumped down column name, or same value if there is no lower value
      */
-    public static byte[] bumpDownColumnName(String colName, OrderType orderType) {
+    public static Bytes bumpDownColumnName(String colName, OrderType orderType) {
         if (orderType != OrderType.UTF8Type)
             throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
         StringBuilder sb = new StringBuilder(32);
@@ -978,7 +1047,7 @@ public class Selector extends KeyspaceOperand {
             }
         }
         sb.reverse();
-        return toBytes(sb.toString());
+        return from(sb.toString());
     }
 
     /**
@@ -987,31 +1056,31 @@ public class Selector extends KeyspaceOperand {
      * @param colName                        The column name
      * @return                               The bumped down column name, or same value if there is no lower value
      */
-    public static byte[] bumpDownColumnName(byte[] colName, OrderType orderType) {
+    public static Bytes bumpDownColumnName(Bytes colName, OrderType orderType) {
 
         if (orderType == OrderType.BytesType) {
-            byte[] newName = Arrays.copyOf(colName, colName.length);
+            byte[] newName = Arrays.copyOf(nullSafeGet(colName), colName.length());
             for (int i=newName.length-1; i >= 0; i--) {
                 if ((newName[i] & 0xFF) > 0) {
                     newName[i] = (byte)((newName[i] & 0xFF) - 1);
                     break;
                 }
             }
-            return newName;
+            return from(newName);
         }
         else if (orderType == OrderType.LongType) {
-            if (colName.length != 8)
+            if (colName.length() != 8)
                 throw new IllegalArgumentException("A Long argument should be 8 bytes");
-            long l = NumberHelper.toLong(colName);
+            long l = NumberHelper.toLong(nullSafeGet(colName));
             if (l > Long.MIN_VALUE)
                 l--;
-            return NumberHelper.toBytes(l);
+            return from(l);
         }
         else if (orderType == OrderType.LexicalUUIDType) {
-            if (colName.length != 16)
+            if (colName.length() != 16)
                 throw new IllegalArgumentException("A lexical UUID argument should be 16 bytes");
-            long msb = NumberHelper.toLong(colName, 0, 8);
-            long lsb = NumberHelper.toLong(colName, 8, 8);
+            long msb = NumberHelper.toLong(nullSafeGet(colName), 0, 8);
+            long lsb = NumberHelper.toLong(nullSafeGet(colName), 8, 8);
             if (lsb > Long.MIN_VALUE)
                 lsb--;
             else
@@ -1020,23 +1089,23 @@ public class Selector extends KeyspaceOperand {
             byte[] newName = new byte[16];
             NumberHelper.toBytes(msb, newName, 0, 8);
             NumberHelper.toBytes(lsb, newName, 8, 8);
-            return newName;
+            return from(newName);
         }
         else if (orderType == OrderType.TimeUUIDType) {
-            if (colName.length != 16)
+            if (colName.length() != 16)
                 throw new IllegalArgumentException("A time UUID argument should be 16 bytes");
-            byte[] newName = Arrays.copyOf(colName, 16);
+            byte[] newName = Arrays.copyOf(nullSafeGet(colName), 16);
             for (int i=15; i >= 8; i--) {
                 if ((newName[i] & 0xFF) > 0) {
                     newName[i] = (byte)((newName[i] & 0xFF) - 1);
-                    return newName;
+                    return from(newName);
                 }
             }
             long timestamp = NumberHelper.toLong(newName, 0, 8);
             if (timestamp > Long.MIN_VALUE)
                 timestamp--;
             NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return newName;
+            return from(newName);
         }
         throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
     }
@@ -1050,12 +1119,12 @@ public class Selector extends KeyspaceOperand {
     }
 
     private static ColumnParent newColumnParent(String columnFamily, String superColName) {
-        return newColumnParent(columnFamily, toBytes(superColName));
+        return newColumnParent(columnFamily, Bytes.from(superColName));
     }
 
-    private static ColumnParent newColumnParent(String columnFamily, byte[] superColName) {
+    private static ColumnParent newColumnParent(String columnFamily, Bytes superColName) {
         ColumnParent parent = new ColumnParent(columnFamily);
-        parent.setSuper_column(superColName);
+        parent.setSuper_column(nullSafeGet(superColName));
         return parent;
     }
 
