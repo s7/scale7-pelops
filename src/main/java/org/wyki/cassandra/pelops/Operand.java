@@ -24,19 +24,21 @@ public class Operand {
 		this.thrift = thrift;
 	}
 	
-	protected Object tryOperation(IOperation operation) throws Exception {
+	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws Exception {
 		String lastNode = null;
 		Exception lastException = null;
 		int retries = 0;
 		do {
 			// Get a connection to a Cassandra node
-            Connection conn = acquireConnection(lastNode);
+            Connection conn = thrift.getConnectionExcept(lastNode);
             lastNode = conn.getNode();
 			try {
 				// Execute operation
-				Object result = operation.execute(conn);
+                beforeOperation(conn);
+				ReturnType result = operation.execute(conn);
 				// Release unbroken connection
-                releaseConnection(conn, false);
+                afterOperation(conn);
+                conn.release(false);
                 // Return result!
 				return result;
 			} catch (Exception e) {
@@ -47,12 +49,13 @@ public class Operand {
 					e instanceof AuthenticationException ||
 					e instanceof AuthorizationException) {
 					// Yup, so we can release unbroken connection
-                    releaseConnection(conn, false);
+                    afterOperation(conn);
+                    conn.release(false);
                     // Re-throw application-level exceptions immediately.
 					throw e;
 				}
 				// This connection is "broken" by network timeout or other problem.
-                releaseConnection(conn, true);
+                conn.release(true);
 				// Should we try again?
 				if (e instanceof TimedOutException ||
                         e instanceof TTransportException ||
@@ -67,12 +70,17 @@ public class Operand {
 		throw lastException;
 	}
 
-    protected void releaseConnection(Connection conn, boolean afterException) {
-        conn.release(afterException);
+    protected void beforeOperation(ThriftPool.Connection conn) throws Exception  {
+        if (KeyspaceAware.class.isAssignableFrom(getClass()))
+            conn.getAPI().set_keyspace(((KeyspaceAware) this).getKeyspace());
     }
 
-    protected Connection acquireConnection(String lastNode) throws Exception {
-        return thrift.getConnectionExcept(lastNode);
+    protected void afterOperation(ThriftPool.Connection conn) throws Exception  {
+        if (KeyspaceAware.class.isAssignableFrom(getClass()))
+            conn.getAPI().set_keyspace(null);
     }
 
+    public interface KeyspaceAware {
+        String getKeyspace();
+    }
 }

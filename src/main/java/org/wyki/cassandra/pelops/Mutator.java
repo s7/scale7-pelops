@@ -12,7 +12,6 @@ import org.wyki.cassandra.pelops.ThriftPool.Connection;
 import static org.wyki.cassandra.pelops.Bytes.from;
 import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
 import static org.wyki.cassandra.pelops.Bytes.transform;
-import static org.wyki.cassandra.pelops.StringHelper.toBytes;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -23,7 +22,7 @@ import static org.wyki.cassandra.pelops.StringHelper.toBytes;
  * @author dominicwilliams
  *
  */
-public class Mutator extends KeyspaceOperand {
+public class Mutator extends Operand implements Operand.KeyspaceAware {
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
@@ -420,6 +419,7 @@ public class Mutator extends KeyspaceOperand {
     class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
 
     private final Map<Bytes, Map<String, List<Mutation>>> batch;
+    private String keyspace;
     private final Clock clock;
 
     /**
@@ -437,9 +437,14 @@ public class Mutator extends KeyspaceOperand {
      *                                This should be in microseconds.
      */
     protected Mutator(ThriftPool thrift, String keyspace, Clock clock) {
-        super(thrift, keyspace);
+        super(thrift);
+        this.keyspace = keyspace;
         this.clock = clock;
         batch = new MutationsByKey();
+    }
+
+    public String getKeyspace() {
+        return keyspace;
     }
 
     private MutationList getMutationList(Bytes key, String colFamily) {

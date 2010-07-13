@@ -14,11 +14,12 @@ import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
  * @author dominicwilliams
  *
  */
-public class KeyDeletor extends KeyspaceOperand {
+public class KeyDeletor extends Operand implements Operand.KeyspaceAware {
 
 	private final Clock clock;
+    private String keyspace;
 
-	/**
+    /**
 	 * Delete all rows with the specified key (that is, for each column family, remove any row that has the
 	 * specified key, such that the database no longer stores any data for the key).
 	 * @param rowKey					The key of the rows to be deleted
@@ -77,7 +78,12 @@ public class KeyDeletor extends KeyspaceOperand {
 	}
 
 	protected KeyDeletor(ThriftPool thrift, String keyspace, Clock clock) {
-		super(thrift, keyspace);
-		this.clock = new Clock(clock);
+		super(thrift);
+        this.keyspace = keyspace;
+        this.clock = new Clock(clock);
 	}
+
+    public String getKeyspace() {
+        return keyspace;
+    }
 }

@@ -60,6 +60,20 @@ public interface ThriftPool {
     Metrics createMetrics();
 
     /**
+     * Create a {@link org.wyki.cassandra.pelops.Management} object.
+     * @return the instance
+     * @see org.wyki.cassandra.pelops.Management
+     */
+    Management createManagement();
+
+    /**
+     * Create a {@link org.wyki.cassandra.pelops.KeyspaceManagement} object.
+     * @return the instance
+     * @see org.wyki.cassandra.pelops.KeyspaceManagement
+     */
+    KeyspaceManagement createKeyspaceManagement();
+
+    /**
      * Get a connection from the pool.
      *
      * @return the connection

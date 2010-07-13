@@ -162,7 +162,29 @@ public class Pelops {
 	 */
 	public static Metrics createMetrics(String poolName) {
 		return poolMap.get(poolName).createMetrics();
-	}	
+	}
+
+	/**
+	 * Create an instance of {@link org.wyki.cassandra.pelops.Management} that can be used to batch several management
+     * operation together.  It's very important that the {@link Management#release()} method is called after you have
+     * finished with the instance.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+	 * @return						The management instance
+	 */
+	public static Management createManagement(String poolName) {
+		return poolMap.get(poolName).createManagement();
+	}
+
+    /**
+	 * Create an instance of {@link KeyspaceManagement} that can be used to batch several management
+     * operation together.  It's very important that the {@link KeyspaceManagement#release()} method is called after you have 
+     * finished with the instance.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+     * @return						The keyspace management instance
+	 */
+    public static KeyspaceManagement createKeyspaceManagement(String poolName) {
+		return poolMap.get(poolName).createKeyspaceManagement();
+	}
 	
 	/**
 	 * Get a direct reference to a DbConnPool. This should never be needed while using Pelops's <code>Mutator</code> and

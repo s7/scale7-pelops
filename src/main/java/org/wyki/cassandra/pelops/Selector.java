@@ -19,7 +19,8 @@ import static org.wyki.cassandra.pelops.Bytes.*;
  * @author dominicwilliams
  *
  */
-public class Selector extends KeyspaceOperand {
+public class Selector extends Operand implements Operand.KeyspaceAware {
+    private String keyspace;
 
     /**
      * Get the count of columns in a row.
@@ -1115,7 +1116,12 @@ public class Selector extends KeyspaceOperand {
      * @param keyspace                    The keyspace the batch mutation will be executed against.
      */
     protected Selector(ThriftPool thrift, String keyspace) {
-        super(thrift, keyspace);
+        super(thrift);
+        this.keyspace = keyspace;
+    }
+
+    public String getKeyspace() {
+        return keyspace;
     }
 
     private static ColumnParent newColumnParent(String columnFamily, String superColName) {
