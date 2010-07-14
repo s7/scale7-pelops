@@ -14,6 +14,19 @@ import java.util.Set;
  * See http://wiki.apache.org/cassandra/LiveSchemaUpdates for more details.
  */
 public class Management extends SingleConnectionOperand {
+    public static final String KSDEF_STRATEGY_RACK_UNAWARE = "org.apache.cassandra.locator.RackUnawareStrategy";
+    public static final String KSDEF_STRATEGY_RACK_AWARE = "org.apache.cassandra.locator.RackAwareStrategy";
+
+    public static final String CFDEF_TYPE_STANDARD = "Standard";
+    public static final String CFDEF_TYPE_SUPER = "Super";
+
+    public static final String CFDEF_COMPARATOR_BYTES = "BytesType";
+    public static final String CFDEF_COMPARATOR_ASCII = "AsciiType";
+    public static final String CFDEF_COMPARATOR_UTF8 = "UTF8Type";
+    public static final String CFDEF_COMPARATOR_LONG = "LongType";
+    public static final String CFDEF_COMPARATOR_LEXICAL_UUID = "LexicalUUIDType";
+    public static final String CFDEF_COMPARATOR_TIME_UUID = "TimeUUIDType";
+
     protected Management(ThriftPool thrift) {
         super(thrift);
     }

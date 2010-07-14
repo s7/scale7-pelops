@@ -31,7 +31,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception
      */
     public int getColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(from(rowKey), newColumnParent(columnFamily), null, cLevel);
+        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily), null, cLevel);
     }
 
     /**
@@ -44,7 +44,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception
      */
     public int getSubColumnCount(String rowKey, String columnFamily, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(from(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
+        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
     }
 
     /**
@@ -57,7 +57,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String rowKey, String columnFamily, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(from(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
+        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
     }
 
     /**
@@ -69,7 +69,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(from(rowKey), newColumnParent(columnFamily), null, cLevel);
+        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily), null, cLevel);
     }
 
     private int getColumnCount(final Bytes rowKey, final ColumnParent colParent, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws Exception {
@@ -92,7 +92,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getColumnFromRow(final String rowKey, final String columnFamily, final String colName, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnFromRow(rowKey, columnFamily, from(colName), cLevel);
+        return getColumnFromRow(rowKey, columnFamily, fromUTF8(colName), cLevel);
     }
 
     /**
@@ -105,7 +105,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getColumnFromRow(final String rowKey, final String columnFamily, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnFromRow(from(rowKey), columnFamily, colName, cLevel);
+        return getColumnFromRow(fromUTF8(rowKey), columnFamily, colName, cLevel);
     }
 
     /**
@@ -140,7 +140,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnFromRow(rowKey, columnFamily, from(superColName), cLevel);
+        return getSuperColumnFromRow(rowKey, columnFamily, fromUTF8(superColName), cLevel);
     }
 
     /**
@@ -153,7 +153,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnFromRow(from(rowKey), columnFamily, superColName, cLevel);
+        return getSuperColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, cLevel);
     }
 
     /**
@@ -189,7 +189,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(from(rowKey), columnFamily, superColName, from(subColName), cLevel);
+        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, fromUTF8(subColName), cLevel);
     }
 
     /**
@@ -203,7 +203,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(from(rowKey), columnFamily, from(superColName), from(subColName), cLevel);
+        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, fromUTF8(superColName), fromUTF8(subColName), cLevel);
     }
 
     /**
@@ -217,7 +217,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(from(rowKey), columnFamily, from(superColName), subColName, cLevel);
+        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, fromUTF8(superColName), subColName, cLevel);
     }
 
     /**
@@ -231,7 +231,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws Exception if an error occurs
      */
     public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(from(rowKey), columnFamily, superColName, subColName, cLevel);
+        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, subColName, cLevel);
     }
 
     /**
@@ -304,7 +304,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
 
     @SuppressWarnings("unchecked")
     private List<Column> getColumnsFromRow(final String rowKey, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnsFromRow(from(rowKey), colParent, colPredicate, cLevel);
+        return getColumnsFromRow(fromUTF8(rowKey), colParent, colPredicate, cLevel);
     }
 
     @SuppressWarnings("unchecked")
@@ -333,7 +333,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      */
     @SuppressWarnings("unchecked")
     public List<SuperColumn> getSuperColumnsFromRow(final String rowKey, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnsFromRow(from(rowKey), columnFamily, colPredicate, cLevel);
+        return getSuperColumnsFromRow(fromUTF8(rowKey), columnFamily, colPredicate, cLevel);
     }
 
     /**
@@ -492,7 +492,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.super_column);
-                    result.put(Bytes.from(rowKey), columns);
+                    result.put(Bytes.fromBytes(rowKey), columns);
                 }
                 return result;
             }
@@ -512,7 +512,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     List<Column> columns = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.column);
-                    result.put(Bytes.from(rowKey), columns);
+                    result.put(Bytes.fromBytes(rowKey), columns);
                 }
                 return result;
             }
@@ -597,7 +597,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.super_column);
-                    result.put(from(ks.key), colList);
+                    result.put(fromBytes(ks.key), colList);
                 }
                 return result;
             }
@@ -617,7 +617,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     List<Column> colList = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.column);
-                    result.put(from(ks.key), colList);
+                    result.put(fromBytes(ks.key), colList);
                 }
                 return result;
             }
@@ -660,7 +660,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @return                                The new <code>SlicePredicate</code>
      */
     public static SlicePredicate newColumnsPredicate(String startName, String finishName, boolean reversed, int maxColCount) {
-        return newColumnsPredicate(from(startName), from(finishName), reversed, maxColCount);
+        return newColumnsPredicate(fromUTF8(startName), fromUTF8(finishName), reversed, maxColCount);
     }
 
     /**
@@ -671,7 +671,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     public static SlicePredicate newColumnsPredicate(String... colNames) {
         List<byte[]> asList = new ArrayList<byte[]>(32);
         for (String colName : colNames)
-            asList.add(from(colName).getBytes());
+            asList.add(fromUTF8(colName).getBytes());
         SlicePredicate predicate = new SlicePredicate();
         predicate.setColumn_names(asList);
         return predicate;
@@ -699,7 +699,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @return                                The new <code>KeyRange</code> instance
      */
     public static KeyRange newKeyRange(String startKey, String finishKey, int maxKeyCount) {
-        return newKeyRange(from(startKey), from(finishKey), maxKeyCount);
+        return newKeyRange(fromUTF8(startKey), fromUTF8(finishKey), maxKeyCount);
     }
 
     /**
@@ -737,7 +737,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @return                                Whether the super column is present
      */
     public static boolean superColumnExists(List<SuperColumn> superColumns, String superColName) {
-        return superColumnExists(superColumns, from(superColName));
+        return superColumnExists(superColumns, fromUTF8(superColName));
     }
 
     /**
@@ -775,7 +775,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a super column with the specified name
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, String superColName) throws ArrayIndexOutOfBoundsException {
-        return getSuperColumn(superColumns, from(superColName));
+        return getSuperColumn(superColumns, fromUTF8(superColName));
     }
 
     /**
@@ -787,7 +787,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
     public static String getColumnValue(List<Column> columns, String colName, String defaultValue) throws UnsupportedEncodingException {
-        return getColumnValue(columns, from(colName), defaultValue);
+        return getColumnValue(columns, fromUTF8(colName), defaultValue);
     }
 
     /**
@@ -798,7 +798,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @return                                The column value
      */
     public static Bytes getColumnValue(List<Column> columns, String colName, Bytes defaultValue) {
-        return getColumnValue(columns, from(colName), defaultValue);
+        return getColumnValue(columns, fromUTF8(colName), defaultValue);
     }
 
     /**
@@ -811,7 +811,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     public static Bytes getColumnValue(List<Column> columns, Bytes colName, Bytes defaultValue) {
         for (Column column : columns)
             if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return from(column.value);
+                return fromBytes(column.value);
         return defaultValue;
     }
 
@@ -826,7 +826,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) throws UnsupportedEncodingException {
         for (Column column : columns)
             if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return from(column.value).toUTF8();
+                return fromBytes(column.value).toUTF8();
         return defaultValue;
     }
 
@@ -850,7 +850,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @return                                Whether the column is present
      */
     public static boolean columnExists(List<Column> columns, String colName) {
-        return columnExists(columns, from(colName));
+        return columnExists(columns, fromUTF8(colName));
     }
 
     /**
@@ -863,7 +863,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     public static Bytes getColumnValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
             if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return from(column.value);
+                return fromBytes(column.value);
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -875,7 +875,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
      */
     public static Bytes getColumnValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
-        return getColumnValue(columns, from(colName));
+        return getColumnValue(columns, fromUTF8(colName));
     }
 
     /**
@@ -887,7 +887,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
     public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
-        return getColumnStringValue(columns, from(colName));
+        return getColumnStringValue(columns, fromUTF8(colName));
     }
 
     /**
@@ -901,7 +901,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
         for (Column column : columns)
             if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return from(column.value).toUTF8();
+                return fromBytes(column.value).toUTF8();
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -938,7 +938,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
      * @throws ArrayIndexOutOfBoundsException
      */
     public static long getColumnTimestamp(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
-        return getColumnTimestamp(columns, from(colName));
+        return getColumnTimestamp(columns, fromUTF8(colName));
     }
 
     /**
@@ -963,7 +963,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             }
         }
         sb.reverse();
-        return from(sb.toString());
+        return fromUTF8(sb.toString());
     }
 
     /**
@@ -983,7 +983,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     break;
                 }
             }
-            return from(newName);
+            return fromBytes(newName);
         }
         else if (orderType == OrderType.LongType) {
             if (colName.length() != 8)
@@ -991,7 +991,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             long l = colName.toLong();
             if (l < Long.MAX_VALUE)
                 l++;
-            return from(l);
+            return fromLong(l);
         }
         else if (orderType == OrderType.LexicalUUIDType) {
             if (colName.length() != 16)
@@ -1006,7 +1006,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             byte[] newName = new byte[16];
             NumberHelper.toBytes(msb, newName, 0, 8);
             NumberHelper.toBytes(lsb, newName, 8, 8);
-            return from(newName);
+            return fromBytes(newName);
         }
         else if (orderType == OrderType.TimeUUIDType) {
             if (colName.length() != 16)
@@ -1015,14 +1015,14 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             for (int i=15; i >= 8; i--) {
                 if ((newName[i] & 0xFF) < 255) {
                     newName[i] = (byte)((newName[i] & 0xFF) + 1);
-                    return from(newName);
+                    return fromBytes(newName);
                 }
             }
             long timestamp = NumberHelper.toLong(newName, 0, 8);
             if (timestamp < Long.MAX_VALUE)
                 timestamp++;
             NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return from(newName);
+            return fromBytes(newName);
         }
         throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
     }
@@ -1048,7 +1048,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             }
         }
         sb.reverse();
-        return from(sb.toString());
+        return fromUTF8(sb.toString());
     }
 
     /**
@@ -1067,7 +1067,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
                     break;
                 }
             }
-            return from(newName);
+            return fromBytes(newName);
         }
         else if (orderType == OrderType.LongType) {
             if (colName.length() != 8)
@@ -1075,7 +1075,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             long l = NumberHelper.toLong(nullSafeGet(colName));
             if (l > Long.MIN_VALUE)
                 l--;
-            return from(l);
+            return fromLong(l);
         }
         else if (orderType == OrderType.LexicalUUIDType) {
             if (colName.length() != 16)
@@ -1090,7 +1090,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             byte[] newName = new byte[16];
             NumberHelper.toBytes(msb, newName, 0, 8);
             NumberHelper.toBytes(lsb, newName, 8, 8);
-            return from(newName);
+            return fromBytes(newName);
         }
         else if (orderType == OrderType.TimeUUIDType) {
             if (colName.length() != 16)
@@ -1099,14 +1099,14 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
             for (int i=15; i >= 8; i--) {
                 if ((newName[i] & 0xFF) > 0) {
                     newName[i] = (byte)((newName[i] & 0xFF) - 1);
-                    return from(newName);
+                    return fromBytes(newName);
                 }
             }
             long timestamp = NumberHelper.toLong(newName, 0, 8);
             if (timestamp > Long.MIN_VALUE)
                 timestamp--;
             NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return from(newName);
+            return fromBytes(newName);
         }
         throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
     }
@@ -1125,7 +1125,7 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
     }
 
     private static ColumnParent newColumnParent(String columnFamily, String superColName) {
-        return newColumnParent(columnFamily, Bytes.from(superColName));
+        return newColumnParent(columnFamily, Bytes.fromUTF8(superColName));
     }
 
     private static ColumnParent newColumnParent(String columnFamily, Bytes superColName) {

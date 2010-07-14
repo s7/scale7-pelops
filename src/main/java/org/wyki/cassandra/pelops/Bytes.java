@@ -19,7 +19,7 @@ public class Bytes {
 
     /**
      * Returns a string representation of the bytes as defined by the {@link java.util.Arrays#toString(byte[])} method.
-     * <p><b>NOTE</b>: The {@link #toUTF8()} method provides the reverse value of the {@link #from(String)} method.
+     * <p><b>NOTE</b>: The {@link #toUTF8()} method provides the reverse value of the {@link #fromUTF8(String)} method.
      * @return the string representation
      */
     @Override
@@ -52,24 +52,28 @@ public class Bytes {
         return this.bytes.length;
     }
 
-    public static Bytes from(byte[] value) {
-        return new Bytes(value);
+    public static Bytes fromBytes(byte[] value) {
+        return value != null ? new Bytes(value) : null;
     }
 
-    public static Bytes from(long value) {
+    public static Bytes fromLong(long value) {
         return new Bytes(NumberHelper.toBytes(value));
     }
 
-    public static Bytes from(int value) {
+    public static Bytes fromInt(int value) {
         return new Bytes(NumberHelper.toBytes(value));
     }
 
-    public static Bytes from(UUID value) {
-        return new Bytes(UuidHelper.timeUuidToBytes(value));
+    public static Bytes fromUuid(UUID value) {
+        return value != null ? new Bytes(UuidHelper.timeUuidToBytes(value)) : null;
     }
 
-    public static Bytes from(String value) {
-        return new Bytes(StringHelper.toBytes(value));
+    public static Bytes fromUuid(String value) {
+        return value != null ? new Bytes(UuidHelper.timeUuidStringToBytes(value)) : null;
+    }
+
+    public static Bytes fromUTF8(String value) {
+        return value != null ? new Bytes(StringHelper.toBytes(value)) : null;
     }
 
     public long toLong() {

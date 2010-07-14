@@ -5,7 +5,7 @@ import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
 
-import static org.wyki.cassandra.pelops.Bytes.from;
+import static org.wyki.cassandra.pelops.Bytes.fromUTF8;
 import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
 
 /**
@@ -49,7 +49,7 @@ public class KeyDeletor extends Operand implements Operand.KeyspaceAware {
 	 * @throws Exception
 	 */
 	public void deleteRow(final String rowKey, final String columnFamily, final ConsistencyLevel cLevel) throws Exception {
-		deleteRow(from(rowKey), columnFamily, cLevel);
+		deleteRow(fromUTF8(rowKey), columnFamily, cLevel);
 	}
 
 	/**

@@ -71,13 +71,13 @@ public class Operand {
 	}
 
     protected void beforeOperation(ThriftPool.Connection conn) throws Exception  {
+        // this is bad, it involves validation via the cassandra server... 
         if (KeyspaceAware.class.isAssignableFrom(getClass()))
             conn.getAPI().set_keyspace(((KeyspaceAware) this).getKeyspace());
     }
 
     protected void afterOperation(ThriftPool.Connection conn) throws Exception  {
-        if (KeyspaceAware.class.isAssignableFrom(getClass()))
-            conn.getAPI().set_keyspace(null);
+        // don't attempt to unset the keyspace (null isn't allowed)
     }
 
     public interface KeyspaceAware {

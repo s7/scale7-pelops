@@ -71,7 +71,7 @@ public interface ThriftPool {
      * @return the instance
      * @see org.wyki.cassandra.pelops.KeyspaceManagement
      */
-    KeyspaceManagement createKeyspaceManagement();
+    KeyspaceManagement createKeyspaceManagement(String keyspace);
 
     /**
      * Get a connection from the pool.

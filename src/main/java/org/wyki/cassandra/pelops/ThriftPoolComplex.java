@@ -124,8 +124,18 @@ public class ThriftPoolComplex implements ThriftPool {
     public Metrics createMetrics() {
 		return new Metrics(this);
 	}
-	
-	/**
+
+    @Override
+    public Management createManagement() {
+        return new Management(this);
+    }
+
+    @Override
+    public KeyspaceManagement createKeyspaceManagement(String keyspace) {
+        return new KeyspaceManagement(this, keyspace);
+    }
+
+    /**
 	 * Get a Cassandra connection to the least loaded node represented in the connection pool.
 	 * @return						A connection to Cassandra
 	 */

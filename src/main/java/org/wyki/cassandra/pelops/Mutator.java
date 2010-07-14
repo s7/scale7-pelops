@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.cassandra.thrift.*;
 import org.wyki.cassandra.pelops.ThriftPool.Connection;
 
-import static org.wyki.cassandra.pelops.Bytes.from;
+import static org.wyki.cassandra.pelops.Bytes.fromUTF8;
 import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
 import static org.wyki.cassandra.pelops.Bytes.transform;
 
@@ -56,7 +56,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param column                    The value of the column
      */
     public void writeColumn(String rowKey, String colFamily, Column column) {
-        writeColumn(from(rowKey), colFamily, column);
+        writeColumn(fromUTF8(rowKey), colFamily, column);
     }
 
     /**
@@ -94,7 +94,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColumn                 The sub-column
      */
     public void writeSubColumn(String rowKey, String colFamily, String colName, Column subColumn) {
-        writeSubColumn(rowKey, colFamily, from(colName), subColumn);
+        writeSubColumn(rowKey, colFamily, fromUTF8(colName), subColumn);
     }
 
     /**
@@ -117,7 +117,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColumns                A list of the sub-columns to write
      */
     public void writeSubColumns(String rowKey, String colFamily, String colName, List<Column> subColumns) {
-        writeSubColumns(rowKey, colFamily, from(colName), subColumns);
+        writeSubColumns(rowKey, colFamily, fromUTF8(colName), subColumns);
     }
 
     /**
@@ -128,7 +128,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColumns                A list of the sub-columns to write
      */
     public void writeSubColumns(String rowKey, String colFamily, Bytes colName, List<Column> subColumns) {
-        writeSubColumns(from(rowKey), colFamily, colName, subColumns);
+        writeSubColumns(fromUTF8(rowKey), colFamily, colName, subColumns);
     }
 
     /**
@@ -154,7 +154,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param colName                   The name of the column or super column to delete.
      */
     public void deleteColumn(String rowKey, String colFamily, String colName) {
-        deleteColumn(rowKey, colFamily, from(colName));
+        deleteColumn(rowKey, colFamily, fromUTF8(colName));
     }
 
     /**
@@ -186,7 +186,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
     public void deleteColumns(String rowKey, String colFamily, String... colNames) {
         List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
-            colNameList.add(from(colName));
+            colNameList.add(fromUTF8(colName));
         deleteColumns(rowKey, colFamily, colNameList);
     }
 
@@ -203,7 +203,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
-        getMutationList(from(rowKey), colFamily).add(mutation);
+        getMutationList(fromUTF8(rowKey), colFamily).add(mutation);
     }
 
     /**
@@ -214,7 +214,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColName                The name of the sub-column to delete.
      */
     public void deleteSubColumn(String rowKey, String colFamily, String colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, from(colName), from(subColName));
+        deleteSubColumn(rowKey, colFamily, fromUTF8(colName), fromUTF8(subColName));
     }
 
     /**
@@ -225,7 +225,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColName                The name of the sub-column to delete.
      */
     public void deleteSubColumn(String rowKey, String colFamily, Bytes colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, colName, from(subColName));
+        deleteSubColumn(rowKey, colFamily, colName, fromUTF8(subColName));
     }
 
     /**
@@ -236,7 +236,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColName                The name of the sub-column to delete.
      */
     public void deleteSubColumn(String rowKey, String colFamily, String colName, Bytes subColName) {
-        deleteSubColumn(rowKey, colFamily, from(colName), subColName);
+        deleteSubColumn(rowKey, colFamily, fromUTF8(colName), subColName);
     }
 
     /**
@@ -260,7 +260,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
-        deleteSubColumns(rowKey, colFamily, from(colName), subColNames);
+        deleteSubColumns(rowKey, colFamily, fromUTF8(colName), subColNames);
     }
 
     /**
@@ -273,7 +273,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
     public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, String... subColNames) {
         List<Bytes> subColNamesList = new ArrayList<Bytes>(subColNames.length);
         for (String subColName : subColNames)
-            subColNamesList.add(from(subColName));
+            subColNamesList.add(fromUTF8(subColName));
         deleteSubColumns(rowKey, colFamily, colName, subColNamesList);
     }
 
@@ -284,7 +284,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param colName               The name of the super column to modify
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName) {
-        deleteSubColumns(from(rowKey), colFamily, from(colName), (List<Bytes>) null);
+        deleteSubColumns(fromUTF8(rowKey), colFamily, fromUTF8(colName), (List<Bytes>) null);
     }
 
     /**
@@ -295,7 +295,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String rowKey, String colFamily, String colName, List<Bytes> subColNames) {
-        deleteSubColumns(from(rowKey), colFamily, from(colName), subColNames);
+        deleteSubColumns(fromUTF8(rowKey), colFamily, fromUTF8(colName), subColNames);
     }
 
     /**
@@ -305,7 +305,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param colName               The name of the super column to modify
      */
     public void deleteSubColumns(String rowKey, String colFamily, Bytes colName) {
-        deleteSubColumns(from(rowKey), colFamily, colName, (List<Bytes>) null);
+        deleteSubColumns(fromUTF8(rowKey), colFamily, colName, (List<Bytes>) null);
     }
 
     /**
@@ -316,7 +316,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, List<Bytes> subColNames) {
-        deleteSubColumns(from(rowKey), colFamily, colName, subColNames);
+        deleteSubColumns(fromUTF8(rowKey), colFamily, colName, subColNames);
     }
 
     /**
@@ -346,7 +346,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(String colName, String colValue) {
-        return newColumn(from(colName), from(colValue));
+        return newColumn(fromUTF8(colName), fromUTF8(colValue));
     }
 
     /**
@@ -356,7 +356,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(Bytes colName, String colValue) {
-        return newColumn(colName, from(colValue));
+        return newColumn(colName, fromUTF8(colValue));
     }
 
     /**
@@ -366,7 +366,7 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(String colName, Bytes colValue) {
-        return newColumn(from(colName), colValue);
+        return newColumn(fromUTF8(colName), colValue);
     }
 
     /**
