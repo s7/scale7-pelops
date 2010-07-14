@@ -1,4 +1,6 @@
-This is basically just a fork of http://code.google.com/p/pelops/ that's been mavenized.
+This is a fork of http://code.google.com/p/pelops/ that's been mavenized and had 0.7.0 support added.  
+
+WARNING: Pelops doesn't have any test coverage so use it at your own risk...
 
 The following steps will build and publish pelops to you local repo:
 1. git clone git@github.com:danwashusen/pelops.git pelops
@@ -19,6 +21,6 @@ To use pelops in a maven project:
 <dependency>
   <groupId>org.wyki</groupId>
   <artifactId>pelops-mvn</artifactId>
-  <version>0.805-SNAPSHOT</version>
+  <version>0.805-0.7.0-SNAPSHOT</version>
 </dependency>
 3. Start using pelops
