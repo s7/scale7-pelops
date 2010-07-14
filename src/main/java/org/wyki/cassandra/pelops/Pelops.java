@@ -53,7 +53,7 @@ public class Pelops {
 	public static void addPool(String poolName, String[] contactNodes, int defaultPort, boolean dynamicNodeDiscovery,
                                String discoveryKeyspace, GeneralPolicy generalPolicy, ThriftPoolComplex.Policy poolPolicy) {
 		ThriftPoolComplex newPool = new ThriftPoolComplex(
-                contactNodes, defaultPort, dynamicNodeDiscovery, discoveryKeyspace, poolPolicy, generalPolicy
+                contactNodes, defaultPort, discoveryKeyspace, dynamicNodeDiscovery, poolPolicy, generalPolicy
         );
         addPool(poolName, newPool);
 	}
@@ -85,7 +85,7 @@ public class Pelops {
 	 * @return						A new <code>Selector</code> object
 	 */
 	public static Selector createSelector(String poolName, String keyspace) {
-		return poolMap.get(poolName).createSelector(keyspace);
+		return poolMap.get(poolName).createSelector();
 	}
 	
 	/**
@@ -96,7 +96,7 @@ public class Pelops {
 	 * @return						A new <code>Mutator</code> object
 	 */
 	public static Mutator createMutator(String poolName, String keyspace) {
-		return poolMap.get(poolName).createMutator(keyspace);
+		return poolMap.get(poolName).createMutator();
 	}
 	
 	/**
@@ -108,7 +108,7 @@ public class Pelops {
 	 * @return						A new <code>Mutator</code> object
 	 */
 	public static Mutator createMutator(String poolName, String keyspace, long timestamp) {
-		return poolMap.get(poolName).createMutator(keyspace, timestamp);
+		return poolMap.get(poolName).createMutator(timestamp);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class Pelops {
 	 * @return						A new <code>Mutator</code> object
 	 */
 	public static Mutator createMutator(String poolName, String keyspace, Clock clock) {
-		return poolMap.get(poolName).createMutator(keyspace, clock);
+		return poolMap.get(poolName).createMutator(clock);
 	}
 	
 	/**
@@ -130,7 +130,7 @@ public class Pelops {
 	 * @return						A new <code>KeyDeletor</code> object
 	 */
 	public static KeyDeletor createKeyDeletor(String poolName, String keyspace) {
-		return poolMap.get(poolName).createKeyDeletor(keyspace);
+		return poolMap.get(poolName).createKeyDeletor();
 	}
 	
 	/**
@@ -141,7 +141,7 @@ public class Pelops {
      * @return						A new <code>KeyDeletor</code> object
 	 */
 	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, long timestamp) {
-		return poolMap.get(poolName).createKeyDeletor(keyspace, timestamp);
+		return poolMap.get(poolName).createKeyDeletor(timestamp);
 	}
 
 	/**
@@ -152,7 +152,7 @@ public class Pelops {
 	 * @return						A new <code>KeyDeletor</code> object
 	 */
 	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, Clock clock) {
-		return poolMap.get(poolName).createKeyDeletor(keyspace, clock);
+		return poolMap.get(poolName).createKeyDeletor(clock);
 	}
 	
 	/**

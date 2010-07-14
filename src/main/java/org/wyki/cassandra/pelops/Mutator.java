@@ -22,7 +22,7 @@ import static org.wyki.cassandra.pelops.Bytes.transform;
  * @author dominicwilliams
  *
  */
-public class Mutator extends Operand implements Operand.KeyspaceAware {
+public class Mutator extends Operand {
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
@@ -419,32 +419,23 @@ public class Mutator extends Operand implements Operand.KeyspaceAware {
     class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
 
     private final Map<Bytes, Map<String, List<Mutation>>> batch;
-    private String keyspace;
     private final Clock clock;
 
     /**
      * Create a batch mutation operation.
-     * @param keyspace                    The keyspace the batch mutation will modify
      */
-    protected Mutator(ThriftPool thrift, String keyspace) {
-        this(thrift, keyspace, new Clock(System.currentTimeMillis() * 1000));
+    protected Mutator(ThriftPool thrift) {
+        this(thrift, new Clock(System.currentTimeMillis() * 1000));
     }
 
     /**
      * Create a batch mutation operation.
-     * @param keyspace                    The keyspace the batch mutation will modify
      * @param clock                   The clock that encapsulates the time stamp to use for the operation.
-     *                                This should be in microseconds.
      */
-    protected Mutator(ThriftPool thrift, String keyspace, Clock clock) {
+    protected Mutator(ThriftPool thrift, Clock clock) {
         super(thrift);
-        this.keyspace = keyspace;
         this.clock = clock;
         batch = new MutationsByKey();
-    }
-
-    public String getKeyspace() {
-        return keyspace;
     }
 
     private MutationList getMutationList(Bytes key, String colFamily) {

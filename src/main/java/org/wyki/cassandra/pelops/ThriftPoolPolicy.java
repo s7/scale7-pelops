@@ -8,5 +8,4 @@ package org.wyki.cassandra.pelops;
  * @author danwashusen
  */
 public abstract class ThriftPoolPolicy {
-    
 }

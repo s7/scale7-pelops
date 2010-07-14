@@ -11,46 +11,41 @@ public interface ThriftPool {
     /**
      * Create a {@link Selector selector} object.
      *
-     * @param keyspace The keyspace to operate on
      * @return A new {@link Selector selector} object
      */
-    Selector createSelector(String keyspace);
+    Selector createSelector();
 
     /**
      * Create a {@link Mutator mutator} object using the current time as the operation time stamp.
      * The {@link Mutator mutator} object must only be used to execute 1 mutation operation.
      *
-     * @param keyspace The keyspace to operate on
      * @return A new {@link Mutator mutator} object
      */
-    Mutator createMutator(String keyspace);
+    Mutator createMutator();
 
     /**
      * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
      * must only be used to execute 1 mutation operation.
      *
-     * @param keyspace  The keyspace to operate on
      * @param timestamp The default time stamp to use for operations
      * @return A new {@link Mutator mutator} object
      */
-    Mutator createMutator(String keyspace, long timestamp);
+    Mutator createMutator(long timestamp);
 
     /**
      * Create a {@link KeyDeletor key deletor} object using the current time as the operation time stamp.
      *
-     * @param keyspace The keyspace to operate on
      * @return A new {@link KeyDeletor key deletor} object
      */
-    KeyDeletor createKeyDeletor(String keyspace);
+    KeyDeletor createKeyDeletor();
 
     /**
      * Create a {@link KeyDeletor key deletor} object with an arbitrary time stamp.
      *
-     * @param keyspace  The keyspace to operate on
      * @param timestamp The default time stamp to use for operations
      * @return A new {@link KeyDeletor key deletor} object
      */
-    KeyDeletor createKeyDeletor(String keyspace, long timestamp);
+    KeyDeletor createKeyDeletor(long timestamp);
 
     /**
      * Create a {@link Metrics metrics} object for discovering information about the Cassandra cluster and its contained keyspaces.
@@ -61,6 +56,7 @@ public interface ThriftPool {
 
     /**
      * Create a {@link org.wyki.cassandra.pelops.Management} object.
+     *
      * @return the instance
      * @see org.wyki.cassandra.pelops.Management
      */
@@ -68,10 +64,11 @@ public interface ThriftPool {
 
     /**
      * Create a {@link org.wyki.cassandra.pelops.KeyspaceManagement} object.
+     *
      * @return the instance
      * @see org.wyki.cassandra.pelops.KeyspaceManagement
      */
-    KeyspaceManagement createKeyspaceManagement(String keyspace);
+    KeyspaceManagement createKeyspaceManagement();
 
     /**
      * Get a connection from the pool.
@@ -113,20 +110,27 @@ public interface ThriftPool {
 
     /**
      * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-     * @param keyspace				The keyspace to operate on
-     * @param clock				    The default clock instance to use for operations
-     * @return						A new <code>KeyDeletor</code> object
+     *
+     * @param clock The default clock instance to use for operations
+     * @return A new <code>KeyDeletor</code> object
      */
-    KeyDeletor createKeyDeletor(String keyspace, Clock clock);
+    KeyDeletor createKeyDeletor(Clock clock);
 
     /**
      * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
      * must only be used to execute 1 mutation operation.
-     * @param keyspace				The keyspace to operate on
-* @param clock				    The default clock instance to use for operations
-     * @return						A new <code>Mutator</code> object
+     *
+     * @param clock The default clock instance to use for operations
+     * @return A new <code>Mutator</code> object
      */
-    Mutator createMutator(String keyspace, Clock clock);
+    Mutator createMutator(Clock clock);
+
+    /**
+     * The keyspace this connection operates on.
+     *
+     * @return the keyspace
+     */
+    String getKeyspace();
 
     /**
      * Defines an encapsulation for a connection to a Cassandra node.
@@ -136,14 +140,16 @@ public interface ThriftPool {
      */
     interface Connection {
         /**
-		 * Get a reference to the Cassandra Thrift API
-		 * @return					The raw Thrift interface
-		 */
+         * Get a reference to the Cassandra Thrift API
+         *
+         * @return The raw Thrift interface
+         */
         Cassandra.Client getAPI();
 
         /**
          * Get a string identifying the node
-         * @return					The IP or DNS address of the node
+         *
+         * @return The IP or DNS address of the node
          */
 
         String getNode();
@@ -151,6 +157,7 @@ public interface ThriftPool {
         /**
          * Flush the underlying transport connection used by Thrift. This is used to ensure all
          * writes have been sent to Cassandra.
+         *
          * @throws TTransportException
          */
         void flush() throws TTransportException;
@@ -161,18 +168,21 @@ public interface ThriftPool {
          * connection will not re-used since it may be corrupted (for example, it may contain partially written
          * data that disrupts the serialization of the Thrift protocol) however it is remains essential that all
          * connection objects are released.
-         * @param afterException		Whether a connection was thrown during usage
+         *
+         * @param afterException Whether a connection was thrown during usage
          */
         void release(boolean afterException);
 
         /**
          * Used to determine if the connection is open.
+         *
          * @return true if the connection is open, otherwise false
          */
         boolean isOpen();
 
         /**
          * Opens a connection.
+         *
          * @param nodeSessionId the node session Id
          * @return true if the connection was opened, otherwise false
          */

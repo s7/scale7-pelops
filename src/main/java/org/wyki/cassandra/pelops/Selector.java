@@ -19,9 +19,7 @@ import static org.wyki.cassandra.pelops.Bytes.*;
  * @author dominicwilliams
  *
  */
-public class Selector extends Operand implements Operand.KeyspaceAware {
-    private String keyspace;
-
+public class Selector extends Operand {
     /**
      * Get the count of columns in a row.
      * @param rowKey                        The key of the row
@@ -1113,15 +1111,9 @@ public class Selector extends Operand implements Operand.KeyspaceAware {
 
     /**
      * Create a batch mutation operation.
-     * @param keyspace                    The keyspace the batch mutation will be executed against.
      */
-    protected Selector(ThriftPool thrift, String keyspace) {
+    protected Selector(ThriftPool thrift) {
         super(thrift);
-        this.keyspace = keyspace;
-    }
-
-    public String getKeyspace() {
-        return keyspace;
     }
 
     private static ColumnParent newColumnParent(String columnFamily, String superColName) {

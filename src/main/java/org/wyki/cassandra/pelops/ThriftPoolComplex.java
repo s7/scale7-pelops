@@ -14,8 +14,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.cassandra.thrift.Clock;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.TokenRange;
 import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -31,91 +33,91 @@ import org.wyki.portability.SystemProxy;
  * created by actual client activity. This is achieved by balancing those connections actually engaged in writing
  * requests or reading responses evenly across the cluster's nodes. Later versions may also poll cluster nodes to
  * detect response times in order to further improve connection distribution.
- * 
+ *
  * @author dominicwilliams
  *
  */
 public class ThriftPoolComplex implements ThriftPool {
-	
+
 	private static final Logger logger = SystemProxy.getLoggerFromFactory(ThriftPoolComplex.class);
-	
+
 	/**
 	 * Create a <code>Selector</code> object.
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>Selector</code> object
 	 */
 	@Override
-    public Selector createSelector(String keyspace) {
-		return new Selector(this, keyspace);
+    public Selector createSelector() {
+        validateKeyspaceSet();
+		return new Selector(this);
 	}
-	
-	/**
-	 * Create a <code>Mutator</code> object using the current time as the operation time stamp. The <code>Mutator</code> object  
+
+    /**
+	 * Create a <code>Mutator</code> object using the current time as the operation time stamp. The <code>Mutator</code> object
 	 * must only be used to execute 1 mutation operation.
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>Mutator</code> object
 	 */
 	@Override
-    public Mutator createMutator(String keyspace) {
-		return new Mutator(this, keyspace);
-	}
-	
-	/**
-	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @param keyspace				The keyspace to operate on
-	 * @param timestamp				The default time stamp to use for operations
-	 * @return						A new <code>Mutator</code> object
-	 */
-	@Override
-    public Mutator createMutator(String keyspace, long timestamp) {
-		return new Mutator(this, keyspace, new Clock(timestamp));
+    public Mutator createMutator() {
+        validateKeyspaceSet();
+		return new Mutator(this);
 	}
 
 	/**
 	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
 	 * must only be used to execute 1 mutation operation.
-	 * @param keyspace				The keyspace to operate on
-     * @param clock				    The default clock instance to use for operations
+	 * @param timestamp				The default time stamp to use for operations
 	 * @return						A new <code>Mutator</code> object
 	 */
 	@Override
-    public Mutator createMutator(String keyspace, Clock clock) {
-		return new Mutator(this, keyspace, clock);
+    public Mutator createMutator(long timestamp) {
+        validateKeyspaceSet();
+		return new Mutator(this, new Clock(timestamp));
 	}
-	
+
+	/**
+	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+	 * must only be used to execute 1 mutation operation.
+	 * @param clock				    The default clock instance to use for operations
+     * @return						A new <code>Mutator</code> object
+	 */
+	@Override
+    public Mutator createMutator(Clock clock) {
+        validateKeyspaceSet();
+		return new Mutator(this, clock);
+	}
+
 	/**
 	 * Create a <code>KeyDeletor</code> object using the current time as the operation time stamp.
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>KeyDeletor</code> object
 	 */
 	@Override
-    public KeyDeletor createKeyDeletor(String keyspace) {
-		return new KeyDeletor(this, keyspace);
-	}
-	
-	/**
-	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-	 * @param keyspace				The keyspace to operate on
-	 * @param timestamp				The default time stamp to use for operations
-	 * @return						A new <code>KeyDeletor</code> object
-	 */
-	@Override
-    public KeyDeletor createKeyDeletor(String keyspace, long timestamp) {
-		return new KeyDeletor(this, keyspace, new Clock(timestamp));
+    public KeyDeletor createKeyDeletor() {
+        validateKeyspaceSet();
+		return new KeyDeletor(this);
 	}
 
 	/**
 	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-	 * @param keyspace				The keyspace to operate on
+	 * @param timestamp				The default time stamp to use for operations
+	 * @return						A new <code>KeyDeletor</code> object
+	 */
+	@Override
+    public KeyDeletor createKeyDeletor(long timestamp) {
+        validateKeyspaceSet();
+		return new KeyDeletor(this, new Clock(timestamp));
+	}
+
+	/**
+	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
 	 * @param clock				    The default clock instance to use for operations
 	 * @return						A new <code>KeyDeletor</code> object
 	 */
 	@Override
-    public KeyDeletor createKeyDeletor(String keyspace, Clock clock) {
-		return new KeyDeletor(this, keyspace, clock);
+    public KeyDeletor createKeyDeletor(Clock clock) {
+        validateKeyspaceSet();
+		return new KeyDeletor(this, clock);
 	}
-	
+
 	/**
 	 * Create a <code>Metrics</code> object for discovering information about the Cassandra cluster and its contained keyspaces.
 	 * @return						A new <code>Metrics</code> object
@@ -131,8 +133,15 @@ public class ThriftPoolComplex implements ThriftPool {
     }
 
     @Override
-    public KeyspaceManagement createKeyspaceManagement(String keyspace) {
-        return new KeyspaceManagement(this, keyspace);
+    public KeyspaceManagement createKeyspaceManagement() {
+        validateKeyspaceSet();
+        return new KeyspaceManagement(this);
+    }
+
+    private void validateKeyspaceSet() throws IllegalStateException {
+        if (getKeyspace() == null && getKeyspace().isEmpty()) {
+            throw new IllegalStateException("A keyspace must be provided in order to use this function.");
+        }
     }
 
     /**
@@ -143,12 +152,33 @@ public class ThriftPoolComplex implements ThriftPool {
     public Connection getConnection() throws Exception {
 		return getConnectionExcept(null);
 	}
-	
-	ThriftPoolComplex(String[] contactNodes, int defaultPort, boolean dynamicNodeDiscovery, String discoveryKeyspace, Policy poolPolicy, GeneralPolicy generalPolicy) {
+
+    /**
+     * Constructs a pool instance suitable for performing management operations.
+     * @param contactNodes the nodes to contact
+     * @param defaultPort the port to content the nodes on (9160)
+     * @param poolPolicy the pool policy
+     * @param generalPolicy the general pelops policy
+     */
+	public ThriftPoolComplex(String[] contactNodes, int defaultPort, Policy poolPolicy, GeneralPolicy generalPolicy) {
+        this(contactNodes, defaultPort, null, false, poolPolicy, generalPolicy);
+	}
+
+    /**
+     * Constructs a pool instance.
+     * Note: unless you are performing management options the keyspace should be provided.
+     * @param contactNodes the nodes to contact
+     * @param defaultPort the port to content the nodes on (9160)
+     * @param keyspace the keyspace to use (note: as of 0.7.0 this is basically a required parameter)
+     * @param dynamicNodeDiscovery if nodes should be dynamically added and removed
+     * @param poolPolicy the pool policy
+     * @param generalPolicy the general pelops policy
+     */
+	public ThriftPoolComplex(String[] contactNodes, int defaultPort, String keyspace, boolean dynamicNodeDiscovery, Policy poolPolicy, GeneralPolicy generalPolicy) {
 		this.defaultPort = defaultPort;
         this.generalPolicy = generalPolicy;
         pool = new MultiNodePool();
-		this.discoveryKeyspace = discoveryKeyspace;
+		this.keyspace = keyspace;
 		this.poolPolicy = poolPolicy;
 		for (String node : contactNodes)
 			touchNodeContext(node);
@@ -227,7 +257,7 @@ public class ThriftPoolComplex implements ThriftPool {
 			Thread.sleep(retryPause);
 		}
 	}
-	
+
 	/**
 	 * Cleanly shutdown this pool and associated Thrift connections and operations.
 	 * TODO wait until all in-use connections are returned to the pool before exiting.
@@ -269,24 +299,29 @@ public class ThriftPoolComplex implements ThriftPool {
         return generalPolicy;
     }
 
+    @Override
+    public String getKeyspace() {
+        return keyspace;
+    }
+
     @SuppressWarnings("serial")
 	class MultiNodePool extends ConcurrentHashMap<String, NodeContext> {}
-	
+
 	private Policy poolPolicy;
 	private final MultiNodePool pool;
 	private final int defaultPort;
     private GeneralPolicy generalPolicy;
-    private final String discoveryKeyspace;
+    private final String keyspace;
 	private ExecutorService clusterWatcherExec = Executors.newSingleThreadExecutor();
     private AtomicBoolean isShutdown = new AtomicBoolean(false);
-			
-	
+
+
 	private void touchNodeContext(String node) {
-			NodeContext newContext = new NodeContext(node);
+			NodeContext newContext = new NodeContext(node, keyspace);
 			if (pool.putIfAbsent(node, newContext) == null)
 				newContext.init();
 	}
-	
+
 	private Runnable clusterWatcher = new Runnable () {
 
 		@Override
@@ -297,7 +332,7 @@ public class ThriftPoolComplex implements ThriftPool {
 				try {
 					// Use key range mappings to derive list of available nodes in cluster
 					HashSet<String> clusterNodes = new HashSet<String>();
-					List<TokenRange> mappings = metrics.getKeyspaceRingMappings(discoveryKeyspace);
+					List<TokenRange> mappings = metrics.getKeyspaceRingMappings(keyspace);
 					for (TokenRange tokenRange : mappings) {
 						List<String> endPointList = tokenRange.getEndpoints();
 						clusterNodes.addAll(endPointList);
@@ -317,23 +352,23 @@ public class ThriftPoolComplex implements ThriftPool {
 				}
 			}
 		}
-		
+
 	};
 
 	/**
 	 * Encapsulates a connection to a Cassandra node.
-	 * 
+	 *
 	 * @author dominicwilliams
 	 *
 	 */
-	public class ConnectionComplex implements Connection {
+	public static class ConnectionComplex implements Connection {
 		private final NodeContext nodeContext;
 		private final TTransport transport;
 		private final TProtocol protocol;
 		private final Client client;
 		int nodeSessionId = 0;
-		
-		ConnectionComplex(NodeContext nodeContext, int port) throws SocketException {
+
+		ConnectionComplex(NodeContext nodeContext, int port) throws SocketException, TException, InvalidRequestException {
 			this.nodeContext = nodeContext;
 			TSocket socket = new TSocket(nodeContext.node, port);
 			transport = socket;
@@ -341,7 +376,7 @@ public class ThriftPoolComplex implements ThriftPool {
 			socket.getSocket().setKeepAlive(true);
 			client = new Client(protocol);
 		}
-				
+
 		/**
 		 * Get a reference to the Cassandra Thrift API
 		 * @return					The raw Thrift interface
@@ -350,7 +385,7 @@ public class ThriftPoolComplex implements ThriftPool {
         public Client getAPI() {
 			return client;
 		}
-		
+
 		/**
 		 * Get a string identifying the node
 		 * @return					The IP or DNS address of the node
@@ -359,7 +394,7 @@ public class ThriftPoolComplex implements ThriftPool {
         public String getNode() {
 			return nodeContext.node;
 		}
-				
+
 		/**
 		 * Flush the underlying transport connection used by Thrift. This is used to ensure all
 		 * writes have been sent to Cassandra.
@@ -369,12 +404,12 @@ public class ThriftPoolComplex implements ThriftPool {
         public void flush() throws TTransportException {
 			transport.flush();
 		}
-		
+
 		/**
 		 * Release a <code>Connection</code> that has previously been taken from the pool. Specify whether
 		 * an exception has been thrown during usage of the connection. If an exception has been thrown, the
 		 * connection will not re-used since it may be corrupted (for example, it may contain partially written
-		 * data that disrupts the serialization of the Thrift protocol) however it is remains essential that all 
+		 * data that disrupts the serialization of the Thrift protocol) however it is remains essential that all
 		 * connection objects are released.
 		 * @param afterException		Whether a connection was thrown during usage
 		 */
@@ -382,7 +417,7 @@ public class ThriftPoolComplex implements ThriftPool {
         public void release(boolean afterException) {
 			nodeContext.onConnectionRelease(this, afterException);
 		}
-		
+
 		@Override
         public boolean isOpen() {
 			return transport.isOpen();
@@ -398,6 +433,14 @@ public class ThriftPoolComplex implements ThriftPool {
 			try {
 				transport.open();
 				this.nodeSessionId = nodeSessionId;
+
+                if (nodeContext.keyspace != null) {
+                    try {
+                        client.set_keyspace(nodeContext.keyspace);
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
 			} catch (TTransportException e) {
                 logger.error(e.getMessage(), e);
 				return false;
@@ -412,34 +455,36 @@ public class ThriftPoolComplex implements ThriftPool {
         public void close() {
 			transport.close();
 		}
-	}
-	
+    }
+
 	@SuppressWarnings("serial")
 	class ConnectionList extends ConcurrentLinkedQueue<Connection> {}
-	
+
 	class NodeContext {
 		private final int MIN_CREATE_CONNECTION_BACK_OFF = 125;
 		private final int MAX_CREATE_CONNECTION_BACK_OFF = 20000;
 		private final String node;
-		private final AtomicInteger countInUse = new AtomicInteger(0);
+        private String keyspace;
+        private final AtomicInteger countInUse = new AtomicInteger(0);
 		private final AtomicInteger countCached = new AtomicInteger(0);
 		private final ConnectionList connCache = new ConnectionList();
 		private ExecutorService refillExec = Executors.newSingleThreadExecutor();
 		private AutoResetEvent refillNow = new AutoResetEvent(true);
 		private final AtomicInteger sessionId = new AtomicInteger(0);
-		
-		NodeContext(String node) {
+
+		NodeContext(String node, String keyspace) {
 			this.node = node;
-		}
-		
+            this.keyspace = keyspace;
+        }
+
 		void init() {
 			refillExec.execute(poolRefiller);
 		}
-		
+
 		void shutdown() {
 			refillExec.shutdownNow();
 		}
-		
+
 		void waitShutdown() {
 			try {
 				refillExec.awaitTermination(10, TimeUnit.SECONDS);
@@ -447,15 +492,15 @@ public class ThriftPoolComplex implements ThriftPool {
 				Thread.currentThread().interrupt();
 			}
 		}
-		
+
 		int getNodeLoadIndex() {
 			return countInUse.get();
 		}
-		
+
 		boolean isAvailable() {
 			return countCached.get() > 0;
 		}
-		
+
 		Connection getConnection() {
 			// Try to retrieve cached connection...
 			try {
@@ -464,9 +509,9 @@ public class ThriftPoolComplex implements ThriftPool {
 					conn = connCache.poll();
 					if (conn == null)
 						return null;
-					else 
+					else
 						countCached.decrementAndGet();
-				
+
 					if (conn.isOpen()) {
 						countInUse.incrementAndGet();
 						return conn;
@@ -501,22 +546,22 @@ public class ThriftPoolComplex implements ThriftPool {
 				refillNow.set();
 			}
 		}
-		
+
 		private Connection createConnection() {
 			Connection conn;
 			try {
 				conn = new ConnectionComplex(this, defaultPort);
-			} catch (SocketException e) {
+			} catch (Exception e) {
                 logger.error(e.getMessage(), e);
 				return null;
 			}
-			
+
 			if (conn.open(sessionId.get()))
 				return conn;
-			
+
 			return null;
 		}
-		
+
 		private void killPooledConnectionsToNode(int nodeSessionId) {
 			logger.warn("{} NodeContext killing all pooled connections for session {}", node, nodeSessionId);
 			int killedCount = 0;
@@ -528,9 +573,9 @@ public class ThriftPoolComplex implements ThriftPool {
 			}
 			logger.trace("{} NodeContext killed {}", node, killedCount);
 		}
-		
+
 		private Runnable poolRefiller = new Runnable () {
-			
+
 			@Override
 			public void run() {
 				int failureCount = 0;
@@ -543,12 +588,12 @@ public class ThriftPoolComplex implements ThriftPool {
 						else
 							// We are in back off mode so wait for current back off delay
 							Thread.sleep(backOffDelay);
-						
+
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 						return;
 					}
-					
+
 					// Remove dead connections from waiting pool
 					int foundDead = 0;
 					for (Connection conn : connCache)
@@ -557,10 +602,10 @@ public class ThriftPoolComplex implements ThriftPool {
 							connCache.remove(conn);
 							foundDead++;
 						}
-					
+
 					if (foundDead > 0)
 						logger.trace("{} NodeContext discarded {} dead connections", node, foundDead);
-					
+
 					// Are we allowed to create any more connections?
 					if (poolPolicy.getMaxConnectionsPerNode() == -1 || (countInUse.get() + countCached.get()) < poolPolicy.getMaxConnectionsPerNode()) {
 						// Do we actually want to create any more connections?
@@ -588,7 +633,7 @@ public class ThriftPoolComplex implements ThriftPool {
 					logger.trace("{} NodeContext has {} cached connections", node, countCached.get());
 				}
 			}
-		
+
 		};
 	}
 

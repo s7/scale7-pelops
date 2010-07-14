@@ -34,10 +34,8 @@ public class Operand {
             lastNode = conn.getNode();
 			try {
 				// Execute operation
-                beforeOperation(conn);
 				ReturnType result = operation.execute(conn);
 				// Release unbroken connection
-                afterOperation(conn);
                 conn.release(false);
                 // Return result!
 				return result;
@@ -49,7 +47,6 @@ public class Operand {
 					e instanceof AuthenticationException ||
 					e instanceof AuthorizationException) {
 					// Yup, so we can release unbroken connection
-                    afterOperation(conn);
                     conn.release(false);
                     // Re-throw application-level exceptions immediately.
 					throw e;
@@ -69,18 +66,4 @@ public class Operand {
 		
 		throw lastException;
 	}
-
-    protected void beforeOperation(ThriftPool.Connection conn) throws Exception  {
-        // this is bad, it involves validation via the cassandra server... 
-        if (KeyspaceAware.class.isAssignableFrom(getClass()))
-            conn.getAPI().set_keyspace(((KeyspaceAware) this).getKeyspace());
-    }
-
-    protected void afterOperation(ThriftPool.Connection conn) throws Exception  {
-        // don't attempt to unset the keyspace (null isn't allowed)
-    }
-
-    public interface KeyspaceAware {
-        String getKeyspace();
-    }
 }

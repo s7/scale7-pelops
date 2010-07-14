@@ -2,16 +2,10 @@ package org.wyki.cassandra.pelops;
 
 import org.apache.cassandra.thrift.CfDef;
 
-public class KeyspaceManagement extends SingleConnectionOperand implements Operand.KeyspaceAware {
-    private String keyspace;
+public class KeyspaceManagement extends SingleConnectionOperand {
 
-    public KeyspaceManagement(ThriftPool thrift, String keyspace) {
+    public KeyspaceManagement(ThriftPool thrift) {
         super(thrift);
-        this.keyspace = keyspace;
-    }
-
-    public String getKeyspace() {
-        return keyspace;
     }
 
     public void truncate(final String columnFamily) throws Exception {

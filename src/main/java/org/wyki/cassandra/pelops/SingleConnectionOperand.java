@@ -27,9 +27,7 @@ public class SingleConnectionOperand extends Operand {
             try {
                 // Execute operation
                 // Return result!
-                beforeOperation(conn);
                 ReturnType result = operation.execute(conn);
-                afterOperation(conn);
                 return result;
             } catch (Exception e) {
                 // Is this an error we can't work around?
@@ -38,7 +36,6 @@ public class SingleConnectionOperand extends Operand {
                         e instanceof TApplicationException ||
                         e instanceof AuthenticationException ||
                         e instanceof AuthorizationException) {
-                    afterOperation(conn);
                     // Re-throw application-level exceptions immediately.
                     throw e;
                 }
