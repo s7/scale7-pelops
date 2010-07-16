@@ -10,6 +10,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cassandra.version>0.7.0-SNAPSHOT</cassandra.version>
+        <cassandra.config>${pom.basedir}/src/test/config/cassandra.yaml</cassandra.config>
     </properties>
     <dependencies>
         <dependency>
@@ -71,8 +72,86 @@
                         <target>1.6</target>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <argLine>-Xms256m -Xmx512m</argLine>
+                        <systemPropertyVariables>
+                            <file.encoding>${file.encoding}</file.encoding>
+                        </systemPropertyVariables>
+                        <excludes>
+                            <exclude>**/*IntegrationTest.java</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <argLine>-Xms256m -Xmx512m</argLine>
+                        <systemPropertyVariables>
+                            <file.encoding>${file.encoding}</file.encoding>
+                        </systemPropertyVariables>
+                        <includes>
+                            <include>**/*IntegrationTest.java</include>
+                        </includes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>integration-test</id>
+                            <goals>
+                                <goal>integration-test</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>verify</id>
+                            <goals>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>com.sixtydigits.cassandra</groupId>
+                    <artifactId>maven-cassandra-plugin</artifactId>
+                    <version>0.7.0-SNAPSHOT</version>
+                    <configuration>
+                        <cassandraConfig>${cassandra.config}</cassandraConfig>
+                        <endless>true</endless>
+                        <loadSchemaFromYaml>true</loadSchemaFromYaml>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>start-cassandra</id>
+                            <phase>pre-integration-test</phase>
+                            <goals>
+                                <goal>start</goal>
+                            </goals>
+                            <configuration>
+                                <endless>false</endless>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.sixtydigits.cassandra</groupId>
+                <artifactId>maven-cassandra-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
     <distributionManagement>
         <repository>
