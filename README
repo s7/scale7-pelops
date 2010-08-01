@@ -24,3 +24,9 @@ To use pelops in a maven project:
   <version>0.805-0.7.0-SNAPSHOT</version>
 </dependency>
 3. Start using pelops
+
+
+NOTES:
+* There appears to be a problem with the Thrift framed transport. For now you should disabled
+ thrift_framed_transport_size_in_mb in cassandra.yaml.
+ See org.wyki.cassandra.pelops.ThriftPoolPolicy.isFramedTransportRequired(true|false)

@@ -20,6 +20,7 @@ import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -37,112 +38,9 @@ import org.wyki.portability.SystemProxy;
  * @author dominicwilliams
  *
  */
-public class ThriftPoolComplex implements ThriftPool {
+public class ThriftPoolComplex extends ThriftPoolAbstract {
 
 	private static final Logger logger = SystemProxy.getLoggerFromFactory(ThriftPoolComplex.class);
-
-	/**
-	 * Create a <code>Selector</code> object.
-	 * @return						A new <code>Selector</code> object
-	 */
-	@Override
-    public Selector createSelector() {
-        validateKeyspaceSet();
-		return new Selector(this);
-	}
-
-    /**
-	 * Create a <code>Mutator</code> object using the current time as the operation time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @return						A new <code>Mutator</code> object
-	 */
-	@Override
-    public Mutator createMutator() {
-        validateKeyspaceSet();
-		return new Mutator(this);
-	}
-
-	/**
-	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @param timestamp				The default time stamp to use for operations
-	 * @return						A new <code>Mutator</code> object
-	 */
-	@Override
-    public Mutator createMutator(long timestamp) {
-        validateKeyspaceSet();
-		return new Mutator(this, new Clock(timestamp));
-	}
-
-	/**
-	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @param clock				    The default clock instance to use for operations
-     * @return						A new <code>Mutator</code> object
-	 */
-	@Override
-    public Mutator createMutator(Clock clock) {
-        validateKeyspaceSet();
-		return new Mutator(this, clock);
-	}
-
-	/**
-	 * Create a <code>KeyDeletor</code> object using the current time as the operation time stamp.
-	 * @return						A new <code>KeyDeletor</code> object
-	 */
-	@Override
-    public KeyDeletor createKeyDeletor() {
-        validateKeyspaceSet();
-		return new KeyDeletor(this);
-	}
-
-	/**
-	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-	 * @param timestamp				The default time stamp to use for operations
-	 * @return						A new <code>KeyDeletor</code> object
-	 */
-	@Override
-    public KeyDeletor createKeyDeletor(long timestamp) {
-        validateKeyspaceSet();
-		return new KeyDeletor(this, new Clock(timestamp));
-	}
-
-	/**
-	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-	 * @param clock				    The default clock instance to use for operations
-	 * @return						A new <code>KeyDeletor</code> object
-	 */
-	@Override
-    public KeyDeletor createKeyDeletor(Clock clock) {
-        validateKeyspaceSet();
-		return new KeyDeletor(this, clock);
-	}
-
-	/**
-	 * Create a <code>Metrics</code> object for discovering information about the Cassandra cluster and its contained keyspaces.
-	 * @return						A new <code>Metrics</code> object
-	 */
-	@Override
-    public Metrics createMetrics() {
-		return new Metrics(this);
-	}
-
-    @Override
-    public Management createManagement() {
-        return new Management(this);
-    }
-
-    @Override
-    public KeyspaceManagement createKeyspaceManagement() {
-        validateKeyspaceSet();
-        return new KeyspaceManagement(this);
-    }
-
-    private void validateKeyspaceSet() throws IllegalStateException {
-        if (getKeyspace() == null && getKeyspace().isEmpty()) {
-            throw new IllegalStateException("A keyspace must be provided in order to use this function.");
-        }
-    }
 
     /**
 	 * Get a Cassandra connection to the least loaded node represented in the connection pool.
@@ -361,7 +259,7 @@ public class ThriftPoolComplex implements ThriftPool {
 	 * @author dominicwilliams
 	 *
 	 */
-	public static class ConnectionComplex implements Connection {
+	public class ConnectionComplex implements Connection {
 		private final NodeContext nodeContext;
 		private final TTransport transport;
 		private final TProtocol protocol;
@@ -370,8 +268,8 @@ public class ThriftPoolComplex implements ThriftPool {
 
 		ConnectionComplex(NodeContext nodeContext, int port) throws SocketException, TException, InvalidRequestException {
 			this.nodeContext = nodeContext;
-			TSocket socket = new TSocket(nodeContext.node, port);
-			transport = socket;
+            TSocket socket = new TSocket(nodeContext.node, port);
+            transport = poolPolicy.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
 			protocol = new TBinaryProtocol(transport);
 			socket.getSocket().setKeepAlive(true);
 			client = new Client(protocol);

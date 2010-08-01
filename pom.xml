@@ -10,7 +10,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cassandra.version>0.7.0-SNAPSHOT</cassandra.version>
-        <cassandra.config>${pom.basedir}/src/test/config/cassandra.yaml</cassandra.config>
+        <!--<cassandra.config>${pom.basedir}/src/test/config/cassandra.yaml</cassandra.config>-->
     </properties>
     <dependencies>
         <dependency>
@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cassandra</groupId>
-            <artifactId>libthrift-r917130</artifactId>
+            <artifactId>libthrift</artifactId>
             <version>${cassandra.version}</version>
         </dependency>
         <dependency>
@@ -114,6 +114,7 @@
                         </execution>
                     </executions>
                 </plugin>
+                <!-- Broken as of the 2010-07-31 release of Cassandra 0.7.0
                 <plugin>
                     <groupId>com.sixtydigits.cassandra</groupId>
                     <artifactId>maven-cassandra-plugin</artifactId>
@@ -136,13 +137,14 @@
                         </execution>
                     </executions>
                 </plugin>
+                -->
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+            <!--<plugin>
                 <groupId>com.sixtydigits.cassandra</groupId>
                 <artifactId>maven-cassandra-plugin</artifactId>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
