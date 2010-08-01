@@ -88,6 +88,14 @@ public interface ThriftPool {
     Connection getConnectionExcept(String notNode) throws Exception;
 
     /**
+     * Get a management connection.
+     *
+     * @return the connection
+     * @throws Exception if an error occurs
+     */
+    Connection getManagementConnection() throws Exception;
+
+    /**
      * Shuts down the pool.
      * <p/>
      * Calling this method after the pool has been shutdown should have no affect.

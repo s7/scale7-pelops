@@ -3,13 +3,14 @@ package org.wyki.cassandra.pelops;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TApplicationException;
 
-public class SingleConnectionOperand extends Operand {
+public class ManagementConnectionOperand extends Operand {
     protected ThriftPool.Connection conn;
 
-    public SingleConnectionOperand(ThriftPool thrift) {
+    public ManagementConnectionOperand(ThriftPool thrift) {
         super(thrift);
         try {
-            conn = thrift.getConnection();
+            conn = thrift.getManagementConnection();
+            conn.open(-1);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

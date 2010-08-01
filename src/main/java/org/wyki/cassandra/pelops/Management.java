@@ -13,7 +13,7 @@ import java.util.Set;
  *
  * See http://wiki.apache.org/cassandra/LiveSchemaUpdates for more details.
  */
-public class Management extends SingleConnectionOperand {
+public class Management extends ManagementConnectionOperand {
     public static final String KSDEF_STRATEGY_RACK_UNAWARE = "org.apache.cassandra.locator.RackUnawareStrategy";
     public static final String KSDEF_STRATEGY_RACK_AWARE = "org.apache.cassandra.locator.RackAwareStrategy";
 

@@ -2,7 +2,7 @@ package org.wyki.cassandra.pelops;
 
 import org.apache.cassandra.thrift.CfDef;
 
-public class KeyspaceManagement extends SingleConnectionOperand {
+public class KeyspaceManagement extends ManagementConnectionOperand {
 
     public KeyspaceManagement(ThriftPool thrift) {
         super(thrift);
