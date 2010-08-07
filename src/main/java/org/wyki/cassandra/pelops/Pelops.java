@@ -81,10 +81,9 @@ public class Pelops {
 	/**
 	 * Create a <code>Selector</code> object.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>Selector</code> object
 	 */
-	public static Selector createSelector(String poolName, String keyspace) {
+	public static Selector createSelector(String poolName) {
 		return poolMap.get(poolName).createSelector();
 	}
 	
@@ -92,10 +91,9 @@ public class Pelops {
 	 * Create a <code>Mutator</code> object using the current time as the operation time stamp. The <code>Mutator</code> object  
 	 * must only be used to execute 1 mutation operation.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>Mutator</code> object
 	 */
-	public static Mutator createMutator(String poolName, String keyspace) {
+	public static Mutator createMutator(String poolName) {
 		return poolMap.get(poolName).createMutator();
 	}
 	
@@ -103,11 +101,10 @@ public class Pelops {
 	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
 	 * must only be used to execute 1 mutation operation.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
 	 * @param timestamp				The default time stamp to use for operations
 	 * @return						A new <code>Mutator</code> object
 	 */
-	public static Mutator createMutator(String poolName, String keyspace, long timestamp) {
+	public static Mutator createMutator(String poolName, long timestamp) {
 		return poolMap.get(poolName).createMutator(timestamp);
 	}
 
@@ -115,43 +112,39 @@ public class Pelops {
 	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
 	 * must only be used to execute 1 mutation operation.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
 	 * @param clock				    The default clock instance to use for operations
 	 * @return						A new <code>Mutator</code> object
 	 */
-	public static Mutator createMutator(String poolName, String keyspace, Clock clock) {
+	public static Mutator createMutator(String poolName, Clock clock) {
 		return poolMap.get(poolName).createMutator(clock);
 	}
 	
 	/**
 	 * Create a <code>KeyDeletor</code> object using the current time as the operation time stamp.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
 	 * @return						A new <code>KeyDeletor</code> object
 	 */
-	public static KeyDeletor createKeyDeletor(String poolName, String keyspace) {
+	public static KeyDeletor createKeyDeletor(String poolName) {
 		return poolMap.get(poolName).createKeyDeletor();
 	}
 	
 	/**
 	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
-     * @param timestamp				The default time stamp to use for operations
+	 * @param timestamp				The default time stamp to use for operations
      * @return						A new <code>KeyDeletor</code> object
 	 */
-	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, long timestamp) {
+	public static KeyDeletor createKeyDeletor(String poolName, long timestamp) {
 		return poolMap.get(poolName).createKeyDeletor(timestamp);
 	}
 
 	/**
 	 * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param keyspace				The keyspace to operate on
-     * @param clock				    The default clock instance to use for operations
-	 * @return						A new <code>KeyDeletor</code> object
+	 * @param clock				    The default clock instance to use for operations
+     * @return						A new <code>KeyDeletor</code> object
 	 */
-	public static KeyDeletor createKeyDeletor(String poolName, String keyspace, Clock clock) {
+	public static KeyDeletor createKeyDeletor(String poolName, Clock clock) {
 		return poolMap.get(poolName).createKeyDeletor(clock);
 	}
 	
