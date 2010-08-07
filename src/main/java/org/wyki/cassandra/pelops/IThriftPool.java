@@ -7,7 +7,7 @@ import org.apache.thrift.transport.TTransportException;
 /**
  * The contract for connection pools used by pelops.
  */
-public interface ThriftPool {
+public interface IThriftPool {
     /**
      * Create a {@link Selector selector} object.
      *

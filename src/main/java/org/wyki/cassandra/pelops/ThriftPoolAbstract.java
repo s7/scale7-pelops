@@ -3,9 +3,9 @@ package org.wyki.cassandra.pelops;
 import org.apache.cassandra.thrift.Clock;
 
 /**
- * Abstract impl of {@link org.wyki.cassandra.pelops.ThriftPool}.
+ * Abstract impl of {@link IThriftPool}.
  */
-public abstract class ThriftPoolAbstract implements ThriftPool {
+public abstract class ThriftPoolAbstract implements IThriftPool {
     /**
      * Create a <code>Selector</code> object.
      *

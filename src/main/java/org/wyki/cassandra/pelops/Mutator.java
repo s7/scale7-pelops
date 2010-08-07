@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
-import org.wyki.cassandra.pelops.ThriftPool.Connection;
+import org.wyki.cassandra.pelops.IThriftPool.Connection;
 
 import static org.wyki.cassandra.pelops.Bytes.fromUTF8;
 import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
@@ -424,7 +424,7 @@ public class Mutator extends Operand {
     /**
      * Create a batch mutation operation.
      */
-    protected Mutator(ThriftPool thrift) {
+    protected Mutator(IThriftPool thrift) {
         this(thrift, new Clock(System.currentTimeMillis() * 1000));
     }
 
@@ -432,7 +432,7 @@ public class Mutator extends Operand {
      * Create a batch mutation operation.
      * @param clock                   The clock that encapsulates the time stamp to use for the operation.
      */
-    protected Mutator(ThriftPool thrift, Clock clock) {
+    protected Mutator(IThriftPool thrift, Clock clock) {
         super(thrift);
         this.clock = clock;
         batch = new MutationsByKey();

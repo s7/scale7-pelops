@@ -4,9 +4,9 @@ import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TApplicationException;
 
 public class ManagementConnectionOperand extends Operand {
-    protected ThriftPool.Connection conn;
+    protected IThriftPool.Connection conn;
 
-    public ManagementConnectionOperand(ThriftPool thrift) {
+    public ManagementConnectionOperand(IThriftPool thrift) {
         super(thrift);
         try {
             conn = thrift.getManagementConnection();
@@ -21,7 +21,7 @@ public class ManagementConnectionOperand extends Operand {
         return tryOperation(conn, operation);
     }
 
-    private <ReturnType> ReturnType tryOperation(ThriftPool.Connection conn, IOperation<ReturnType> operation) throws Exception {
+    private <ReturnType> ReturnType tryOperation(IThriftPool.Connection conn, IOperation<ReturnType> operation) throws Exception {
         Exception lastException = null;
         int retries = 0;
         do {

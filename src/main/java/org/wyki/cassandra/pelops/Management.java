@@ -27,14 +27,14 @@ public class Management extends ManagementConnectionOperand {
     public static final String CFDEF_COMPARATOR_LEXICAL_UUID = "LexicalUUIDType";
     public static final String CFDEF_COMPARATOR_TIME_UUID = "TimeUUIDType";
 
-    protected Management(ThriftPool thrift) {
+    protected Management(IThriftPool thrift) {
         super(thrift);
     }
 
     public Set<String> getKeyspaceNames() throws Exception {
         IOperation<Set<String>> operation = new IOperation<Set<String>>() {
             @Override
-            public Set<String> execute(ThriftPool.Connection conn) throws Exception {
+            public Set<String> execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().describe_keyspaces();
             }
         };
@@ -44,7 +44,7 @@ public class Management extends ManagementConnectionOperand {
     public String getClusterName() throws Exception {
         IOperation<String> operation = new IOperation<String>() {
             @Override
-            public String execute(ThriftPool.Connection conn) throws Exception {
+            public String execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().describe_cluster_name();
             }
         };
@@ -54,7 +54,7 @@ public class Management extends ManagementConnectionOperand {
     public String getCassandraVersion() throws Exception {
         IOperation<String> operation = new IOperation<String>() {
             @Override
-            public String execute(ThriftPool.Connection conn) throws Exception {
+            public String execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().describe_version();
             }
         };
@@ -64,7 +64,7 @@ public class Management extends ManagementConnectionOperand {
     public List<TokenRange> getKeyspaceRingMappings(final String keyspace) throws Exception {
         IOperation<List<TokenRange>> operation = new IOperation<List<TokenRange>>() {
             @Override
-            public List<TokenRange> execute(ThriftPool.Connection conn) throws Exception {
+            public List<TokenRange> execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().describe_ring(keyspace);
             }
         };
@@ -74,7 +74,7 @@ public class Management extends ManagementConnectionOperand {
     public Map<String, Map<String, String>> getKeyspaceSchema(final String keyspace) throws Exception {
 		IOperation<Map<String, Map<String, String>>> operation = new IOperation<Map<String, Map<String, String>>>() {
 			@Override
-			public Map<String, Map<String, String>> execute(ThriftPool.Connection conn) throws Exception {
+			public Map<String, Map<String, String>> execute(IThriftPool.Connection conn) throws Exception {
 				return conn.getAPI().describe_keyspace(keyspace);
 			}
 		};
@@ -84,7 +84,7 @@ public class Management extends ManagementConnectionOperand {
     public String addKeyspace(final KsDef keyspaceDef) throws Exception {
         IOperation<String> operation = new IOperation<String>() {
             @Override
-            public String execute(ThriftPool.Connection conn) throws Exception {
+            public String execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().system_add_keyspace(keyspaceDef);
             }
         };
@@ -94,7 +94,7 @@ public class Management extends ManagementConnectionOperand {
     public String dropKeyspace(final String keyspace) throws Exception {
         IOperation<String> operation = new IOperation<String>() {
             @Override
-            public String execute(ThriftPool.Connection conn) throws Exception {
+            public String execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().system_drop_keyspace(keyspace);
             }
         };
@@ -104,7 +104,7 @@ public class Management extends ManagementConnectionOperand {
     public String renameKeyspace(final String oldName, final String newName) throws Exception {
         IOperation<String> operation = new IOperation<String>() {
             @Override
-            public String execute(ThriftPool.Connection conn) throws Exception {
+            public String execute(IThriftPool.Connection conn) throws Exception {
                 return conn.getAPI().system_rename_keyspace(oldName, newName);
             }
         };

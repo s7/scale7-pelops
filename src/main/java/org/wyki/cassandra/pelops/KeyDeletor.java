@@ -3,7 +3,7 @@ package org.wyki.cassandra.pelops;
 import org.apache.cassandra.thrift.Clock;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.wyki.cassandra.pelops.ThriftPool.Connection;
+import org.wyki.cassandra.pelops.IThriftPool.Connection;
 
 import static org.wyki.cassandra.pelops.Bytes.fromUTF8;
 import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
@@ -72,11 +72,11 @@ public class KeyDeletor extends Operand {
 		tryOperation(operation);
 	}
 
-	protected KeyDeletor(ThriftPool thrift) {
+	protected KeyDeletor(IThriftPool thrift) {
 		this(thrift, new Clock(System.currentTimeMillis() * 1000));
 	}
 
-	protected KeyDeletor(ThriftPool thrift, Clock clock) {
+	protected KeyDeletor(IThriftPool thrift, Clock clock) {
 		super(thrift);
         this.clock = new Clock(clock);
 	}

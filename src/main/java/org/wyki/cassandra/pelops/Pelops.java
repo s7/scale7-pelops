@@ -10,7 +10,7 @@ public class Pelops {
 
 	private static final Logger logger = SystemProxy.getLoggerFromFactory(Pelops.class);
 	
-	private static ConcurrentHashMap<String, ThriftPool> poolMap = new ConcurrentHashMap<String, ThriftPool>();
+	private static ConcurrentHashMap<String, IThriftPool> poolMap = new ConcurrentHashMap<String, IThriftPool>();
 	
 	/**
 	 * Add a new Thrift connection pool and give it a name. The name is later used to identify the pool from which to request
@@ -59,11 +59,11 @@ public class Pelops {
 	}
 
     /**
-     * Add an already instantiated instance of {@link org.wyki.cassandra.pelops.ThriftPool} to pelops.
+     * Add an already instantiated instance of {@link IThriftPool} to pelops.
      * @param poolName A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
-     * @param thriftPool an instance of the {@link org.wyki.cassandra.pelops.ThriftPool} interface
+     * @param thriftPool an instance of the {@link IThriftPool} interface
      */
-    public static void addPool(String poolName, ThriftPool thriftPool) {
+    public static void addPool(String poolName, IThriftPool thriftPool) {
         logger.info("Pelops adds new pool {}", poolName);
         poolMap.put(poolName, thriftPool);
     }
@@ -73,7 +73,7 @@ public class Pelops {
 	 */
 	public static void shutdown() {
 		logger.info("Pelops starting to shutdown...");
-		for (ThriftPool pool : poolMap.values())
+		for (IThriftPool pool : poolMap.values())
 			pool.shutdown();
 		logger.info("Pelops has shutdown");
 	}
@@ -193,7 +193,7 @@ public class Pelops {
 	 * @param poolName				The name of the pool
 	 * @return						A direct reference to the specified pool
 	 */
-	public static ThriftPool getDbConnPool(String poolName) {
+	public static IThriftPool getDbConnPool(String poolName) {
 		return poolMap.get(poolName);
 	}
 }

@@ -8,7 +8,7 @@ import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransportException;
-import org.wyki.cassandra.pelops.ThriftPool.Connection;
+import org.wyki.cassandra.pelops.IThriftPool.Connection;
 
 /**
  * Base class for objects operating against a Cassandra keyspace.
@@ -18,9 +18,9 @@ import org.wyki.cassandra.pelops.ThriftPool.Connection;
  */
 public class Operand {
 	
-	protected final ThriftPool thrift;
+	protected final IThriftPool thrift;
 	
-	protected Operand(ThriftPool thrift) {
+	protected Operand(IThriftPool thrift) {
 		this.thrift = thrift;
 	}
 	

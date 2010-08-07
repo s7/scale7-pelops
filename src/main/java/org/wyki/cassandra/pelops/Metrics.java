@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.cassandra.thrift.TokenRange;
-import org.wyki.cassandra.pelops.ThriftPool.Connection;
+import org.wyki.cassandra.pelops.IThriftPool.Connection;
 
 /**
  * Retrieves information about the Cassandra cluster the keyspaces it contains.
@@ -95,7 +95,7 @@ public class Metrics extends Operand {
 		return (Map<String, Map<String, String>>) tryOperation(operation);
 	}
 	
-	protected Metrics(ThriftPool thrift) {
+	protected Metrics(IThriftPool thrift) {
 		super(thrift);
 	}
 
