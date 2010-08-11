@@ -8,7 +8,7 @@ The following steps will build and publish pelops to you local repo:
 3. mvn clean install -DperformRelease=true # install source and javadoc as well
 
 To use pelops in a maven project:
-1. Add the following repository to your project repositories (make sure you specify central above sixtydigits):
+1. Add the following repository to your project repositories (to avoid slow build make sure you specify central above sixtydigits):
 <repositories>
     <repository>
         <id>central</id>
@@ -34,8 +34,8 @@ To use pelops in a maven project:
 
 
 NOTES:
-* There appears to be a problem with the Thrift framed transport. For now you should disable
- thrift_framed_transport_size_in_mb in cassandra.yaml.
- See org.wyki.cassandra.pelops.ThriftPoolPolicy.isFramedTransportRequired(true|false)
 * The build of Cassandra 0.7.0 that Pelops publishes is available from
  http://maven.sixtydigits.com/org/apache/cassandra/.
+* (FIXED) There appears to be a problem with the Thrift framed transport. For now you should disable
+ thrift_framed_transport_size_in_mb in cassandra.yaml.
+ See org.wyki.cassandra.pelops.ThriftPoolPolicy.isFramedTransportRequired(true|false)

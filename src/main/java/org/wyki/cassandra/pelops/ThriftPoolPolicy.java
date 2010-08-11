@@ -8,7 +8,7 @@ package org.wyki.cassandra.pelops;
  * @author danwashusen
  */
 public abstract class ThriftPoolPolicy {
-    private boolean isFramedTransportRequired = false;
+    private boolean isFramedTransportRequired = true;
 
     /**
      * Used to determine if the thrift transport should be framed or not.  This is dicated by the 'thrift_framed_transport_size_in_mb'
