@@ -1,6 +1,5 @@
-This is a fork of http://code.google.com/p/pelops/ that's been mavenized and had 0.7.0 support added.  
-
-WARNING: Pelops doesn't have any test coverage so use it at your own risk...
+This is a fork of http://code.google.com/p/pelops/ that's been mavenized and had 0.7.0 support added.  It will soon be
+moving back under Dominic's control at http://github.com/s7/pelops.
 
 The following steps will build and publish pelops to you local repo:
 1. git clone git@github.com:danwashusen/pelops.git pelops
