@@ -1,4 +1,4 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +14,8 @@ public class Bytes {
     private byte[] bytes;
 
     public Bytes(byte[] bytes) {
+    	if (bytes == null)
+    		bytes = new byte[]{};
         this.bytes = bytes;
     }
 

@@ -1,4 +1,4 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -7,8 +7,8 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-import org.wyki.portability.SystemProxy;
 
 import java.net.SocketException;
 
@@ -20,50 +20,36 @@ import static java.lang.String.format;
  *
  * This class is useful for diagnostics.
  */
-public class ThriftPoolBasic extends ThriftPoolAbstract {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(ThriftPoolBasic.class);
+public class DebuggingPool extends ThriftPoolBase {
+    private static final Logger logger = SystemProxy.getLoggerFromFactory(DebuggingPool.class);
 
-    private String node;
-    private int port;
+    Cluster cluster;
     private String keyspace;
-    private ThriftPoolPolicy poolPolicy;
-    private GeneralPolicy generalPolicy;
+    private OperandPolicy generalPolicy;
 
-    public ThriftPoolBasic(String node, int port, String keyspace, ThriftPoolPolicy poolPolicy, GeneralPolicy generalPolicy) {
-        this.node = node;
-        this.port = port;
+    public DebuggingPool(Cluster cluster, String keyspace, OperandPolicy generalPolicy) {
+        this.cluster = cluster;
         this.keyspace = keyspace;
-        this.poolPolicy = poolPolicy;
         this.generalPolicy = generalPolicy;
     }
 
     @Override
-    public Connection getConnection() throws Exception {
-        return new BasicConnection(node, port, keyspace);
+    public IConnection getConnection() throws Exception {
+        return new Connection(cluster.getCurrentNodesSnapshot()[0], cluster.getThriftPort(), keyspace);
     }
 
     @Override
-    public Connection getConnectionExcept(String notNode) throws Exception {
+    public IConnection getConnectionExcept(String notNode) throws Exception {
         return getConnection();
     }
 
     @Override
-    public Connection getManagementConnection() throws Exception {
-        return new BasicConnection(node, port, null);
-    }
-
-    @Override
     public void shutdown() {
-        // do nothing
+        // Do nothing.. we do not have a handle on number of unreleased connections
     }
 
     @Override
-    public ThriftPoolPolicy getPoolPolicy() {
-        return poolPolicy;
-    }
-
-    @Override
-    public GeneralPolicy getGeneralPolicy() {
+    public OperandPolicy getOperandPolicy() {
         return generalPolicy;
     }
 
@@ -72,7 +58,7 @@ public class ThriftPoolBasic extends ThriftPoolAbstract {
         return keyspace;
     }
 
-    public class BasicConnection implements Connection {
+    public class Connection implements IConnection {
         private TTransport transport;
         private TProtocol protocol;
         private Cassandra.Client client;
@@ -80,7 +66,7 @@ public class ThriftPoolBasic extends ThriftPoolAbstract {
         private int port;
         private String keyspace;
 
-        public BasicConnection(String node, int port, String keyspace) throws SocketException {
+        public Connection(String node, int port, String keyspace) throws SocketException {
             this.node = node;
             this.port = port;
             this.keyspace = keyspace;
@@ -103,7 +89,7 @@ public class ThriftPoolBasic extends ThriftPoolAbstract {
 
         @Override
         public void release(boolean afterException) {
-            // do nothing
+            close();
         }
 
         @Override
@@ -115,7 +101,7 @@ public class ThriftPoolBasic extends ThriftPoolAbstract {
         public boolean open(int nodeSessionId) {
             try {
                 TSocket socket = new TSocket(node, port);
-                transport = poolPolicy.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
+                transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
                 protocol = new TBinaryProtocol(transport);
                 client = new Cassandra.Client(protocol);
 
@@ -139,5 +125,11 @@ public class ThriftPoolBasic extends ThriftPoolAbstract {
         public void close() {
             transport.close();
         }
+
+		@Override
+		public int getSessionId() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
     }
 }

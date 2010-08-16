@@ -1,12 +1,12 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 /**
  * General policy configuration.
  */
-public class GeneralPolicy {
+public class OperandPolicy {
     int maxOpRetries = 3;
 
-    public GeneralPolicy() {
+    public OperandPolicy() {
     }
 
     public int getMaxOpRetries() {

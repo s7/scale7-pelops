@@ -1,4 +1,4 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -9,9 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
-import org.wyki.cassandra.pelops.IThriftPool.Connection;
+import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 
-import static org.wyki.cassandra.pelops.Bytes.*;
+import static org.scale7.cassandra.pelops.Bytes.*;
+import static org.scale7.cassandra.pelops.StringHelper.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.
@@ -22,58 +23,225 @@ import static org.wyki.cassandra.pelops.Bytes.*;
 public class Selector extends Operand {
     /**
      * Get the count of columns in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the columns
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
      * @throws Exception
      */
-    public int getColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily), null, cLevel);
+    public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
+    }
+
+    /**
+     * Get the count of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param predicate						A predicate selecting the columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the columns
+     * @throws Exception
+     */
+    public int getColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Get the count of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the columns
+     * @throws Exception
+     */
+    public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+    }
+
+    /**
+     * Get the count of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param predicate						A predicate selecting the columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the columns
+     * @throws Exception
+     */
+    public int getColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), predicate, cLevel);
     }
 
     /**
      * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the columns
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
      * @throws Exception
      */
-    public int getSubColumnCount(String rowKey, String columnFamily, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
+    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
     }
 
     /**
      * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the columns
+     * @param superColName                  The name of the super column
+     * @param predicate						A predicate selecting the sub columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception
+     */
+    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), predicate, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception
+     */
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column
+     * @param predicate						A predicate selecting the sub columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception
+     */
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
      * @throws Exception if an error occurs
      */
-    public int getSubColumnCount(String rowKey, String columnFamily, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily, superColName), null, cLevel);
+    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column
+     * @param predicate						A predicate selecting the sub columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception if an error occurs
+     */
+    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), predicate, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception if an error occurs
+     */
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+    }
+
+    /**
+     * Get the count of sub-columns inside a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column
+     * @param predicate						A predicate selecting the sub columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the sub-columns
+     * @throws Exception if an error occurs
+     */
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, predicate, cLevel);
     }
 
     /**
      * Get the count of super columns in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The column family containing the super columns
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
      * @throws Exception if an error occurs
      */
-    public int getSuperColumnCount(String rowKey, String columnFamily, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(fromUTF8(rowKey), newColumnParent(columnFamily), null, cLevel);
+    public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
     }
 
-    private int getColumnCount(final Bytes rowKey, final ColumnParent colParent, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    /**
+     * Get the count of super columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param predicate						A predicate selecting the super columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the super columns
+     * @throws Exception if an error occurs
+     */
+    public int getSuperColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Get the count of super columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the super columns
+     * @throws Exception if an error occurs
+     */
+    public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+    }
+
+    /**
+     * Get the count of super columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param predicate						A predicate selecting the super columns to be counted
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The count of the super columns
+     * @throws Exception if an error occurs
+     */
+    public int getSuperColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), predicate, cLevel);
+    }
+
+    /**
+     * Get the count of columns in a row with a matching predicate
+     * @param colParent						The parent of the columns to be counted
+     * @param rowKey						The key of the row containing the columns
+     * @param predicate						The slice predicate selecting the columns to be counted
+     * @param cLevel						The Cassandra consistency level with which to perform the operation
+     * @return								The number of matching columns
+     * @throws Exception					The error
+     */
+    private int getColumnCount(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Integer> operation = new IOperation<Integer>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Integer execute(IConnection conn) throws Exception {
                 return conn.getAPI().get_count(nullSafeGet(rowKey), colParent, predicate, cLevel);
             }
         };
@@ -82,170 +250,170 @@ public class Selector extends Operand {
 
     /**
      * Retrieve a column from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the column
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getColumnFromRow(final String rowKey, final String columnFamily, final String colName, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnFromRow(rowKey, columnFamily, fromUTF8(colName), cLevel);
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final String colName, final ConsistencyLevel cLevel) throws Exception {
+        return getColumnFromRow(columnFamily, rowKey, fromUTF8(colName), cLevel);
     }
 
     /**
      * Retrieve a column from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the column
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getColumnFromRow(final String rowKey, final String columnFamily, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnFromRow(fromUTF8(rowKey), columnFamily, colName, cLevel);
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
+        return getColumnFromRow(columnFamily, fromUTF8(rowKey), colName, cLevel);
     }
 
     /**
      * Retrieve a column from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the column
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Column> operation = new IOperation<Column>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Column execute(IConnection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
                 cp.setColumn(nullSafeGet(colName));
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
         };
-        return (Column) tryOperation(operation);
+        return tryOperation(operation);
     }
 
     /**
      * Retrieve a super column from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
-     * @param superColName                       The name of the super column to retrieve
-     * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception if an error occurs
-     */
-    public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnFromRow(rowKey, columnFamily, fromUTF8(superColName), cLevel);
-    }
-
-    /**
-     * Retrieve a super column from a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
      * @throws Exception if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, cLevel);
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSuperColumnFromRow(columnFamily, rowKey, fromUTF8(superColName), cLevel);
     }
 
     /**
      * Retrieve a super column from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
      * @throws Exception if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSuperColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, cLevel);
+    }
+
+    /**
+     * Retrieve a super column from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param superColName                  The name of the super column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The requested <code>SuperColumn</code>
+     * @throws Exception if an error occurs
+     */
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public SuperColumn execute(IConnection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
                 cp.setSuper_column(nullSafeGet(superColName));
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.super_column;
             }
         };
-        return (SuperColumn) tryOperation(operation);
+        return tryOperation(operation);
     }
 
     /**
      * Retrieve a sub column from a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column containing the sub column
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, fromUTF8(subColName), cLevel);
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, fromUTF8(subColName), cLevel);
     }
 
     /**
      * Retrieve a sub column from a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column containing the sub column
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, fromUTF8(superColName), fromUTF8(subColName), cLevel);
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), fromUTF8(subColName), cLevel);
     }
 
     /**
      * Retrieve a sub column from a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column containing the sub column
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, fromUTF8(superColName), subColName, cLevel);
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), subColName, cLevel);
     }
 
     /**
      * Retrieve a sub column from a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column containing the sub column
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final String rowKey, final String columnFamily, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
-        return getSubColumnFromRow(fromUTF8(rowKey), columnFamily, superColName, subColName, cLevel);
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+        return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, subColName, cLevel);
     }
 
     /**
      * Retrieve a sub column from a super column in a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super column
      * @param superColName                  The name of the super column containing the sub column
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
      * @throws Exception if an error occurs
      */
-    public Column getSubColumnFromRow(final Bytes rowKey, final String columnFamily, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Column> operation = new IOperation<Column>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Column execute(IConnection conn) throws Exception {
                 ColumnPath cp = new ColumnPath(columnFamily);
                 cp.setSuper_column(nullSafeGet(superColName));
                 cp.setColumn(nullSafeGet(subColName));
@@ -253,63 +421,61 @@ public class Selector extends Operand {
                 return cosc.column;
             }
         };
-        return (Column) tryOperation(operation);
+        return tryOperation(operation);
     }
 
     /**
      * Retrieve columns from a row.
+     * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the columns
      * @param colPredicate                  The column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    public List<Column> getColumnsFromRow(String rowKey, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getColumnsFromRow(String columnFamily, String rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRow(rowKey, newColumnParent(columnFamily), colPredicate, cLevel);
+        return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super columns
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
      * @param superColName                  The name of the super column
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String rowKey, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRow(rowKey, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super columns
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
      * @param superColName                  The name of the super column
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String rowKey, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRow(rowKey, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<Column> getColumnsFromRow(final String rowKey, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        return getColumnsFromRow(fromUTF8(rowKey), colParent, colPredicate, cLevel);
+    private List<Column> getColumnsFromRow(final ColumnParent colParent, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        return getColumnsFromRow(colParent, fromUTF8(rowKey), colPredicate, cLevel);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<Column> getColumnsFromRow(final Bytes rowKey, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    private List<Column> getColumnsFromRow(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<List<Column>> operation = new IOperation<List<Column>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public List<Column> execute(IConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), colParent, colPredicate, cLevel);
                 List<Column> result = new ArrayList<Column>(apiResult.size());
                 for (ColumnOrSuperColumn cosc : apiResult)
@@ -317,37 +483,35 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (List<Column>) tryOperation(operation);
+        return tryOperation(operation);
     }
 
     /**
      * Retrieve super columns from a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super columns
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super columns
      * @param colPredicate                  The super column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    @SuppressWarnings("unchecked")
-    public List<SuperColumn> getSuperColumnsFromRow(final String rowKey, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        return getSuperColumnsFromRow(fromUTF8(rowKey), columnFamily, colPredicate, cLevel);
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        return getSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), colPredicate, cLevel);
     }
 
     /**
      * Retrieve super columns from a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the super columns
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super columns
      * @param colPredicate                  The super column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    @SuppressWarnings("unchecked")
-    public List<SuperColumn> getSuperColumnsFromRow(final Bytes rowKey, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<List<SuperColumn>> operation = new IOperation<List<SuperColumn>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public List<SuperColumn> execute(IConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), newColumnParent(columnFamily), colPredicate, cLevel);
                 List<SuperColumn> result = new ArrayList<SuperColumn>(apiResult.size());
                 for (ColumnOrSuperColumn cosc : apiResult)
@@ -355,7 +519,7 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (List<SuperColumn>) tryOperation(operation);
+        return tryOperation(operation);
     }
 
     public enum OrderType {
@@ -369,8 +533,8 @@ public class Selector extends Operand {
 
     /**
      * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
-     * @param rowKey                        The key of the row
-     * @param columnFamily                  The name of the column family containing the columns
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
      * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
      * @param orderType                     The scheme used to determine how the column names are ordered
      * @param reversed                      Whether the scan should proceed in descending column name order
@@ -379,7 +543,7 @@ public class Selector extends Operand {
      * @return                              A page of columns
      * @throws Exception if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(final String rowKey, final String columnFamily, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
         SlicePredicate predicate;
         if (startBeyondName == null)
@@ -393,7 +557,36 @@ public class Selector extends Operand {
 
             predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
         }
-        return getColumnsFromRow(rowKey, columnFamily, predicate, cLevel);
+        return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param orderType                     The scheme used to determine how the column names are ordered
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final String rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+
+        SlicePredicate predicate;
+        if (startBeyondName == null)
+            predicate = Selector.newColumnsPredicateAll(reversed, count);
+        else {
+            Bytes startName;
+            if (reversed)
+                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
+            else
+                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
+
+            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
+        }
+        return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
     }
 
     /**
@@ -408,7 +601,7 @@ public class Selector extends Operand {
      * @return                              A page of super columns
      * @throws Exception if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String rowKey, final String columnFamily, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
         SlicePredicate predicate;
         if (startBeyondName == null)
@@ -422,67 +615,139 @@ public class Selector extends Operand {
 
             predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
         }
-        return getSuperColumnsFromRow(rowKey, columnFamily, predicate, cLevel);
+        return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param rowKey                        The key of the row
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param orderType                     The scheme used to determine how the column names are ordered
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final String rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+
+        SlicePredicate predicate;
+        if (startBeyondName == null)
+            predicate = Selector.newColumnsPredicateAll(reversed, count);
+        else {
+            Bytes startName;
+            if (reversed)
+                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
+            else
+                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
+
+            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
+        }
+        return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
     }
 
     /**
      * Retrieve columns from a set of rows.
-     * @param rowKeys                        The keys of the rows
-     * @param columnFamily                   The name of the column family containing the columns
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the columns
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(List<Bytes> rowKeys, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(rowKeys, newColumnParent(columnFamily), colPredicate, cLevel);
+        return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the columns
+     * @param colPredicate                   The column selector predicate
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
-     * @param rowKeys                        The keys of the rows
-     * @param columnFamily                   The name of the column family containing the super columns
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(List<Bytes> rowKeys, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(rowKeys, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
-     * @param rowKeys                        The keys of the rows
-     * @param columnFamily                   The name of the column family containing the super columns
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(List<Bytes> rowKeys, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(rowKeys, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+    	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param colPredicate                   The sub-column selector predicate
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws Exception if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param colPredicate                   The sub-column selector predicate
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
      * Retrieve super columns from a set of rows.
-     * @param rowKeys                        The keys of the rows
-     * @param columnFamily                   The name of the column family containing the super columns
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
      * @param colPredicate                   The super column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of super columns
      * @throws Exception if an error occurs
      */
-    @SuppressWarnings("unchecked")
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final List<Bytes> rowKeys, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Map<Bytes, List<SuperColumn>> execute(IConnection conn) throws Exception {
                 Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
                 for (byte[] rowKey : apiResult.keySet()) {
@@ -495,14 +760,41 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (Map<Bytes, List<SuperColumn>>) tryOperation(operation);
+        return tryOperation(operation);
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Bytes, List<Column>> getColumnsFromRows(final List<Bytes> rowKeys, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    /**
+     * Retrieve super columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param colPredicate                   The super column selector predicate
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of super columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Map<String, List<SuperColumn>> execute(IConnection conn) throws Exception {
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(toByteArrayList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
+                for (byte[] rowKey : apiResult.keySet()) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
+                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList)
+                        columns.add(cosc.super_column);
+                    result.put(toUTF8(rowKey), columns);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+            @Override
+            public Map<Bytes, List<Column>> execute(IConnection conn) throws Exception {
                 Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), colParent, colPredicate, cLevel);
                 Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
                 for (byte[] rowKey : apiResult.keySet()) {
@@ -515,7 +807,26 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (Map<Bytes, List<Column>>) tryOperation(operation);
+        return tryOperation(operation);
+    }
+
+    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
+            @Override
+            public Map<String, List<Column>> execute(IConnection conn) throws Exception {
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(toByteArrayList(rowKeys), colParent, colPredicate, cLevel);
+                Map<String, List<Column>> result = new HashMap<String, List<Column>>();
+                for (byte[] rowKey : apiResult.keySet()) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
+                    List<Column> columns = new ArrayList<Column>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList)
+                        columns.add(cosc.column);
+                    result.put(toUTF8(rowKey), columns);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
     }
 
     /**
@@ -523,16 +834,33 @@ public class Selector extends Operand {
      * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
      * @param keyRange                        A key range selecting the rows
-     * @param columnFamily                    The name of the column family containing the columns
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(KeyRange keyRange, String columnFamily, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(keyRange, newColumnParent(columnFamily), colPredicate, cLevel);
+        return getColumnsFromRows(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param colPredicate                    The column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
     }
 
     /**
@@ -540,17 +868,17 @@ public class Selector extends Operand {
      * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
      * @param keyRange                        A key range selecting the rows
-     * @param columnFamily                    The name of the column family containing the super columns
      * @param superColName                    The name of the super column
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
 
     /**
@@ -558,17 +886,53 @@ public class Selector extends Operand {
      * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
      * @param keyRange                        A key range selecting the rows
-     * @param columnFamily                    The name of the column family containing the super columns
      * @param superColName                    The name of the super column
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws Exception if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(KeyRange keyRange, String columnFamily, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
 
-        return getColumnsFromRows(keyRange, newColumnParent(columnFamily, superColName), colPredicate, cLevel);
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param colPredicate                    The sub-column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws Exception if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param colPredicate                    The sub-column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
 
     /**
@@ -576,18 +940,17 @@ public class Selector extends Operand {
      * The method returns a map from the keys of rows in the specified range to lists of super columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
      * @param keyRange                        A key range selecting the rows
-     * @param columnFamily                    The name of the column family containing the super columns
      * @param colPredicate                    The super column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of super columns
      * @throws Exception if an error occurs
      */
-    @SuppressWarnings("unchecked")
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final KeyRange keyRange, final String columnFamily, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Map<Bytes, List<SuperColumn>> execute(IConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
@@ -600,14 +963,44 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (Map<Bytes, List<SuperColumn>>) tryOperation(operation);
+        return tryOperation(operation);
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Bytes, List<Column>> getColumnsFromRows(final KeyRange keyRange, final ColumnParent colParent, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
-        IOperation operation = new IOperation() {
+    /**
+     * Retrieve super columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of super columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param colPredicate                    The super column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of super columns
+     * @throws Exception if an error occurs
+     */
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Map<String, List<SuperColumn>> execute(IConnection conn) throws Exception {
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
+                Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
+                for (KeySlice ks : apiResult) {
+                    List<ColumnOrSuperColumn> coscList = ks.columns;
+                    List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList)
+                        colList.add(cosc.super_column);
+                    result.put(toUTF8(ks.key), colList);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+            @Override
+            public Map<Bytes, List<Column>> execute(IConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(colParent, colPredicate, keyRange, cLevel);
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
@@ -620,7 +1013,26 @@ public class Selector extends Operand {
                 return result;
             }
         };
-        return (Map<Bytes, List<Column>>) tryOperation(operation);
+        return tryOperation(operation);
+    }
+
+    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
+            @Override
+            public Map<String, List<Column>> execute(IConnection conn) throws Exception {
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(colParent, colPredicate, keyRange, cLevel);
+                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
+                for (KeySlice ks : apiResult) {
+                    List<ColumnOrSuperColumn> coscList = ks.columns;
+                    List<Column> colList = new ArrayList<Column>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList)
+                        colList.add(cosc.column);
+                    result.put(toUTF8(ks.key), colList);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
     }
 
     /**
@@ -774,6 +1186,15 @@ public class Selector extends Operand {
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, String superColName) throws ArrayIndexOutOfBoundsException {
         return getSuperColumn(superColumns, fromUTF8(superColName));
+    }
+
+    /**
+     * Get the value of a column as a UTF8 string
+     * @param column							The column containing the value
+     * @return									The <code>byte[]</code> value as a UTF8 string
+     */
+    public static String getColumnStringValue(Column column) {
+    	return toUTF8(column.getValue());
     }
 
     /**
@@ -1126,7 +1547,7 @@ public class Selector extends Operand {
         return parent;
     }
 
-    private static ColumnParent newColumnParent(String columnFamily) {
+    public static ColumnParent newColumnParent(String columnFamily) {
         return new ColumnParent(columnFamily);
     }
 }

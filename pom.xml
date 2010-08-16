@@ -1,16 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.wyki</groupId>
-    <artifactId>pelops-mvn</artifactId>
+    <groupId>org.scale7</groupId>
+    <artifactId>scale7-pelops</artifactId>
     <packaging>jar</packaging>
-    <version>0.805-0.7.0-SNAPSHOT</version>
-    <name>Pelops Mavenized</name>
-    <url>http://github.com/danwashusen/pelops</url>
+    <version>0.902-0.7.0</version>
+    <name>Pelops - A library for accessing the Cassandra database</name>
+    <url>http://github.com/s7/pelops</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cassandra.version>0.7.0-SNAPSHOT</cassandra.version>
-        <!--<cassandra.config>${pom.basedir}/src/test/config/cassandra.yaml</cassandra.config>-->
     </properties>
     <dependencies>
         <dependency>
@@ -38,6 +37,11 @@
             <artifactId>junit</artifactId>
             <version>4.8.1</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scale7</groupId>
+            <artifactId>scale7-core</artifactId>
+            <version>1.1</version>
         </dependency>
     </dependencies>
 <repositories>

@@ -1,4 +1,4 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
-import org.wyki.cassandra.pelops.IThriftPool.Connection;
+import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 
-import static org.wyki.cassandra.pelops.Bytes.fromUTF8;
-import static org.wyki.cassandra.pelops.Bytes.nullSafeGet;
-import static org.wyki.cassandra.pelops.Bytes.transform;
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Bytes.transform;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -35,9 +35,9 @@ public class Mutator extends Operand {
             convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
         }
 
-        IOperation operation = new IOperation() {
+        IOperation<Void> operation = new IOperation<Void>() {
             @Override
-            public Object execute(Connection conn) throws Exception {
+            public Void execute(IConnection conn) throws Exception {
                 // Send batch mutation job to Thrift connection
                 conn.getAPI().batch_mutate(convertedBatch, cLevel);
                 // Flush connection
@@ -51,282 +51,282 @@ public class Mutator extends Operand {
 
     /**
      * Write a column value.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param column                    The value of the column
      */
-    public void writeColumn(String rowKey, String colFamily, Column column) {
-        writeColumn(fromUTF8(rowKey), colFamily, column);
+    public void writeColumn(String colFamily, String rowKey, Column column) {
+        writeColumn(colFamily, fromUTF8(rowKey), column);
     }
 
     /**
      * Write a column value.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param column                    The value of the column
      */
-    public void writeColumn(Bytes rowKey, String colFamily, Column column) {
+    public void writeColumn(String colFamily, Bytes rowKey, Column column) {
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setColumn(column);
         Mutation mutation = new Mutation();
         mutation.setColumn_or_supercolumn(cosc);
-        getMutationList(rowKey, colFamily).add(mutation);
+        getMutationList(colFamily, rowKey).add(mutation);
     }
 
     /**
      * Write a list of columns to a key
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param columns                   The list of columns to write
      */
-    public void writeColumns(String rowKey, String colFamily, List<Column> columns) {
+    public void writeColumns(String colFamily, String rowKey, List<Column> columns) {
         for (Column column : columns) {
-            writeColumn(rowKey, colFamily, column);
+            writeColumn(colFamily, rowKey, column);
         }
     }
 
     /**
      * Write a single sub-column value to a super column. If wish to write multiple sub-columns for a
      * super column, then it is more efficient to use <code>writeSubColumns</code>
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the super column family to operate on
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String rowKey, String colFamily, String colName, Column subColumn) {
-        writeSubColumn(rowKey, colFamily, fromUTF8(colName), subColumn);
+    public void writeSubColumn(String colFamily, String rowKey, String colName, Column subColumn) {
+        writeSubColumn(colFamily, rowKey, fromUTF8(colName), subColumn);
     }
 
     /**
      * Write a single sub-column value to a super column. If wish to write multiple sub-columns for a
      * super column, then it is more efficient to use <code>writeSubColumns</code>
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the super column family to operate on
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String rowKey, String colFamily, Bytes colName, Column subColumn) {
-        writeSubColumns(rowKey, colFamily, colName, Arrays.asList(subColumn));
+    public void writeSubColumn(String colFamily, String rowKey, Bytes colName, Column subColumn) {
+        writeSubColumns(colFamily, rowKey, colName, Arrays.asList(subColumn));
     }
 
     /**
      * Write multiple sub-column values to a super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the super column family to operate on
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String rowKey, String colFamily, String colName, List<Column> subColumns) {
-        writeSubColumns(rowKey, colFamily, fromUTF8(colName), subColumns);
+    public void writeSubColumns(String colFamily, String rowKey, String colName, List<Column> subColumns) {
+        writeSubColumns(colFamily, rowKey, fromUTF8(colName), subColumns);
     }
 
     /**
      * Write multiple sub-column values to a super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the super column family to operate on
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String rowKey, String colFamily, Bytes colName, List<Column> subColumns) {
-        writeSubColumns(fromUTF8(rowKey), colFamily, colName, subColumns);
+    public void writeSubColumns(String colFamily, String rowKey, Bytes colName, List<Column> subColumns) {
+        writeSubColumns(colFamily, fromUTF8(rowKey), colName, subColumns);
     }
 
     /**
      * Write multiple sub-column values to a super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the super column family to operate on
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(Bytes rowKey, String colFamily, Bytes colName, List<Column> subColumns) {
+    public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
         SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setSuper_column(scol);
         Mutation mutation = new Mutation();
         mutation.setColumn_or_supercolumn(cosc);
-        getMutationList(rowKey, colFamily).add(mutation);
+        getMutationList(colFamily, rowKey).add(mutation);
     }
 
     /**
      * Delete a column or super column
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String rowKey, String colFamily, String colName) {
-        deleteColumn(rowKey, colFamily, fromUTF8(colName));
+    public void deleteColumn(String colFamily, String rowKey, String colName) {
+        deleteColumn(colFamily, rowKey, fromUTF8(colName));
     }
 
     /**
      * Delete a column or super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String rowKey, String colFamily, Bytes colName) {
-        deleteColumns(rowKey, colFamily, Arrays.asList(colName));
+    public void deleteColumn(String colFamily, String rowKey, Bytes colName) {
+        deleteColumns(colFamily, rowKey, Arrays.asList(colName));
     }
 
     /**
      * Delete a list of columns or super columns.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String rowKey, String colFamily, Bytes... colNames) {
-        deleteColumns(rowKey, colFamily, Arrays.asList(colNames));
+    public void deleteColumns(String colFamily, String rowKey, Bytes... colNames) {
+        deleteColumns(colFamily, rowKey, Arrays.asList(colNames));
     }
 
     /**
      * Delete a list of columns or super columns.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String rowKey, String colFamily, String... colNames) {
+    public void deleteColumns(String colFamily, String rowKey, String... colNames) {
         List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
             colNameList.add(fromUTF8(colName));
-        deleteColumns(rowKey, colFamily, colNameList);
+        deleteColumns(colFamily, rowKey, colNameList);
     }
 
     /**
      * Delete a list of columns or super columns.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String rowKey, String colFamily, List<Bytes> colNames) {
+    public void deleteColumns(String colFamily, String rowKey, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(transform(colNames));
         Deletion deletion = new Deletion(clock);
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
-        getMutationList(fromUTF8(rowKey), colFamily).add(mutation);
+        getMutationList(colFamily, fromUTF8(rowKey)).add(mutation);
     }
 
     /**
      * Delete a column or super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, String colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, fromUTF8(colName), fromUTF8(subColName));
+    public void deleteSubColumn(String colFamily, String rowKey, String colName, String subColName) {
+        deleteSubColumn(colFamily, rowKey, fromUTF8(colName), fromUTF8(subColName));
     }
 
     /**
      * Delete a column or super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, Bytes colName, String subColName) {
-        deleteSubColumn(rowKey, colFamily, colName, fromUTF8(subColName));
+    public void deleteSubColumn(String colFamily, String rowKey, Bytes colName, String subColName) {
+        deleteSubColumn(colFamily, rowKey, colName, fromUTF8(subColName));
     }
 
     /**
      * Delete a column or super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, String colName, Bytes subColName) {
-        deleteSubColumn(rowKey, colFamily, fromUTF8(colName), subColName);
+    public void deleteSubColumn(String colFamily, String rowKey, String colName, Bytes subColName) {
+        deleteSubColumn(colFamily, rowKey, fromUTF8(colName), subColName);
     }
 
     /**
      * Delete a column or super column.
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String rowKey, String colFamily, Bytes colName, Bytes subColName) {
+    public void deleteSubColumn(String colFamily, String rowKey, Bytes colName, Bytes subColName) {
         List<Bytes> subColNames = new ArrayList<Bytes>(1);
         subColNames.add(subColName);
-        deleteSubColumns(rowKey, colFamily, colName, subColNames);
+        deleteSubColumns(colFamily, rowKey, colName, subColNames);
     }
 
     /**
      * Delete a list of sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String rowKey, String colFamily, String colName, String... subColNames) {
-        deleteSubColumns(rowKey, colFamily, fromUTF8(colName), subColNames);
+    public void deleteSubColumns(String colFamily, String rowKey, String colName, String... subColNames) {
+        deleteSubColumns(colFamily, rowKey, fromUTF8(colName), subColNames);
     }
 
     /**
      * Delete a list of sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, String... subColNames) {
+    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName, String... subColNames) {
         List<Bytes> subColNamesList = new ArrayList<Bytes>(subColNames.length);
         for (String subColName : subColNames)
             subColNamesList.add(fromUTF8(subColName));
-        deleteSubColumns(rowKey, colFamily, colName, subColNamesList);
+        deleteSubColumns(colFamily, rowKey, colName, subColNamesList);
     }
 
     /**
      * Delete all sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      */
-    public void deleteSubColumns(String rowKey, String colFamily, String colName) {
-        deleteSubColumns(fromUTF8(rowKey), colFamily, fromUTF8(colName), (List<Bytes>) null);
+    public void deleteSubColumns(String colFamily, String rowKey, String colName) {
+        deleteSubColumns(colFamily, fromUTF8(rowKey), fromUTF8(colName), (List<Bytes>) null);
     }
 
     /**
      * Delete a list of sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String rowKey, String colFamily, String colName, List<Bytes> subColNames) {
-        deleteSubColumns(fromUTF8(rowKey), colFamily, fromUTF8(colName), subColNames);
+    public void deleteSubColumns(String colFamily, String rowKey, String colName, List<Bytes> subColNames) {
+        deleteSubColumns(colFamily, fromUTF8(rowKey), fromUTF8(colName), subColNames);
     }
 
     /**
      * Delete all sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      */
-    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName) {
-        deleteSubColumns(fromUTF8(rowKey), colFamily, colName, (List<Bytes>) null);
+    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName) {
+        deleteSubColumns(colFamily, fromUTF8(rowKey), colName, (List<Bytes>) null);
     }
 
     /**
      * Delete a list of sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String rowKey, String colFamily, Bytes colName, List<Bytes> subColNames) {
-        deleteSubColumns(fromUTF8(rowKey), colFamily, colName, subColNames);
+    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName, List<Bytes> subColNames) {
+        deleteSubColumns(colFamily, fromUTF8(rowKey), colName, subColNames);
     }
 
     /**
      * Delete a list of sub-columns
+     * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
-     * @param colFamily                 The name of the column family to modify
-     * @param colName               The name of the super column to modify
+     * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(Bytes rowKey, String colFamily, Bytes colName, List<Bytes> subColNames) {
+    public void deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
         Deletion deletion = new Deletion(clock);
         deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
@@ -336,7 +336,7 @@ public class Mutator extends Operand {
         );
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
-        getMutationList(rowKey, colFamily).add(mutation);
+        getMutationList(colFamily, rowKey).add(mutation);
     }
 
     /**
@@ -396,11 +396,11 @@ public class Mutator extends Operand {
      * @param microsToMillis             If the time stamp is UTC microseconds (as is a self-constructed time stamp), whether to convert this into a standard milliseconds value
      * @return                           A byte array containing the time stamp <code>long</code> value
      */
-    public byte[] getMutationTimestamp(boolean microsToMillis) {
+    public Bytes getMutationTimestamp(boolean microsToMillis) {
         long result = clock.getTimestamp();
         if (microsToMillis)
             result /= 1000;
-        return NumberHelper.toBytes(result);
+        return Bytes.fromLong(result);
     }
 
     /**
@@ -438,7 +438,7 @@ public class Mutator extends Operand {
         batch = new MutationsByKey();
     }
 
-    private MutationList getMutationList(Bytes key, String colFamily) {
+    private MutationList getMutationList(String colFamily, Bytes key) {
         MutationsByCf mutsByCf = (MutationsByCf) batch.get(key);
         if (mutsByCf == null) {
             mutsByCf = new MutationsByCf();

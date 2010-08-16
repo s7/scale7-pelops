@@ -1,11 +1,11 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Clock;
 
 /**
  * Abstract impl of {@link IThriftPool}.
  */
-public abstract class ThriftPoolAbstract implements IThriftPool {
+public abstract class ThriftPoolBase implements IThriftPool {
     /**
      * Create a <code>Selector</code> object.
      *
@@ -61,9 +61,9 @@ public abstract class ThriftPoolAbstract implements IThriftPool {
      * @return A new <code>KeyDeletor</code> object
      */
     @Override
-    public KeyDeletor createKeyDeletor() {
+    public RowDeletor createRowDeletor() {
         validateKeyspaceSet();
-        return new KeyDeletor(this);
+        return new RowDeletor(this);
     }
 
     /**
@@ -73,9 +73,9 @@ public abstract class ThriftPoolAbstract implements IThriftPool {
      * @return A new <code>KeyDeletor</code> object
      */
     @Override
-    public KeyDeletor createKeyDeletor(long timestamp) {
+    public RowDeletor createRowDeletor(long timestamp) {
         validateKeyspaceSet();
-        return new KeyDeletor(this, new Clock(timestamp));
+        return new RowDeletor(this, new Clock(timestamp));
     }
 
     /**
@@ -85,30 +85,9 @@ public abstract class ThriftPoolAbstract implements IThriftPool {
      * @return A new <code>KeyDeletor</code> object
      */
     @Override
-    public KeyDeletor createKeyDeletor(Clock clock) {
+    public RowDeletor createRowDeletor(Clock clock) {
         validateKeyspaceSet();
-        return new KeyDeletor(this, clock);
-    }
-
-    /**
-     * Create a <code>Metrics</code> object for discovering information about the Cassandra cluster and its contained keyspaces.
-     *
-     * @return A new <code>Metrics</code> object
-     */
-    @Override
-    public Metrics createMetrics() {
-        return new Metrics(this);
-    }
-
-    @Override
-    public Management createManagement() {
-        return new Management(this);
-    }
-
-    @Override
-    public KeyspaceManagement createKeyspaceManagement() {
-        validateKeyspaceSet();
-        return new KeyspaceManagement(this);
+        return new RowDeletor(this, clock);
     }
 
     private void validateKeyspaceSet() throws IllegalStateException {

@@ -1,9 +1,9 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.TokenRange;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -23,10 +22,10 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.scale7.concurrency.AutoResetEvent;
+import org.scale7.networking.utility.NetworkAlgorithms;
+import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-import org.wyki.concurrency.AutoResetEvent;
-import org.wyki.networking.utility.NetworkAlgorithms;
-import org.wyki.portability.SystemProxy;
 
 /**
  * Provides intelligent pooling of Thrift connections to the Cassandra cluster including balancing the load
@@ -37,28 +36,25 @@ import org.wyki.portability.SystemProxy;
  * @author dominicwilliams
  *
  */
-public class ThriftPoolComplex extends ThriftPoolAbstract {
+public class CachePerNodePool extends ThriftPoolBase {
 
-	private static final Logger logger = SystemProxy.getLoggerFromFactory(ThriftPoolComplex.class);
+	private static final Logger logger = SystemProxy.getLoggerFromFactory(CachePerNodePool.class);
+
+	private Cluster cluster;
+	private Policy poolPolicy;
+	private final MultiNodePool pool;
+    private OperandPolicy generalPolicy;
+    private final String keyspace;
+	private ExecutorService clusterWatcherExec = Executors.newSingleThreadExecutor();
+    private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     /**
 	 * Get a Cassandra connection to the least loaded node represented in the connection pool.
 	 * @return						A connection to Cassandra
 	 */
 	@Override
-    public Connection getConnection() throws Exception {
+    public IConnection getConnection() throws Exception {
 		return getConnectionExcept(null);
-	}
-
-    /**
-     * Constructs a pool instance suitable for performing management operations.
-     * @param contactNodes the nodes to contact
-     * @param defaultPort the port to content the nodes on (9160)
-     * @param poolPolicy the pool policy
-     * @param generalPolicy the general pelops policy
-     */
-	public ThriftPoolComplex(String[] contactNodes, int defaultPort, Policy poolPolicy, GeneralPolicy generalPolicy) {
-        this(contactNodes, defaultPort, null, false, poolPolicy, generalPolicy);
 	}
 
     /**
@@ -67,21 +63,22 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
      * @param contactNodes the nodes to contact
      * @param defaultPort the port to content the nodes on (9160)
      * @param keyspace the keyspace to use (note: as of 0.7.0 this is basically a required parameter)
-     * @param dynamicNodeDiscovery if nodes should be dynamically added and removed
-     * @param poolPolicy the pool policy
      * @param generalPolicy the general pelops policy
+     * @param poolPolicy the pool policy
      */
-	public ThriftPoolComplex(String[] contactNodes, int defaultPort, String keyspace, boolean dynamicNodeDiscovery, Policy poolPolicy, GeneralPolicy generalPolicy) {
-        this.contactNodes = contactNodes;
-        this.defaultPort = defaultPort;
+	public CachePerNodePool(Cluster cluster, String keyspace, OperandPolicy generalPolicy, Policy poolPolicy) {
+        this.cluster = cluster;
         this.generalPolicy = generalPolicy;
         pool = new MultiNodePool();
 		this.keyspace = keyspace;
 		this.poolPolicy = poolPolicy;
-		for (String node : contactNodes)
+		String[] nodesSnapshot = cluster.getCurrentNodesSnapshot();
+		for (String node : nodesSnapshot)
 			touchNodeContext(node);
-		if (dynamicNodeDiscovery)
+		if (poolPolicy.getDynamicNodeDiscovery())
 			clusterWatcherExec.execute(clusterWatcher);
+		else
+			logger.warn("Dynamic node discovery is false. Pelops will not automatically discover nodes added to the cluster, or nodes that have not been specified");
 	}
 
 	/**
@@ -93,7 +90,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 	 * @throws Exception
 	 */
 	@Override
-    public Connection getConnectionExcept(String notNode) throws Exception {
+    public IConnection getConnectionExcept(String notNode) throws Exception {
 		// Create a list of nodes we have already tried, and therefore should avoid in preference
 		// to trying new nodes.
 		List<String> triedNodes = null;
@@ -121,7 +118,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 				if (leastLoaded == null)
 					break;
 				// otherwise, try to return a connection from this least loaded untried node
-				Connection conn = leastLoaded.getConnection();
+				IConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 				// That node couldn't give us a connection, so loop to try and find another untried node
@@ -138,7 +135,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 				}
 			}
 			if (leastLoaded != null) {
-				Connection conn = leastLoaded.getConnection();
+				IConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 			}
@@ -155,16 +152,6 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 			Thread.sleep(retryPause);
 		}
 	}
-
-    @Override
-    public Connection getManagementConnection() throws Exception {
-        return new ConnectionComplex(contactNodes[0], defaultPort, keyspace, new ConnectionReleaseHandler() {
-            @Override
-            public void release(ConnectionComplex connection, boolean afterException) {
-                // do nothing
-            }
-        });
-    }
 
     /**
 	 * Cleanly shutdown this pool and associated Thrift connections and operations.
@@ -193,8 +180,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 	 * Get the current policy in force, which controls the behavioral parameters of the connection pool.
 	 * @return							The current policy
 	 */
-	@Override
-    public ThriftPoolPolicy getPoolPolicy() {
+    public Policy getPoolPolicy() {
 		return poolPolicy;
 	}
 
@@ -203,7 +189,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
      * @return the current policy
      */
     @Override
-    public GeneralPolicy getGeneralPolicy() {
+    public OperandPolicy getOperandPolicy() {
         return generalPolicy;
     }
 
@@ -214,15 +200,6 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 
     @SuppressWarnings("serial")
 	class MultiNodePool extends ConcurrentHashMap<String, NodeContext> {}
-
-	private Policy poolPolicy;
-	private final MultiNodePool pool;
-    private String[] contactNodes;
-    private final int defaultPort;
-    private GeneralPolicy generalPolicy;
-    private final String keyspace;
-	private ExecutorService clusterWatcherExec = Executors.newSingleThreadExecutor();
-    private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
 
 	private void touchNodeContext(String node) {
@@ -236,21 +213,14 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 		@Override
 		public void run() {
 			while (true) {
-				// Update cluster node contexts
-				Metrics metrics = createMetrics();
 				try {
-					// Use key range mappings to derive list of available nodes in cluster
-					HashSet<String> clusterNodes = new HashSet<String>();
-					List<TokenRange> mappings = metrics.getKeyspaceRingMappings(keyspace);
-					for (TokenRange tokenRange : mappings) {
-						List<String> endPointList = tokenRange.getEndpoints();
-						clusterNodes.addAll(endPointList);
-					}
-					// Adjust our list of node contexts accordingly
+					cluster.refreshNodesSnapshot();
+					String[] clusterNodes = cluster.getCurrentNodesSnapshot();
 					for (String node : clusterNodes)
 						touchNodeContext(node);
 				} catch (Exception e) {
-                    SystemProxy.getLoggerFromFactory(getClass()).error(e.getMessage(), e);
+					logger.warn("Cluster watcher process encountered error while refreshing snapshot", e.getMessage());
+					e.printStackTrace();
 				}
 				// Sleep awhile
 				try {
@@ -270,7 +240,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 	 * @author dominicwilliams
 	 *
 	 */
-	public class ConnectionComplex implements Connection {
+	public class Connection implements IConnection {
         private String node;
         private String keyspace;
         private ConnectionReleaseHandler releaseHandler;
@@ -279,14 +249,14 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 		private final Client client;
 		int nodeSessionId = 0;
 
-		ConnectionComplex(String node, int port, String keyspace, ConnectionReleaseHandler releaseHandler) throws SocketException, TException, InvalidRequestException {
+		Connection(String node, int port, String keyspace, ConnectionReleaseHandler releaseHandler) throws SocketException, TException, InvalidRequestException {
             this.node = node;
             this.keyspace = keyspace;
             this.releaseHandler = releaseHandler;
             TSocket socket = new TSocket(node, port);
-            transport = poolPolicy.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
+            transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
 			protocol = new TBinaryProtocol(transport);
-			socket.getSocket().setKeepAlive(true);
+			//socket.getSocket().setKeepAlive(true);
 			client = new Client(protocol);
 		}
 
@@ -362,6 +332,11 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 			return true;
 		}
 
+		@Override
+		public int getSessionId() {
+			return nodeSessionId;
+		}
+
         /**
          * Close the connection.
          */
@@ -372,11 +347,11 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
     }
 
     public interface ConnectionReleaseHandler {
-        void release(ConnectionComplex connection, boolean afterException);
+        void release(Connection connection, boolean afterException);
     }
 
 	@SuppressWarnings("serial")
-	class ConnectionList extends ConcurrentLinkedQueue<Connection> {}
+	class ConnectionList extends ConcurrentLinkedQueue<IConnection> {}
 
 	class NodeContext {
 		private final int MIN_CREATE_CONNECTION_BACK_OFF = 125;
@@ -417,12 +392,16 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 			return countCached.get() > 0;
 		}
 
-		Connection getConnection() {
+		private Integer connCacheLock = new Integer(-1);
+
+		IConnection getConnection() {
 			// Try to retrieve cached connection...
 			try {
-				Connection conn;
+				IConnection conn;
 				while (true) {
-					conn = connCache.poll();
+					synchronized (connCacheLock) {
+						conn = connCache.poll();
+					}
 					if (conn == null)
 						return null;
 					else
@@ -439,12 +418,12 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 			}
 		}
 
-		void onConnectionRelease(ConnectionComplex conn, boolean afterException) {
+		void onConnectionRelease(Connection conn, boolean networkException) {
 			// This connection is no longer in use
 			countInUse.decrementAndGet();
 			// Is this connection still open/reusable?
-			if (!afterException) {
-				// Do we want this connection?
+			if (!networkException) {
+				// Yes, we can keep this connection if we still want it!
 				if (conn.isOpen() && (countInUse.get() + countCached.get()) < poolPolicy.getTargetConnectionsPerNode()) {
 					connCache.add(conn);
 					countCached.incrementAndGet();
@@ -455,20 +434,21 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 				// close connection
 				conn.close();
 				// kill all connections to this node?
-				if (poolPolicy.isKillNodeConnsOnException())
-					if (sessionId.compareAndSet(conn.nodeSessionId, sessionId.get()+1))
-						killPooledConnectionsToNode(conn.nodeSessionId);
+				if (poolPolicy.isKillNodeConnsOnException()) {
+					sessionId.incrementAndGet();
+					purgeConnsCreatedToSession(conn.nodeSessionId);
+				}
 				// Since this connection has died, prompt refiller to check pool parameters
 				refillNow.set();
 			}
 		}
 
-		private Connection createConnection() {
-			Connection conn;
+		private IConnection createConnection() {
+			IConnection conn;
 			try {
-				conn = new ConnectionComplex(this.node, defaultPort, keyspace, new ConnectionReleaseHandler() {
+				conn = new Connection(this.node, cluster.getThriftPort(), keyspace, new ConnectionReleaseHandler() {
                     @Override
-                    public void release(ConnectionComplex connection, boolean afterException) {
+                    public void release(Connection connection, boolean afterException) {
 			            onConnectionRelease(connection, afterException);
                     }
                 });
@@ -483,16 +463,22 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 			return null;
 		}
 
-		private void killPooledConnectionsToNode(int nodeSessionId) {
+		private void purgeConnsCreatedToSession(int nodeSessionId) {
 			logger.warn("{} NodeContext killing all pooled connections for session {}", node, nodeSessionId);
 			int killedCount = 0;
-			Connection c = null;
-			while ((c = connCache.poll()) != null) {
-				countCached.decrementAndGet();
-				c.close();
-				killedCount++;
+			synchronized (connCacheLock) {
+				Iterator<IConnection> i = connCache.iterator();
+				while (i.hasNext()) {
+					IConnection c = i.next();
+					if (c.getSessionId() <= nodeSessionId) {
+						i.remove();
+						countCached.decrementAndGet();
+						c.close();
+						killedCount++;
+					}
+				}
 			}
-			logger.trace("{} NodeContext killed {}", node, killedCount);
+			logger.trace("{} NodeContext purged {}", node, killedCount);
 		}
 
 		private Runnable poolRefiller = new Runnable () {
@@ -517,7 +503,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 
 					// Remove dead connections from waiting pool
 					int foundDead = 0;
-					for (Connection conn : connCache)
+					for (IConnection conn : connCache)
 						if (!conn.isOpen()) {
 							countCached.decrementAndGet();
 							connCache.remove(conn);
@@ -533,7 +519,7 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 						while (countCached.get() < poolPolicy.getMinCachedConnectionsPerNode() ||
 								(countInUse.get() + countCached.get()) < poolPolicy.getTargetConnectionsPerNode()) {
 							// Yup create new connection for cache
-							Connection conn = createConnection();
+							IConnection conn = createConnection();
 							if (conn == null) {
 								// Connection error occurred. Calculate back off delay
 								failureCount++;
@@ -558,7 +544,13 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 		};
 	}
 
-    public static class Policy extends ThriftPoolPolicy {
+    public static class Policy {
+
+        public Policy() {
+        }
+
+    	boolean dynamicNodeDiscovery = false;
+
         int minCachedConnectionsPerNode = 50;
         int targetConnectionsPerNode = 100;
         int maxConnectionsPerNode = 1000;
@@ -571,7 +563,21 @@ public class ThriftPoolComplex extends ThriftPoolAbstract {
 
         boolean killNodeConnsOnException = true;
 
-        public Policy() {
+        public boolean getDynamicNodeDiscovery() {
+        	return dynamicNodeDiscovery;
+        }
+
+        /**
+         * If dynamic node discovery is switched on, Pelops will periodically attempt to discover the current
+         * set of nodes comprising the complete cluster. This means that if new nodes have been bootstrapped,
+         * it automatically starts directing operations to them even though initially they were not specified
+         * in the list of contact nodes. If you use this option, you must make sure that your cluster nodes
+         * are listening on addresses that you can reach e.g. as configured via <code>listen_address</code> in
+         * their cassandra.yaml configuration (this option controls what node addresses are reported to Pelops).
+         * @param dynamicNodeDiscovery				The value for dynamic node discovery feature
+         */
+        public void setDynamicNodeDiscovery(boolean dynamicNodeDiscovery) {
+        	this.dynamicNodeDiscovery = dynamicNodeDiscovery;
         }
 
         /**

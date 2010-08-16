@@ -1,4 +1,4 @@
-package org.wyki.cassandra.pelops;
+package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.Clock;
@@ -33,42 +33,19 @@ public interface IThriftPool {
     Mutator createMutator(long timestamp);
 
     /**
-     * Create a {@link KeyDeletor key deletor} object using the current time as the operation time stamp.
+     * Create a {@link RowDeletor key deletor} object using the current time as the operation time stamp.
      *
-     * @return A new {@link KeyDeletor key deletor} object
+     * @return A new {@link RowDeletor key deletor} object
      */
-    KeyDeletor createKeyDeletor();
+    RowDeletor createRowDeletor();
 
     /**
-     * Create a {@link KeyDeletor key deletor} object with an arbitrary time stamp.
+     * Create a {@link RowDeletor key deletor} object with an arbitrary time stamp.
      *
      * @param timestamp The default time stamp to use for operations
-     * @return A new {@link KeyDeletor key deletor} object
+     * @return A new {@link RowDeletor key deletor} object
      */
-    KeyDeletor createKeyDeletor(long timestamp);
-
-    /**
-     * Create a {@link Metrics metrics} object for discovering information about the Cassandra cluster and its contained keyspaces.
-     *
-     * @return A new {@link Metrics metrics} object
-     */
-    Metrics createMetrics();
-
-    /**
-     * Create a {@link org.wyki.cassandra.pelops.Management} object.
-     *
-     * @return the instance
-     * @see org.wyki.cassandra.pelops.Management
-     */
-    Management createManagement();
-
-    /**
-     * Create a {@link org.wyki.cassandra.pelops.KeyspaceManagement} object.
-     *
-     * @return the instance
-     * @see org.wyki.cassandra.pelops.KeyspaceManagement
-     */
-    KeyspaceManagement createKeyspaceManagement();
+    RowDeletor createRowDeletor(long timestamp);
 
     /**
      * Get a connection from the pool.
@@ -76,7 +53,7 @@ public interface IThriftPool {
      * @return the connection
      * @throws Exception if an error occurs
      */
-    Connection getConnection() throws Exception;
+    IConnection getConnection() throws Exception;
 
     /**
      * Get a connection from the pool trying to avoid the node specified by the notNode param.
@@ -85,15 +62,7 @@ public interface IThriftPool {
      * @return the connection
      * @throws Exception if an error occurs
      */
-    Connection getConnectionExcept(String notNode) throws Exception;
-
-    /**
-     * Get a management connection.
-     *
-     * @return the connection
-     * @throws Exception if an error occurs
-     */
-    Connection getManagementConnection() throws Exception;
+    IConnection getConnectionExcept(String notNode) throws Exception;
 
     /**
      * Shuts down the pool.
@@ -103,26 +72,19 @@ public interface IThriftPool {
     void shutdown();
 
     /**
-     * Get the current policy in force, which controls the behavioral parameters of the connection pool.
-     *
-     * @return The current policy
-     */
-    ThriftPoolPolicy getPoolPolicy();
-
-    /**
      * Get the current policy in force, which controls the general behavior of pelops.
      *
      * @return the current policy
      */
-    GeneralPolicy getGeneralPolicy();
+    OperandPolicy getOperandPolicy();
 
     /**
-     * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
+     * Create a {@link RowDeletor row deletor} object with an arbitrary time stamp.
      *
      * @param clock The default clock instance to use for operations
-     * @return A new <code>KeyDeletor</code> object
+     * @return A new {@link RowDeletor row deletor} object
      */
-    KeyDeletor createKeyDeletor(Clock clock);
+    RowDeletor createRowDeletor(Clock clock);
 
     /**
      * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
@@ -146,7 +108,7 @@ public interface IThriftPool {
      * @author dominicwilliams
      * @author danwashusen
      */
-    interface Connection {
+    interface IConnection {
         /**
          * Get a reference to the Cassandra Thrift API
          *
@@ -195,6 +157,12 @@ public interface IThriftPool {
          * @return true if the connection was opened, otherwise false
          */
         boolean open(int nodeSessionId);
+
+        /**
+         * Returns the id of the session during which this node was connected
+         * @return
+         */
+        int getSessionId();
 
         /**
          * Close the connection.
