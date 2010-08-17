@@ -8,6 +8,12 @@
     <name>Pelops - A library for accessing the Cassandra database</name>
     <url>http://github.com/s7/pelops</url>
     <properties>
+        <!--
+           The ${scale7.deploy.dir} should point to the directory that contains the clone of http://github.com/s7/mvnrepo.
+           By default it assumes that it's a sibling of the current project directory.  To change the default value alter
+           your ~/.m2/settings.xml file.
+        -->
+        <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cassandra.version>0.7.0-beta1</cassandra.version>
     </properties>
@@ -113,31 +119,6 @@
                         </execution>
                     </executions>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>1.0-beta-1</version>
-                    <executions>
-                        <execution>
-                            <id>enforce-deploy</id>
-                            <phase>deploy</phase>
-                            <goals>
-                                <goal>enforce</goal>
-                            </goals>
-                            <configuration>
-                                <rules>
-                                    <requireProperty>
-                                        <property>scale7.deploy.dir</property>
-                                        <message>"You must specify the scale7.deploy.dir property in your settings.xml
-                                            in order to deploy"
-                                        </message>
-                                    </requireProperty>
-                                </rules>
-                                <fail>true</fail>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -159,11 +140,6 @@
         <repository>
             <id>maven.scale7.org.local</id>
             <name>Deployment Staging Area</name>
-            <!--
-                   The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file and it should
-                   point to the directory that contains the clone of http://github.com/s7/mvnrepo.
-                   e.g. file:///Users/dan/Development/Projects/scale7/mvnrepo
-               -->
             <url>${scale7.deploy.dir}</url>
             <layout>default</layout>
         </repository>
