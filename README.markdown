@@ -5,6 +5,7 @@ productivity and code quality while greatly reducing the learning curve for new 
 hand in hand.
 
 To use pelops in a maven project:
+
 1. Add the following repository to your project repositories:
     <repositories>
         <repository>
