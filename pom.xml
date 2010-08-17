@@ -1,15 +1,15 @@
-    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.scale7</groupId>
     <artifactId>scale7-pelops</artifactId>
     <packaging>jar</packaging>
-    <version>0.902-0.7.0</version>
+    <version>0.903-0.7.0-SNAPSHOT</version>
     <name>Pelops - A library for accessing the Cassandra database</name>
     <url>http://github.com/s7/pelops</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cassandra.version>0.7.0-SNAPSHOT</cassandra.version>
+        <cassandra.version>0.7.0-beta1</cassandra.version>
     </properties>
     <dependencies>
         <dependency>
@@ -21,6 +21,11 @@
             <groupId>com.eaio.uuid</groupId>
             <artifactId>uuid</artifactId>
             <version>3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scale7</groupId>
+            <artifactId>scale7-core</artifactId>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cassandra</groupId>
@@ -38,27 +43,22 @@
             <version>4.8.1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.scale7</groupId>
-            <artifactId>scale7-core</artifactId>
-            <version>1.1</version>
-        </dependency>
     </dependencies>
-<repositories>
-    <repository>
-        <id>central</id>
-        <name>Maven Central Repo</name>
-        <url>http://repo1.maven.org/maven2</url>
-    </repository>
-    <repository>
-        <id>maven.sixtydigits.com</id>
-        <name>Sixty Digits Maven Repo</name>
-        <url>http://maven.sixtydigits.com</url>
-        <snapshots>
-            <enabled>true</enabled>
-        </snapshots>
-    </repository>
-</repositories>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central Repo</name>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>maven.scale7.org</id>
+            <name>Scale7 Maven Repo</name>
+            <url>http://github.com/s7/mvnrepo/raw/master</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <build>
         <pluginManagement>
             <plugins>
@@ -113,37 +113,34 @@
                         </execution>
                     </executions>
                 </plugin>
-                <!-- Broken as of the 2010-07-31 release of Cassandra 0.7.0
                 <plugin>
-                    <groupId>com.sixtydigits.cassandra</groupId>
-                    <artifactId>maven-cassandra-plugin</artifactId>
-                    <version>0.7.0-SNAPSHOT</version>
-                    <configuration>
-                        <cassandraConfig>${cassandra.config}</cassandraConfig>
-                        <endless>true</endless>
-                        <loadSchemaFromYaml>true</loadSchemaFromYaml>
-                    </configuration>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.0-beta-1</version>
                     <executions>
                         <execution>
-                            <id>start-cassandra</id>
-                            <phase>pre-integration-test</phase>
+                            <id>enforce-deploy</id>
+                            <phase>deploy</phase>
                             <goals>
-                                <goal>start</goal>
+                                <goal>enforce</goal>
                             </goals>
                             <configuration>
-                                <endless>false</endless>
+                                <rules>
+                                    <requireProperty>
+                                        <property>scale7.deploy.dir</property>
+                                        <message>"You must specify the scale7.deploy.dir property in your settings.xml
+                                            in order to deploy"
+                                        </message>
+                                    </requireProperty>
+                                </rules>
+                                <fail>true</fail>
                             </configuration>
                         </execution>
                     </executions>
                 </plugin>
-                -->
             </plugins>
         </pluginManagement>
         <plugins>
-            <!--<plugin>
-                <groupId>com.sixtydigits.cassandra</groupId>
-                <artifactId>maven-cassandra-plugin</artifactId>
-            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -152,13 +149,22 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
     <distributionManagement>
         <repository>
-            <id>maven.sixtydigits.com</id>
-            <name>Sixty Digits Maven Repo</name>
-            <url>scp://maven.sixtydigits.com/var/www/maven</url>
+            <id>maven.scale7.org.local</id>
+            <name>Deployment Staging Area</name>
+            <!--
+                   The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file and it should
+                   point to the directory that contains the clone of http://github.com/s7/mvnrepo.
+                   e.g. file:///Users/dan/Development/Projects/scale7/mvnrepo
+               -->
+            <url>${scale7.deploy.dir}</url>
             <layout>default</layout>
         </repository>
     </distributionManagement>
