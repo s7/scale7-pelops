@@ -4,9 +4,10 @@ makes the underlying semantics clear to reviewers. Without compromising power, P
 productivity and code quality while greatly reducing the learning curve for new users. In fact, these objectives go
 hand in hand.
 
-To use pelops in a maven project:
+To use Pelops in a maven project:
 
 1. Add the following repository to your project repositories:
+
     <repositories>
         <repository>
             <id>central</id>
@@ -22,10 +23,13 @@ To use pelops in a maven project:
             </snapshots>
         </repository>
     </repositories>
+
 2. Add the following dep to your project:
+
     <dependency>
         <groupId>org.scale7</groupId>
         <artifactId>scale7-pelops</artifactId>
         <version>0.903-0.7.0-SNAPSHOT</version>
     </dependency>
-3. Start using pelops.
+
+3. Start using Pelops.
