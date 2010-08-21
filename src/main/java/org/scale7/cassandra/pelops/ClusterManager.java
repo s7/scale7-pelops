@@ -4,7 +4,7 @@ import org.apache.cassandra.thrift.Cassandra.Client;
 
 public class ClusterManager extends ManagerOperand {
 
-	ClusterManager(Cluster cluster) {
+	public ClusterManager(Cluster cluster) {
 		super(cluster, null, 0);
 	}
 

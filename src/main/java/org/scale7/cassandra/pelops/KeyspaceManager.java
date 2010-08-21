@@ -18,7 +18,7 @@ public class KeyspaceManager extends ManagerOperand {
     public static final String KSDEF_STRATEGY_RACK_UNAWARE = "org.apache.cassandra.locator.RackUnawareStrategy";
     public static final String KSDEF_STRATEGY_RACK_AWARE = "org.apache.cassandra.locator.RackAwareStrategy";
 
-    protected KeyspaceManager(Cluster cluster) {
+    public KeyspaceManager(Cluster cluster) {
         super(cluster);
     }
 
