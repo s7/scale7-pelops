@@ -4,7 +4,7 @@ makes the underlying semantics clear to reviewers. Without compromising power, P
 productivity and code quality while greatly reducing the learning curve for new users. In fact, these objectives go
 hand in hand.
 
-To use Pelops in a maven project:
+To use Pelops with Cassandra 0.7.x use the following:
 
 1. Add the following repository to your project repositories:
 
@@ -34,6 +34,13 @@ To use Pelops in a maven project:
 
 3. Start using Pelops.
 
+Cassandra 0.6.x users should use:
+
+		<dependency>
+			<groupId>org.wyki</groupId>
+			<artifactId>pelops</artifactId>
+			<version>0.805-0.6.4</version>
+		</dependency>
 
 More Resources:
 [Mailing List](http://groups.google.com/group/scale7)
