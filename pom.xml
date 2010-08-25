@@ -17,6 +17,34 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cassandra.version>0.7.0-beta1</cassandra.version>
     </properties>
+    <developers>
+        <developer>
+            <name>Dominic Williams</name>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Dan Washusen</name>
+            <roles>
+                <role>Contributor</role>
+            </roles>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:http://github.com/s7/scale7-pelops.git</connection>
+        <developerConnection>scm:git:ssh://github.com/s7/scale7-pelops.git</developerConnection>
+        <url>http://github.com/s7/scale7-pelops</url>
+    </scm>
+    <issueManagement>
+        <url>http://github.com/s7/scale7-pelops/issues</url>
+    </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>users</name>
+            <archive>http://groups.google.com/group/scale7</archive>
+        </mailingList>
+    </mailingLists>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -199,6 +227,30 @@
             </plugin>
         </plugins>
     </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.0.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-changelog-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+        </plugins>
+    </reporting>
     <distributionManagement>
         <repository>
             <id>maven.scale7.org.local</id>
