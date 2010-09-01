@@ -12,11 +12,28 @@ public class Cluster {
 	final String[] contactNodes;
 	String[] currentNodes;
 
-	public Cluster(String[] contactNodes, int thriftPort) {
+    public Cluster(String contactNodes, int thriftPort) {
+        this(splitAndTrim(contactNodes), thriftPort);
+    }
+
+    public Cluster(String[] contactNodes, int thriftPort) {
 		this.thriftPort = thriftPort;
 		this.contactNodes = contactNodes;
 		this.currentNodes = contactNodes;
 	}
+
+    /**
+     * Splits the provided string based on "," and trims leading or trailing whitespace for each host.
+     * @param contactNodes the nodes
+     * @return the split and trimmed nodes
+     */
+    private static String[] splitAndTrim(String contactNodes) {
+        String[] splitContactNodes = contactNodes.split(",");
+        for (int i = 0; i < splitContactNodes.length; i++) {
+            splitContactNodes[i] = splitContactNodes[i].trim();
+        }
+        return splitContactNodes;
+    }
 
 	/**
 	 * The thrift port on which the cluster listens

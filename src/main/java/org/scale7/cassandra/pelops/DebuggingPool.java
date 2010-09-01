@@ -35,7 +35,9 @@ public class DebuggingPool extends ThriftPoolBase {
 
     @Override
     public IConnection getConnection() throws Exception {
-        return new Connection(cluster.getCurrentNodesSnapshot()[0], cluster.getThriftPort(), keyspace);
+        Connection connection = new Connection(cluster.getCurrentNodesSnapshot()[0], cluster.getThriftPort(), keyspace);
+        connection.open(-1);
+        return connection;
     }
 
     @Override

@@ -14,6 +14,7 @@ public class ColumnFamilyManager extends ManagerOperand {
     public static final String CFDEF_COMPARATOR_LONG = "LongType";
     public static final String CFDEF_COMPARATOR_LEXICAL_UUID = "LexicalUUIDType";
     public static final String CFDEF_COMPARATOR_TIME_UUID = "TimeUUIDType";
+    public static final String CFDEF_COMPARATOR_INTEGER = "IntegerType";
 
     public ColumnFamilyManager(Cluster cluster, String keyspace) {
         super(cluster, keyspace);

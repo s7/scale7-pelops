@@ -80,6 +80,16 @@ public class Mutator extends Operand {
      * @param columns                   The list of columns to write
      */
     public void writeColumns(String colFamily, String rowKey, List<Column> columns) {
+        writeColumns(colFamily, Bytes.fromUTF8(rowKey), columns);
+    }
+
+    /**
+     * Write a list of columns to a key
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param columns                   The list of columns to write
+     */
+    public void writeColumns(String colFamily, Bytes rowKey, List<Column> columns) {
         for (Column column : columns) {
             writeColumn(colFamily, rowKey, column);
         }

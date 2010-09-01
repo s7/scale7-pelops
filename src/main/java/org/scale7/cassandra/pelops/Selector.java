@@ -434,7 +434,19 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public List<Column> getColumnsFromRow(String columnFamily, String rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
+    }
 
+    /**
+     * Retrieve columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param colPredicate                  The column selector predicate
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getColumnsFromRow(String columnFamily, Bytes rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
     }
 
@@ -448,8 +460,7 @@ public class Selector extends Operand {
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
-
+    public List<Column> getSubColumnsFromRow(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
@@ -464,7 +475,6 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
-
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
@@ -522,6 +532,7 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
+    @Deprecated
     public enum OrderType {
         BytesType,
         AsciiType,
@@ -542,6 +553,7 @@ public class Selector extends Operand {
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
      * @throws Exception if an error occurs
+     * @deprecated Use {@link #getPageOfColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
      */
     public List<Column> getPageOfColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
@@ -571,8 +583,9 @@ public class Selector extends Operand {
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
      * @throws Exception if an error occurs
+     * @deprecated Use {@link #getPageOfColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
      */
-    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final String rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
 
         SlicePredicate predicate;
         if (startBeyondName == null)
@@ -590,9 +603,33 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+        SlicePredicate predicate;
+        if (startBeyondName == null) {
+            predicate = Selector.newColumnsPredicateAll(reversed, count);
+            return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+        } else {
+            int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
+            predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
+            List<Column> columns = getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+            return columns.subList(1, columns.size()); // as per incrementedCount
+        }
+    }
+
+    /**
      * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
-     * @param rowKey                        The key of the row
      * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
      * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
      * @param orderType                     The scheme used to determine how the column names are ordered
      * @param reversed                      Whether the scan should proceed in descending super column name order
@@ -600,9 +637,27 @@ public class Selector extends Operand {
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
      * @throws Exception if an error occurs
+     * @deprecated Use {@link #getPageOfSuperColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
      */
     public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+        return getPageOfSuperColumnsFromRow(columnFamily, Bytes.fromUTF8(rowKey), startBeyondName != null ? Bytes.fromUTF8(startBeyondName) : null, orderType, reversed, count, cLevel);
+    }
 
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param orderType                     The scheme used to determine how the column names are ordered
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     * @deprecated Use {@link #getPageOfSuperColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
+     */
+    @Deprecated
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
         SlicePredicate predicate;
         if (startBeyondName == null)
             predicate = Selector.newColumnsPredicateAll(reversed, count);
@@ -620,31 +675,25 @@ public class Selector extends Operand {
 
     /**
      * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
-     * @param rowKey                        The key of the row
      * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
      * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param orderType                     The scheme used to determine how the column names are ordered
      * @param reversed                      Whether the scan should proceed in descending super column name order
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
      * @throws Exception if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final String rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-
-        SlicePredicate predicate;
-        if (startBeyondName == null)
-            predicate = Selector.newColumnsPredicateAll(reversed, count);
-        else {
-            Bytes startName;
-            if (reversed)
-                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
-            else
-                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
-
-            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+        if (startBeyondName == null) {
+            SlicePredicate predicate = Selector.newColumnsPredicateAll(reversed, count);
+            return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+        } else {
+            int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
+            SlicePredicate predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
+            List<SuperColumn> fromRow = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+            return fromRow.subList(1, fromRow.size()); // as per incrementedCount
         }
-        return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
     }
 
     /**
@@ -657,7 +706,6 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
-
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -1376,6 +1424,7 @@ public class Selector extends Operand {
      * @return                               The bumped up column name, or same value if there is no higher value
      * @throws UnsupportedEncodingException if an error occurs
      */
+    @Deprecated
     public static Bytes bumpUpColumnName(String colName, OrderType orderType) {
         if (orderType != OrderType.UTF8Type)
             throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
@@ -1401,6 +1450,7 @@ public class Selector extends Operand {
      * @return                               The bumped up column name, or same value if there is no higher value
      * @throws UnsupportedEncodingException if an error occurs
      */
+    @Deprecated
     public static Bytes bumpUpColumnName(Bytes colName, OrderType orderType) {
 
         if (orderType == OrderType.BytesType) {
@@ -1461,6 +1511,7 @@ public class Selector extends Operand {
      * @param colName                        The column name
      * @return                               The bumped down column name, or same value if there is no lower value
      */
+    @Deprecated
     public static Bytes bumpDownColumnName(String colName, OrderType orderType) {
         if (orderType != OrderType.UTF8Type)
             throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
@@ -1485,6 +1536,7 @@ public class Selector extends Operand {
      * @param colName                        The column name
      * @return                               The bumped down column name, or same value if there is no lower value
      */
+    @Deprecated
     public static Bytes bumpDownColumnName(Bytes colName, OrderType orderType) {
 
         if (orderType == OrderType.BytesType) {

@@ -59,7 +59,7 @@ public class Operand {
                     // Re-throw application-level exceptions immediately.
 					throw e;
 				}
-				logger.warn("Operation failed as result of network exception. Connection must be destroyed because of: {} {}", e.getClass(), e.getMessage());
+				logger.warn("Operation failed as result of network exception. Connection must be destroyed.  See cause for details...", e);
 				// This connection is "broken" by network timeout or other problem.
                 conn.release(true);
 				// Should we try again?

@@ -4,28 +4,43 @@ makes the underlying semantics clear to reviewers. Without compromising power, P
 productivity and code quality while greatly reducing the learning curve for new users. In fact, these objectives go
 hand in hand.
 
-To use pelops in a maven project:
+To use Pelops with Cassandra 0.7.x use the following:
 
 1. Add the following repository to your project repositories:
-    <repositories>
-        <repository>
-            <id>central</id>
-            <name>Maven Central Repo</name>
-            <url>http://repo1.maven.org/maven2</url>
-        </repository>
-        <repository>
-            <id>maven.scale7.org</id>
-            <name>Scale7 Maven Repo</name>
-            <url>http://github.com/s7/mvnrepo/raw/master</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+
+		<repositories>
+			<repository>
+				<id>central</id>
+				<name>Maven Central Repo</name>
+				<url>http://repo1.maven.org/maven2</url>
+			</repository>
+			<repository>
+				<id>maven.scale7.org</id>
+				<name>Scale7 Maven Repo</name>
+				<url>http://github.com/s7/mvnrepo/raw/master</url>
+				<snapshots>
+					<enabled>true</enabled>
+				</snapshots>
+			</repository>
+		</repositories>
+
 2. Add the following dep to your project:
-    <dependency>
-        <groupId>org.scale7</groupId>
-        <artifactId>scale7-pelops</artifactId>
-        <version>0.903-0.7.0-SNAPSHOT</version>
-    </dependency>
-3. Start using pelops.
+
+		<dependency>
+			<groupId>org.scale7</groupId>
+			<artifactId>scale7-pelops</artifactId>
+			<version>0.903-0.7.0-SNAPSHOT</version>
+		</dependency>
+
+3. Start using Pelops.
+
+Cassandra 0.6.x users should use:
+
+		<dependency>
+			<groupId>org.wyki</groupId>
+			<artifactId>pelops</artifactId>
+			<version>0.805-0.6.4</version>
+		</dependency>
+
+More Resources:
+[Mailing List](http://groups.google.com/group/scale7)
