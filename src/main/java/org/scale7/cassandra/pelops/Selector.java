@@ -474,6 +474,20 @@ public class Selector extends Operand {
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
+     * @param superColName                  The name of the super column
+     * @param colPredicate                  The sub-column selector predicate
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws Exception if an error occurs
+     */
     public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
@@ -613,6 +627,51 @@ public class Selector extends Operand {
      * @return                              A page of columns
      * @throws Exception if an error occurs
      */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
     public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
         SlicePredicate predicate;
         if (startBeyondName == null) {
@@ -678,6 +737,51 @@ public class Selector extends Operand {
             predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
         }
         return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
     }
 
     /**
