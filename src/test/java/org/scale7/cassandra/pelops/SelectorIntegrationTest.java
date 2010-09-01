@@ -115,6 +115,41 @@ public class SelectorIntegrationTest {
     }
 
     @Test
+    public void testGetPageOfColumnsFromRowWithNoMatches() throws Exception {
+        Selector selector = pool.createSelector();
+        char[] expectedColumns = new char[] { };
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('z'), false, expectedColumns.length, ConsistencyLevel.ONE);
+
+        veryifyColumns(expectedColumns, columns);
+    }
+
+    @Test
+    public void testGetPageOfColumnsFromRowWithOffsetAndInsufficientMatches() throws Exception {
+        Selector selector = pool.createSelector();
+        char[] expectedColumns = new char[] { 'x', 'y', 'z' };
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('w'), false, 1000, ConsistencyLevel.ONE);
+
+        veryifyColumns(expectedColumns, columns);
+    }
+
+    @Test
+    public void testGetPageOfColumnsFromRowWithOffsetThatDoesNotExist() throws Exception {
+        Selector selector = pool.createSelector();
+        char[] expectedColumns = new char[] { 'a', 'b', 'c', 'd', 'e' };
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('`'), false, expectedColumns.length, ConsistencyLevel.ONE);
+
+        veryifyColumns(expectedColumns, columns);
+    }
+
+    @Test
+    public void testGetPageOfColumnsFromRowWithOffsetThatDoesNotExistAndInsufficientMatches() throws Exception {
+        Selector selector = pool.createSelector();
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('`'), false, 1000, ConsistencyLevel.ONE);
+
+        assertEquals("Wrong number of columns returned", 26, columns.size());
+    }
+
+    @Test
     public void testGetPageOfColumnsFromRowReverse() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'z', 'y', 'x', 'w', 'v' };
@@ -158,6 +193,24 @@ public class SelectorIntegrationTest {
     }
 
     @Test
+    public void testGetPageOfSuperColumnsFromRowWithOffsetAndInsufficientMatches() throws Exception {
+        Selector selector = pool.createSelector();
+        char[] expectedColumns = new char[] { 'X', 'Y', 'Z' };
+        List<SuperColumn> superColumns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(50l), fromChar('W'), false, expectedColumns.length, ConsistencyLevel.ONE);
+
+        verifySuperColumns(expectedColumns, superColumns);
+    }
+
+    @Test
+    public void testGetPageOfSuperColumnsFromRowWithOffsetThatDoesNotExist() throws Exception {
+        Selector selector = pool.createSelector();
+        char[] expectedColumns = new char[] { 'A', 'B', 'C', 'D', 'E' };
+        List<SuperColumn> columns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(25l), fromChar('@'), false, expectedColumns.length, ConsistencyLevel.ONE);
+
+        verifySuperColumns(expectedColumns, columns);
+    }
+
+    @Test
     public void testGetPageOfSuperColumnsFromRowReverse() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'Z', 'Y', 'X', 'W', 'V' };
@@ -176,8 +229,9 @@ public class SelectorIntegrationTest {
     }
 
     private void verifySuperColumns(char[] expectedColumns, List<SuperColumn> superColumns) {
+        assertEquals("Wrong number of super columns returned", expectedColumns.length, superColumns.size());
         for (int i = 0; i < expectedColumns.length; i++) {
-            assertEquals("Wrong column value returned", expectedColumns[i], fromBytes(superColumns.get(i).getName()).toChar());
+            assertEquals("Wrong super column value returned", expectedColumns[i], fromBytes(superColumns.get(i).getName()).toChar());
         }
     }
 }

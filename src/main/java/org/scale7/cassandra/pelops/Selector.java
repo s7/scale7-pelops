@@ -615,14 +615,24 @@ public class Selector extends Operand {
      */
     public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
         SlicePredicate predicate;
-        if (startBeyondName == null) {
+        if (Bytes.nullSafeGet(startBeyondName) == null) {
             predicate = Selector.newColumnsPredicateAll(reversed, count);
             return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
         } else {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
             List<Column> columns = getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            return columns.subList(1, columns.size()); // as per incrementedCount
+            if (columns.isEmpty()) {
+                return columns;
+            } else {
+                // if the first row matches the offset then ignore it
+                if (Arrays.equals(startBeyondName.getBytes(), columns.get(0).getValue())) {
+                    return columns.subList(1, columns.size()); // as per incrementedCount
+                } else {
+                    // it's possible that less rows were returned than were asked for
+                    return columns.subList(0, columns.size() < count ? columns.size() : count); // as per incrementedCount
+                }
+            }
         }
     }
 
@@ -685,14 +695,24 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-        if (startBeyondName == null) {
+        if (Bytes.nullSafeGet(startBeyondName) == null) {
             SlicePredicate predicate = Selector.newColumnsPredicateAll(reversed, count);
             return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
         } else {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             SlicePredicate predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
-            List<SuperColumn> fromRow = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            return fromRow.subList(1, fromRow.size()); // as per incrementedCount
+            List<SuperColumn> columns = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+            if (columns.isEmpty()) {
+                return columns;
+            } else {
+                // if the first row matches the offset then ignore it
+                if (Arrays.equals(startBeyondName.getBytes(), columns.get(0).getName())) {
+                    return columns.subList(1, columns.size()); // as per incrementedCount
+                } else {
+                    // it's possible that less rows were returned than were asked for
+                    return columns.subList(0, columns.size() < count ? columns.size() : count); // as per incrementedCount
+                }
+            }
         }
     }
 
