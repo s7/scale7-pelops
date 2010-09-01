@@ -821,8 +821,10 @@ public class Selector extends Operand {
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
+                    for (ColumnOrSuperColumn cosc : coscList) {
+                        assert cosc.super_column != null : "The super column should not be null";
                         columns.add(cosc.super_column);
+                    }
                     result.put(Bytes.fromBytes(rowKey), columns);
                 }
                 return result;
@@ -868,8 +870,10 @@ public class Selector extends Operand {
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<Column> columns = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
+                    for (ColumnOrSuperColumn cosc : coscList) {
+                        assert cosc.column != null : "The column should not be null";
                         columns.add(cosc.column);
+                    }
                     result.put(Bytes.fromBytes(rowKey), columns);
                 }
                 return result;
