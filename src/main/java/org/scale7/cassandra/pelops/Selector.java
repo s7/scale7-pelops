@@ -30,7 +30,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -55,7 +55,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -81,7 +81,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -108,7 +108,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -135,7 +135,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -162,7 +162,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -188,7 +188,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -213,7 +213,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -1186,6 +1186,15 @@ public class Selector extends Operand {
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, String superColName) throws ArrayIndexOutOfBoundsException {
         return getSuperColumn(superColumns, fromUTF8(superColName));
+    }
+
+    /**
+     * Get the name of a column as a UTF8 string
+     * @param column							The column
+     * @return									The <code>byte[]</code> name as a UTF8 string
+     */
+    public static String getColumnStringName(Column column) {
+    	return toUTF8(column.getName());
     }
 
     /**
