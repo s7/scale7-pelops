@@ -131,7 +131,6 @@ public class Pelops {
      * Create a <code>ClusterManager</code> object for use managing the cluster. For example, querying
      * the version of the Cassandra software, or the cluster name.
      * @param cluster
-     * @param policy
      * @return
      */
     public static ClusterManager createClusterManager(Cluster cluster) {
@@ -142,7 +141,6 @@ public class Pelops {
      * Create a <code>KeyspaceManager</code> object for use managing keyspaces in the cluster. For example,
      * querying the list of keyspaces, or adding a new keyspace.
      * @param cluster
-     * @param policy
      * @return
      */
     public static KeyspaceManager createKeyspaceManager(Cluster cluster) {

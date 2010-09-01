@@ -60,7 +60,6 @@ public class CachePerNodePool extends ThriftPoolBase {
     /**
      * Constructs a pool instance.
      * Note: unless you are performing management options the keyspace should be provided.
-     * @param contactNodes the nodes to contact
      * @param defaultPort the port to content the nodes on (9160)
      * @param keyspace the keyspace to use (note: as of 0.7.0 this is basically a required parameter)
      * @param generalPolicy the general pelops policy
