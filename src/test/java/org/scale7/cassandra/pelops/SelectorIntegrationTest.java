@@ -102,7 +102,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'a', 'b', 'c', 'd', 'e' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), null, false, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'f', 'g', 'h', 'i', 'j' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('e'), false, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('z'), false, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'x', 'y', 'z' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('w'), false, 1000, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -138,7 +138,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'a', 'b', 'c', 'd', 'e' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('`'), false, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -155,7 +155,7 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'z', 'y', 'x', 'w', 'v' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), null, true, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
     @Test
@@ -164,10 +164,10 @@ public class SelectorIntegrationTest {
         char[] expectedColumns = new char[] { 'u', 't', 's', 'r', 'q' };
         List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), fromChar('v'), true, expectedColumns.length, ConsistencyLevel.ONE);
 
-        veryifyColumns(expectedColumns, columns);
+        verifyColumns(expectedColumns, columns);
     }
 
-    private void veryifyColumns(char[] expectedColumns, List<Column> columns) {
+    private void verifyColumns(char[] expectedColumns, List<Column> columns) {
         assertEquals("Wrong number of columns returned", expectedColumns.length, columns.size());
         for (int i = 0; i < expectedColumns.length; i++) {
             assertEquals("Wrong column value returned", expectedColumns[i], fromBytes(columns.get(i).getValue()).toChar());
