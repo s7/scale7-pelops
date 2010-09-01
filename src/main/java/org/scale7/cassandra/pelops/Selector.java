@@ -622,7 +622,14 @@ public class Selector extends Operand {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
             List<Column> columns = getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            return columns.subList(1, columns.size()); // as per incrementedCount
+            if (columns.size() > 0) {
+            	Column first = columns.get(0);
+            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            		return columns.subList(1, columns.size());
+            	else if (columns.size() == incrementedCount)
+            		return columns.subList(0, columns.size()-1);
+            }
+            return columns;
         }
     }
 
@@ -691,8 +698,15 @@ public class Selector extends Operand {
         } else {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             SlicePredicate predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
-            List<SuperColumn> fromRow = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            return fromRow.subList(1, fromRow.size()); // as per incrementedCount
+            List<SuperColumn> columns = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
+            if (columns.size() > 0) {
+            	SuperColumn first = columns.get(0);
+            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            		return columns.subList(1, columns.size());
+            	else if (columns.size() == incrementedCount)
+            		return columns.subList(0, columns.size()-1);
+            }
+            return columns;
         }
     }
 
