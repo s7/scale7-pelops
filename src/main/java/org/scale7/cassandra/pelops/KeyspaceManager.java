@@ -3,18 +3,21 @@ package org.scale7.cassandra.pelops;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
 import org.apache.cassandra.thrift.Cassandra.Client;
+import org.scale7.portability.SystemProxy;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Management operations need to be applied to a single node.  As a result instances of this class hold a connection so
- * it's very important to call the {@link #release()} method in a finally block.
+ * Management operations need to be applied to a single node.
  *
  * See http://wiki.apache.org/cassandra/LiveSchemaUpdates for more details.
  */
 public class KeyspaceManager extends ManagerOperand {
+    private static final Logger logger = SystemProxy.getLoggerFromFactory(KeyspaceManager.class);
+
     public static final String KSDEF_STRATEGY_RACK_UNAWARE = "org.apache.cassandra.locator.RackUnawareStrategy";
     public static final String KSDEF_STRATEGY_RACK_AWARE = "org.apache.cassandra.locator.RackAwareStrategy";
 
@@ -53,32 +56,44 @@ public class KeyspaceManager extends ManagerOperand {
 	}
 
     public String addKeyspace(final KsDef keyspaceDefinition) throws Exception {
+        if (logger.isInfoEnabled()) logger.info("Adding keyspace '{}'", keyspaceDefinition.getName());
         IManagerOperation<String> operation = new IManagerOperation<String>() {
             @Override
             public String execute(Client conn) throws Exception {
                 return conn.system_add_keyspace(keyspaceDefinition);
             }
         };
-        return tryOperation(operation);
+        String schemaVersion = tryOperation(operation);
+        if (logger.isInfoEnabled()) logger.info("Added keyspace '{}', schema version is now '{}'", new Object[] {keyspaceDefinition.getName(), schemaVersion});
+
+        return schemaVersion;
     }
 
     public String dropKeyspace(final String keyspace) throws Exception {
+        if (logger.isInfoEnabled()) logger.info("Dropping keyspace '{}'", keyspace);
         IManagerOperation<String> operation = new IManagerOperation<String>() {
             @Override
             public String execute(Client conn) throws Exception {
                 return conn.system_drop_keyspace(keyspace);
             }
         };
-        return tryOperation(operation);
+        String schemaVersion = tryOperation(operation);
+        if (logger.isInfoEnabled()) logger.info("Dropped keyspace '{}', schema version is now '{}'", keyspace, schemaVersion);
+
+        return schemaVersion;
     }
 
     public String renameKeyspace(final String oldName, final String newName) throws Exception {
+        if (logger.isInfoEnabled()) logger.info("Renaming keyspace '{}' to '{}'", oldName, newName);
         IManagerOperation<String> operation = new IManagerOperation<String>() {
             @Override
             public String execute(Client conn) throws Exception {
                 return conn.system_rename_keyspace(oldName, newName);
             }
         };
-        return tryOperation(operation);
+        String schemaVersion = tryOperation(operation);
+        if (logger.isInfoEnabled()) logger.info("Renamed keyspace '{}' to '{}', schema version is now '{}'", new Object[] {oldName, newName, schemaVersion});
+
+        return schemaVersion;
     }
 }
