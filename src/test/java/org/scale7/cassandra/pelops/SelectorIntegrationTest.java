@@ -22,7 +22,7 @@ import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 public class SelectorIntegrationTest {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(SelectorIntegrationTest.class);
 
-    public static final String KEYSPACE = "Pelops-Testing";
+    public static final String KEYSPACE = "PelopsTesting";
     public static final String CF = "SEL_CF";
     public static final String SCF = "SEL_SCF";
 
@@ -34,12 +34,20 @@ public class SelectorIntegrationTest {
         KeyspaceManager keyspaceManager = new KeyspaceManager(cluster);
 
         // start from scratch
-        if (keyspaceManager.getKeyspaceNames().contains(KEYSPACE)) {
-            keyspaceManager.dropKeyspace(KEYSPACE);
-        }
+        List<KsDef> keyspaces = keyspaceManager.getKeyspaceNames();
+        for (KsDef ksDef : keyspaces)
+        	if (ksDef.name.equals(KEYSPACE)) {
+        		keyspaceManager.dropKeyspace(KEYSPACE);
+        	}
 
+        /* The horror... the horror... as Colonel Kurtz used to say
+         * - unfortunately Pelops-Testing became an illegal keyspace name
+         * and worse than that, all the replication strategies have changed... you may even
+         * need to rebuild your schemas to map rack_unaware_strategy -> simple_strategy!
+         * ahhyeeeeeeee
+         */
 
-        KsDef keyspaceDefinition = new KsDef(KEYSPACE, KeyspaceManager.KSDEF_STRATEGY_RACK_UNAWARE, 1, new ArrayList<CfDef>());
+        KsDef keyspaceDefinition = new KsDef(KEYSPACE, KeyspaceManager.KSDEF_STRATEGY_SIMPLE, 1, new ArrayList<CfDef>());
 
         // add a standard column family
         keyspaceDefinition.addToCf_defs(
@@ -93,7 +101,8 @@ public class SelectorIntegrationTest {
 
     @AfterClass
     public static void teardownPool() {
-        pool.shutdown();
+    	if (pool != null)
+    		pool.shutdown();
     }
 
     @Test

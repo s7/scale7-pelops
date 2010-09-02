@@ -40,8 +40,6 @@ public class Mutator extends Operand {
             public Void execute(IConnection conn) throws Exception {
                 // Send batch mutation job to Thrift connection
                 conn.getAPI().batch_mutate(convertedBatch, cLevel);
-                // Flush connection
-                conn.flush();
                 // Nothing to return
                 return null;
             }

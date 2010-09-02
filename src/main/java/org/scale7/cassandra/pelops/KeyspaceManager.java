@@ -7,8 +7,6 @@ import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Management operations need to be applied to a single node.
@@ -18,17 +16,19 @@ import java.util.Set;
 public class KeyspaceManager extends ManagerOperand {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(KeyspaceManager.class);
 
-    public static final String KSDEF_STRATEGY_RACK_UNAWARE = "org.apache.cassandra.locator.RackUnawareStrategy";
-    public static final String KSDEF_STRATEGY_RACK_AWARE = "org.apache.cassandra.locator.RackAwareStrategy";
+    public static final String KSDEF_STRATEGY_SIMPLE = "org.apache.cassandra.locator.SimpleStrategy";
+    public static final String KSDEF_STRATEGY_LOCAL = "org.apache.cassandra.locator.LocalStrategy";
+    public static final String KSDEF_STRATEGY_NETWORK_TOPOLOGY = "org.apache.cassandra.locator.NetworkTopologyStrategy";
+    public static final String KSDEF_STRATEGY_NETWORK_TOPOLOGY_OLD = "org.apache.cassandra.locator.OldNetworkTopologyStrategy";
 
     public KeyspaceManager(Cluster cluster) {
         super(cluster);
     }
 
-    public Set<String> getKeyspaceNames() throws Exception {
-        IManagerOperation<Set<String>> operation = new IManagerOperation<Set<String>>() {
+    public List<KsDef> getKeyspaceNames() throws Exception {
+        IManagerOperation<List<KsDef>> operation = new IManagerOperation<List<KsDef>>() {
             @Override
-            public Set<String> execute(Client conn) throws Exception {
+            public List<KsDef> execute(Client conn) throws Exception {
                 return conn.describe_keyspaces();
             }
         };
@@ -45,10 +45,10 @@ public class KeyspaceManager extends ManagerOperand {
         return tryOperation(operation);
     }
 
-    public Map<String, Map<String, String>> getKeyspaceSchema(final String keyspace) throws Exception {
-		IManagerOperation<Map<String, Map<String, String>>> operation = new IManagerOperation<Map<String, Map<String, String>>>() {
+    public KsDef getKeyspaceSchema(final String keyspace) throws Exception {
+		IManagerOperation<KsDef> operation = new IManagerOperation<KsDef>() {
 			@Override
-			public Map<String, Map<String, String>> execute(Client conn) throws Exception {
+			public KsDef execute(Client conn) throws Exception {
 				return conn.describe_keyspace(keyspace);
 			}
 		};

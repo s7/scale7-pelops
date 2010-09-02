@@ -3,8 +3,8 @@ package org.scale7.cassandra.pelops;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
+import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
 
 public class Cluster {
@@ -59,19 +59,19 @@ public class Cluster {
 	 */
 	public void refreshNodesSnapshot() throws Exception {
 		KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
-		Set<String> keyspaces = kspcMngr.getKeyspaceNames();
-		Iterator<String> k = keyspaces.iterator();
-		String appKeyspace = null;
+		List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
+		Iterator<KsDef> k = keyspaces.iterator();
+		KsDef appKeyspace = null;
 		while (k.hasNext()) {
-			String keyspace = k.next();
-			if (!keyspace.equals("system")) {
+			KsDef keyspace = k.next();
+			if (!keyspace.getName().equals("system")) {
 				appKeyspace = keyspace;
 				break;
 			}
 		}
 		if (appKeyspace == null)
 			throw new Exception("Cannot obtain a node list from a ring mapping. No keyspaces are defined for this cluster.");
-		List<TokenRange> mappings = kspcMngr.getKeyspaceRingMappings(appKeyspace);
+		List<TokenRange> mappings = kspcMngr.getKeyspaceRingMappings(appKeyspace.getName());
 		HashSet<String> clusterNodes = new HashSet<String>();
 		for (TokenRange tokenRange : mappings) {
 			List<String> endPointList = tokenRange.getEndpoints();

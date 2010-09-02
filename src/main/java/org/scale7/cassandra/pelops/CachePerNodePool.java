@@ -278,16 +278,6 @@ public class CachePerNodePool extends ThriftPoolBase {
 		}
 
 		/**
-		 * Flush the underlying transport connection used by Thrift. This is used to ensure all
-		 * writes have been sent to Cassandra.
-		 * @throws TTransportException if an error occurs while attempting to flush
-		 */
-		@Override
-        public void flush() throws TTransportException {
-			transport.flush();
-		}
-
-		/**
 		 * Release a <code>Connection</code> that has previously been taken from the pool. Specify whether
 		 * an exception has been thrown during usage of the connection. If an exception has been thrown, the
 		 * connection will not re-used since it may be corrupted (for example, it may contain partially written

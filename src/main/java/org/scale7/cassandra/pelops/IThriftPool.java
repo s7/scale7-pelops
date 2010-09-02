@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.Clock;
-import org.apache.thrift.transport.TTransportException;
 
 /**
  * The contract for connection pools used by pelops.
@@ -123,14 +122,6 @@ public interface IThriftPool {
          */
 
         String getNode();
-
-        /**
-         * Flush the underlying transport connection used by Thrift. This is used to ensure all
-         * writes have been sent to Cassandra.
-         *
-         * @throws TTransportException
-         */
-        void flush() throws TTransportException;
 
         /**
          * Release a <code>Connection</code> that has previously been taken from the pool. Specify whether

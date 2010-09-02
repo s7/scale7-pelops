@@ -85,11 +85,6 @@ public class DebuggingPool extends ThriftPoolBase {
         }
 
         @Override
-        public void flush() throws TTransportException {
-            transport.flush();
-        }
-
-        @Override
         public void release(boolean afterException) {
             close();
         }
