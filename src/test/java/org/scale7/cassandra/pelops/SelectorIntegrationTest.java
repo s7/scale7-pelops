@@ -100,7 +100,7 @@ public class SelectorIntegrationTest {
     public void testGetPageOfColumnsFromRow() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'a', 'b', 'c', 'd', 'e' };
-        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), null, false, expectedColumns.length, ConsistencyLevel.ONE);
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), (Bytes) null, false, expectedColumns.length, ConsistencyLevel.ONE);
 
         verifyColumns(expectedColumns, columns);
     }
@@ -153,7 +153,7 @@ public class SelectorIntegrationTest {
     public void testGetPageOfColumnsFromRowReverse() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'z', 'y', 'x', 'w', 'v' };
-        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), null, true, expectedColumns.length, ConsistencyLevel.ONE);
+        List<Column> columns = selector.getPageOfColumnsFromRow(CF, fromLong(25l), (Bytes) null, true, expectedColumns.length, ConsistencyLevel.ONE);
 
         verifyColumns(expectedColumns, columns);
     }
@@ -178,7 +178,7 @@ public class SelectorIntegrationTest {
     public void testGetPageOfSuperColumnsFromRow() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'A', 'B', 'C', 'D', 'E' };
-        List<SuperColumn> superColumns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(50l), null, false, expectedColumns.length, ConsistencyLevel.ONE);
+        List<SuperColumn> superColumns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(50l), (Bytes) null, false, expectedColumns.length, ConsistencyLevel.ONE);
 
         verifySuperColumns(expectedColumns, superColumns);
     }
@@ -214,7 +214,7 @@ public class SelectorIntegrationTest {
     public void testGetPageOfSuperColumnsFromRowReverse() throws Exception {
         Selector selector = pool.createSelector();
         char[] expectedColumns = new char[] { 'Z', 'Y', 'X', 'W', 'V' };
-        List<SuperColumn> superColumns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(50l), null, true, expectedColumns.length, ConsistencyLevel.ONE);
+        List<SuperColumn> superColumns = selector.getPageOfSuperColumnsFromRow(SCF, fromLong(50l), (Bytes) null, true, expectedColumns.length, ConsistencyLevel.ONE);
 
         verifySuperColumns(expectedColumns, superColumns);
     }

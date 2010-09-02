@@ -30,7 +30,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -55,7 +55,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -81,7 +81,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -108,7 +108,7 @@ public class Selector extends Operand {
      * @throws Exception
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -135,7 +135,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -162,7 +162,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -188,7 +188,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -213,7 +213,7 @@ public class Selector extends Operand {
      * @throws Exception if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), null, cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
     /**
@@ -474,6 +474,20 @@ public class Selector extends Operand {
      * @return                              A list of matching columns
      * @throws Exception if an error occurs
      */
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve sub-columns from a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
+     * @param superColName                  The name of the super column
+     * @param colPredicate                  The sub-column selector predicate
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws Exception if an error occurs
+     */
     public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
@@ -613,6 +627,51 @@ public class Selector extends Operand {
      * @return                              A page of columns
      * @throws Exception if an error occurs
      */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of columns
+     * @throws Exception if an error occurs
+     */
     public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
         SlicePredicate predicate;
         if (Bytes.nullSafeGet(startBeyondName) == null) {
@@ -622,17 +681,14 @@ public class Selector extends Operand {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
             List<Column> columns = getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            if (columns.isEmpty()) {
-                return columns;
-            } else {
-                // if the first row matches the offset then ignore it
-                if (Arrays.equals(startBeyondName.getBytes(), columns.get(0).getValue())) {
-                    return columns.subList(1, columns.size()); // as per incrementedCount
-                } else {
-                    // it's possible that less rows were returned than were asked for
-                    return columns.subList(0, columns.size() < count ? columns.size() : count); // as per incrementedCount
-                }
+            if (columns.size() > 0) {
+            	Column first = columns.get(0);
+            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            		return columns.subList(1, columns.size());
+            	else if (columns.size() == incrementedCount)
+            		return columns.subList(0, columns.size()-1);
             }
+            return columns;
         }
     }
 
@@ -694,6 +750,51 @@ public class Selector extends Operand {
      * @return                              A page of super columns
      * @throws Exception if an error occurs
      */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    	return getPageOfSuperColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
+    }
+
+    /**
+     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param count                         The maximum number of super columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws Exception if an error occurs
+     */
     public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
         if (Bytes.nullSafeGet(startBeyondName) == null) {
             SlicePredicate predicate = Selector.newColumnsPredicateAll(reversed, count);
@@ -702,17 +803,14 @@ public class Selector extends Operand {
             int incrementedCount = count + 1;  // cassandra will return the start row but the user is expecting a page of results beyond that point
             SlicePredicate predicate = Selector.newColumnsPredicate(startBeyondName, Bytes.EMPTY, reversed, incrementedCount);
             List<SuperColumn> columns = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-            if (columns.isEmpty()) {
-                return columns;
-            } else {
-                // if the first row matches the offset then ignore it
-                if (Arrays.equals(startBeyondName.getBytes(), columns.get(0).getName())) {
-                    return columns.subList(1, columns.size()); // as per incrementedCount
-                } else {
-                    // it's possible that less rows were returned than were asked for
-                    return columns.subList(0, columns.size() < count ? columns.size() : count); // as per incrementedCount
-                }
+            if (columns.size() > 0) {
+            	SuperColumn first = columns.get(0);
+            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            		return columns.subList(1, columns.size());
+            	else if (columns.size() == incrementedCount)
+            		return columns.subList(0, columns.size()-1);
             }
+            return columns;
         }
     }
 
@@ -1258,6 +1356,15 @@ public class Selector extends Operand {
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, String superColName) throws ArrayIndexOutOfBoundsException {
         return getSuperColumn(superColumns, fromUTF8(superColName));
+    }
+
+    /**
+     * Get the name of a column as a UTF8 string
+     * @param column							The column
+     * @return									The <code>byte[]</code> name as a UTF8 string
+     */
+    public static String getColumnStringName(Column column) {
+    	return toUTF8(column.getName());
     }
 
     /**

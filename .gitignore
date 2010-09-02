@@ -4,5 +4,5 @@
 *.iml
 *.ipr
 *.iws
-target/
-
+/target
+/pom.xml
