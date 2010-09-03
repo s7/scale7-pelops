@@ -12,6 +12,12 @@ import static junit.framework.Assert.*;
  */
 public class BytesUnitTest {
     @Test
+    public void testNullArray() {
+        Bytes bytes = new Bytes(null);
+        assertNotNull("The underlying array should not be null", bytes.getBytes());
+    }
+    
+    @Test
     public void testEquals() {
         Bytes one = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
         Bytes two = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
@@ -71,6 +77,15 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testByteObjectNull() {
+        Byte value = null;
+        Bytes from = Bytes.fromByte(value);
+        Byte to = from.toByte(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
     public void testBooleanTrue() {
         boolean value = true;
 
@@ -101,6 +116,16 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testBooleanObjectNull() {
+        Boolean value = null;
+
+        Bytes from = Bytes.fromBoolean(value);
+        Boolean to = from.toBoolean(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
     public void testChar() {
         char value = 'a';
         Bytes from = Bytes.fromChar(value);
@@ -112,6 +137,15 @@ public class BytesUnitTest {
     @Test
     public void testCharObject() {
         Character value = 'a';
+        Bytes from = Bytes.fromChar(value);
+        Character to = from.toChar(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testCharObjectNull() {
+        Character value = null;
         Bytes from = Bytes.fromChar(value);
         Character to = from.toChar(null);
 
@@ -137,6 +171,15 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testShortObjectNull() {
+        Short value = null;
+        Bytes from = Bytes.fromShort(value);
+        Short to = from.toShort(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
     public void testInt() {
         int value = Integer.MAX_VALUE;
         Bytes from = Bytes.fromInt(value);
@@ -148,6 +191,15 @@ public class BytesUnitTest {
     @Test
     public void testIntObject() {
         Integer value = Integer.MAX_VALUE;
+        Bytes from = Bytes.fromInt(value);
+        Integer to = from.toInt(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testIntObjectNull() {
+        Integer value = null;
         Bytes from = Bytes.fromInt(value);
         Integer to = from.toInt(null);
 
@@ -173,6 +225,15 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testLongObjectNull() {
+        Long value = null;
+        Bytes from = Bytes.fromLong(value);
+        Long to = from.toLong(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
     public void testFloat() {
         float value = Float.MAX_VALUE;
         Bytes from = Bytes.fromFloat(value);
@@ -183,6 +244,15 @@ public class BytesUnitTest {
 
     @Test
     public void testFloatObject() {
+        Float value = Float.MAX_VALUE;
+        Bytes from = Bytes.fromFloat(value);
+        Float to = from.toFloat(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testFloatObjectNull() {
         Float value = Float.MAX_VALUE;
         Bytes from = Bytes.fromFloat(value);
         Float to = from.toFloat(null);
@@ -209,8 +279,26 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testDoubleObjectNull() {
+        Double value = null;
+        Bytes from = Bytes.fromDouble(value);
+        Double to = from.toDouble(null);
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
     public void testUuid() {
         UUID value = UUID.randomUUID();
+        Bytes from = Bytes.fromUuid(value);
+        UUID to = from.toUuid();
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testUuidNull() {
+        UUID value = null;
         Bytes from = Bytes.fromUuid(value);
         UUID to = from.toUuid();
 
@@ -240,6 +328,15 @@ public class BytesUnitTest {
     @Test
     public void testTimeUuid() {
         com.eaio.uuid.UUID value = new com.eaio.uuid.UUID();
+        Bytes from = Bytes.fromTimeUuid(value);
+        com.eaio.uuid.UUID to = from.toTimeUuid();
+
+        assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testTimeUuidNull() {
+        com.eaio.uuid.UUID value = null;
         Bytes from = Bytes.fromTimeUuid(value);
         com.eaio.uuid.UUID to = from.toTimeUuid();
 

@@ -46,6 +46,9 @@ public class Bytes {
      * @param bytes the bytes
      */
     public Bytes(byte[] bytes) {
+        // null is not a valid column value
+        if (bytes == null) bytes = new byte[0];
+        
         this.bytes = bytes;
 
     }
@@ -92,7 +95,7 @@ public class Bytes {
      */
     @Override
     public int hashCode() {
-        if (hashCode == -1 && !isNull()) // only calculate the hash code once
+        if (hashCode == -1) // only calculate the hash code once
             hashCode = Arrays.hashCode(bytes);
 
         return hashCode;
@@ -113,7 +116,7 @@ public class Bytes {
      * @return the Bytes instance or null (if null is provided)
      */
     public static Bytes fromBytes(byte[] value) {
-        return value == null ? null : new Bytes(value);
+        return new Bytes(value);
     }
 
     /**
@@ -133,7 +136,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromChar(Character value) {
-        return value == null ? null : fromChar(value.charValue());
+        return value == null ? new Bytes(null) : fromChar(value.charValue());
     }
 
     /**
@@ -153,7 +156,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromByte(Byte value) {
-        return value == null ? null : fromByte(value.byteValue());
+        return value == null ? new Bytes(null) : fromByte(value.byteValue());
     }
 
     /**
@@ -173,7 +176,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromLong(Long value) {
-        return value == null ? null : fromLong(value.longValue());
+        return value == null ? new Bytes(null) : fromLong(value.longValue());
     }
 
     /**
@@ -193,7 +196,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromInt(Integer value) {
-        return value == null ? null : fromInt(value.intValue());
+        return value == null ? new Bytes(null) : fromInt(value.intValue());
     }
 
     /**
@@ -213,7 +216,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromShort(Short value) {
-        return value == null ? null : fromShort(value.shortValue());
+        return value == null ? new Bytes(null) : fromShort(value.shortValue());
     }
 
     /**
@@ -233,7 +236,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromDouble(Double value) {
-        return value == null ? null : fromDouble(value.doubleValue());
+        return value == null ? new Bytes(null) : fromDouble(value.doubleValue());
     }
 
     /**
@@ -253,7 +256,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromFloat(Float value) {
-        return value == null ? null : fromFloat(value.floatValue());
+        return value == null ? new Bytes(null) : fromFloat(value.floatValue());
     }
 
     /**
@@ -273,7 +276,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromBoolean(Boolean value) {
-        return value == null ? null : fromBoolean(value.booleanValue());
+        return value == null ? new Bytes(null) : fromBoolean(value.booleanValue());
     }
 
     /**
@@ -284,7 +287,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(UUID value) {
-        return value == null ? null : fromUuid(value.getMostSignificantBits(), value.getLeastSignificantBits());
+        return value == null ? new Bytes(null) : fromUuid(value.getMostSignificantBits(), value.getLeastSignificantBits());
     }
 
     /**
@@ -296,7 +299,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(String value) {
-        return value == null ? null : fromUuid(UUID.fromString(value));
+        return value == null ? new Bytes(null) : fromUuid(UUID.fromString(value));
     }
 
     /**
@@ -323,7 +326,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromTimeUuid(com.eaio.uuid.UUID value) {
-        return value == null ? null : fromTimeUuid(value.getTime(), value.getClockSeqAndNode());
+        return value == null ? new Bytes(null) : fromTimeUuid(value.getTime(), value.getClockSeqAndNode());
     }
 
     /**
@@ -335,7 +338,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromTimeUuid(String value) {
-        return value == null ? null : fromTimeUuid(new com.eaio.uuid.UUID(value));
+        return value == null ? new Bytes(null) : fromTimeUuid(new com.eaio.uuid.UUID(value));
     }
 
     /**
@@ -361,7 +364,7 @@ public class Bytes {
      * @see String#getBytes(java.nio.charset.Charset) for details on the format
      */
     public static Bytes fromUTF8(String value) {
-        return value == null ? null : new Bytes(value.getBytes(UTF8));
+        return value == null ? new Bytes(null) : new Bytes(value.getBytes(UTF8));
     }
 
 
@@ -371,7 +374,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Character toChar(Character defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toChar();
@@ -396,7 +399,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Byte toByte(Byte defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toByte();
@@ -422,7 +425,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Long toLong(Long defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toLong();
@@ -447,7 +450,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Integer toInt(Integer defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toInt();
@@ -472,7 +475,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Short toShort(Short defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toShort();
@@ -497,7 +500,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Double toDouble(Double defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toDouble();
@@ -522,7 +525,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Float toFloat(Float defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toFloat();
@@ -547,7 +550,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Boolean toBoolean(Boolean defaultIfNull) {
-        if (isNullOrEmpty())
+        if (isEmpty())
             return defaultIfNull;
         else
             return toBoolean();
@@ -572,7 +575,7 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public UUID toUuid() throws IllegalStateException {
-        if (isNullOrEmpty()) return null;
+        if (isEmpty()) return null;
 
         ByteBuffer buffer = ByteBuffer.wrap(this.bytes);
         try {
@@ -591,7 +594,7 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public com.eaio.uuid.UUID toTimeUuid() throws IllegalStateException {
-        if (isNullOrEmpty()) return null;
+        if (isEmpty()) return null;
 
         ByteBuffer buffer = ByteBuffer.wrap(this.bytes);
         try {
@@ -609,7 +612,7 @@ public class Bytes {
      * @return the deserialized instance or null if the backing array was null or empty
      */
     public String toUTF8() {
-        return isNull() ? null : new String(this.bytes, UTF8);
+        return isEmpty() ? null : new String(this.bytes, UTF8);
     }
 
     /**
@@ -637,15 +640,7 @@ public class Bytes {
         return bytes == null ? null : bytes.getBytes();
     }
 
-    private boolean isEmpty() {
+    public boolean isEmpty() {
         return this.length() == 0;
-    }
-
-    private boolean isNull() {
-        return this.bytes == null;
-    }
-
-    private boolean isNullOrEmpty() {
-        return isNull() || isEmpty();
     }
 }
