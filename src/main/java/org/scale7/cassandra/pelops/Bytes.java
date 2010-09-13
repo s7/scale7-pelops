@@ -12,6 +12,11 @@ import java.util.*;
  * <p>In an effort to provide a very stable and well tested marshalling strategy
  * this class uses the various methods available on {@link java.nio.ByteBuffer} to perform serialization.  The exceptions
  * to this are the UUID and String methods (see their javadoc comments for details).</p>
+ *
+ * <p>The down side of the marshalling strategy used in this class this class is a LOT of ByteBuffer instances being
+ * created.  If you think this will be an issue then consider avoiding the {@link #fromBoolean(boolean) various}
+ * {@link #toBoolean() helper} {@link #fromTimeUuid(com.eaio.uuid.UUID) methods} and instead use the
+ * {@link #fromBytes(byte[])} and {@link #getBytes()} methods directly.</p>
  */
 public class Bytes {
     public static final Bytes EMPTY = new Bytes(new byte[0]);
@@ -43,9 +48,6 @@ public class Bytes {
      * @param bytes the bytes
      */
     public Bytes(byte[] bytes) {
-        // null is not a valid column value
-        if (bytes == null) bytes = new byte[0];
-        
         this.bytes = bytes;
 
     }
@@ -371,7 +373,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Character toChar(Character defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toChar();
@@ -396,7 +398,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Byte toByte(Byte defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toByte();
@@ -422,7 +424,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Long toLong(Long defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toLong();
@@ -447,7 +449,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Integer toInt(Integer defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toInt();
@@ -472,7 +474,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Short toShort(Short defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toShort();
@@ -497,7 +499,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Double toDouble(Double defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toDouble();
@@ -522,7 +524,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Float toFloat(Float defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toFloat();
@@ -547,7 +549,7 @@ public class Bytes {
      * @return the deserialized instance
      */
     public Boolean toBoolean(Boolean defaultIfNull) {
-        if (isEmpty())
+        if (isNull())
             return defaultIfNull;
         else
             return toBoolean();
@@ -572,7 +574,7 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public UUID toUuid() throws IllegalStateException {
-        if (isEmpty()) return null;
+        if (isNull()) return null;
 
         ByteBuffer buffer = ByteBuffer.wrap(this.bytes);
         try {
@@ -591,7 +593,7 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public com.eaio.uuid.UUID toTimeUuid() throws IllegalStateException {
-        if (isEmpty()) return null;
+        if (isNull()) return null;
 
         ByteBuffer buffer = ByteBuffer.wrap(this.bytes);
         try {
@@ -609,7 +611,7 @@ public class Bytes {
      * @return the deserialized instance or null if the backing array was null or empty
      */
     public String toUTF8() {
-        return isEmpty() ? null : new String(this.bytes, UTF8);
+        return isNull() ? null : new String(this.bytes, UTF8);
     }
 
     /**
@@ -685,7 +687,7 @@ public class Bytes {
         return bytes == null ? null : bytes.getBytes();
     }
 
-    public boolean isEmpty() {
-        return this.length() == 0;
+    public boolean isNull() {
+        return this.bytes == null;
     }
 }

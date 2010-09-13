@@ -14,7 +14,7 @@ public class BytesUnitTest {
     @Test
     public void testNullArray() {
         Bytes bytes = new Bytes(null);
-        assertNotNull("The underlying array should not be null", bytes.getBytes());
+        assertNull("The underlying array should not be null", bytes.getBytes());
     }
     
     @Test
