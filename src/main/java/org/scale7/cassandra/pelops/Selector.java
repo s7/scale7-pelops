@@ -914,7 +914,7 @@ public class Selector extends Operand {
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToSet(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
@@ -944,7 +944,7 @@ public class Selector extends Operand {
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(toByteArrayList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToSet(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
@@ -963,7 +963,7 @@ public class Selector extends Operand {
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transform(rowKeys), colParent, colPredicate, cLevel);
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToSet(rowKeys), colParent, colPredicate, cLevel);
                 Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
@@ -984,7 +984,7 @@ public class Selector extends Operand {
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(toByteArrayList(rowKeys), colParent, colPredicate, cLevel);
+                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToSet(rowKeys), colParent, colPredicate, cLevel);
                 Map<String, List<Column>> result = new HashMap<String, List<Column>>();
                 for (byte[] rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);

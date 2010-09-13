@@ -38,6 +38,7 @@ public class StringHelper {
 	 * Convert a list of strings to a list of byte arrays
 	 * @param list
 	 * @return
+     * @deprecated Use {@link Bytes#transformUTF8ToList(java.util.Collection)} instead.
 	 */
     public static List<byte[]> toByteArrayList(List<String> list) {
         if (list == null)

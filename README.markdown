@@ -39,7 +39,7 @@ and use the latest build available from
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.904-0.7.0-SNAPSHOT</version>
+			<version>0.905-0.7.0-SNAPSHOT</version>
 		</dependency>
 
 Note: this version is the only one getting Pelops fixes and updates.

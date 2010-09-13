@@ -11,7 +11,7 @@ import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
-import static org.scale7.cassandra.pelops.Bytes.transform;
+import static org.scale7.cassandra.pelops.Bytes.transformBytesToSet;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -238,7 +238,7 @@ public class Mutator extends Operand {
      */
     public void deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
-        pred.setColumn_names(transform(colNames));
+        pred.setColumn_names(Bytes.transformBytesToList(colNames));
         Deletion deletion = new Deletion(clock);
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
@@ -394,7 +394,7 @@ public class Mutator extends Operand {
         // CASSANDRA-1027 allows for a null predicate
         deletion.setPredicate(
                 subColNames != null && !subColNames.isEmpty() ?
-                        new SlicePredicate().setColumn_names(transform(subColNames)) : null
+                        new SlicePredicate().setColumn_names(Bytes.transformBytesToList(subColNames)) : null
         );
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);

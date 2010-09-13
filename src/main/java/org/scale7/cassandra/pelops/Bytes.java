@@ -3,10 +3,7 @@ package org.scale7.cassandra.pelops;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Wraps a byte[] and provides useful methods to operate on it.  Also provides numerous factory methods to create instances
@@ -616,16 +613,64 @@ public class Bytes {
     }
 
     /**
-     * Transforms the provided list of {@link Bytes} instance into a list of byte arrays.
+     * Transforms the provided list of {@link Bytes} instances into a list of byte arrays.
      * @param arrays the list of Bytes instances
      * @return the list of byte arrays
      */
-    public static List<byte[]> transform(List<Bytes> arrays) {
+    public static Set<byte[]> transformBytesToSet(Collection<Bytes> arrays) {
+        if (arrays == null) return null;
+
+        Set<byte[]> transformed = new HashSet<byte[]>(arrays.size());
+        for (Bytes array : arrays) {
+            transformed.add(array.getBytes());
+        }
+
+        return transformed;
+    }
+
+    /**
+     * Transforms the provided list of {@link Bytes} instances into a list of byte arrays.
+     * @param arrays the list of Bytes instances
+     * @return the list of byte arrays
+     */
+    public static List<byte[]> transformBytesToList(Collection<Bytes> arrays) {
         if (arrays == null) return null;
 
         List<byte[]> transformed = new ArrayList<byte[]>(arrays.size());
         for (Bytes array : arrays) {
             transformed.add(array.getBytes());
+        }
+
+        return transformed;
+    }
+
+    /**
+     * Transforms the provided list of {@link String} instances into a list of byte arrays.
+     * @param strings the list of Bytes instances
+     * @return the list of byte arrays
+     */
+    public static Set<byte[]> transformUTF8ToSet(Collection<String> strings) {
+        if (strings == null) return null;
+
+        Set<byte[]> transformed = new HashSet<byte[]>(strings.size());
+        for (String string : strings) {
+            transformed.add(Bytes.fromUTF8(string).getBytes());
+        }
+
+        return transformed;
+    }
+
+    /**
+     * Transforms the provided list of {@link String} instances into a list of byte arrays.
+     * @param strings the list of Bytes instances
+     * @return the list of byte arrays
+     */
+    public static List<byte[]> transformUTF8ToList(Collection<String> strings) {
+        if (strings == null) return null;
+
+        List<byte[]> transformed = new ArrayList<byte[]>(strings.size());
+        for (String string : strings) {
+            transformed.add(Bytes.fromUTF8(string).getBytes());
         }
 
         return transformed;
