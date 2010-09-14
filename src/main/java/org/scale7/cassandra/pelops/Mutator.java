@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
 import org.scale7.cassandra.pelops.IThriftPool.IConnection;
+import org.scale7.portability.SystemProxy;
+import org.slf4j.Logger;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
@@ -23,6 +25,7 @@ import static org.scale7.cassandra.pelops.Bytes.transformBytesToSet;
  *
  */
 public class Mutator extends Operand {
+    private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
@@ -72,6 +75,28 @@ public class Mutator extends Operand {
     }
 
     /**
+     * Write a column value.  This method will automatically issue deletes if the deleteIfNullValue is true and the
+     * provided column does not have a value.
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param column                    The value of the column
+     * @param deleteIfNullValue         If true and the provided column does NOT have value (as determined by the
+     *                                  {@link org.apache.cassandra.thrift.Column#isSetValue()} method) then issue a
+     *                                  {@link #deleteColumn(String, Bytes, Bytes) delete} instead.
+     */
+    public void writeColumn(String colFamily, Bytes rowKey, Column column, boolean deleteIfNullValue) {
+        if (!deleteIfNullValue) {
+            writeColumn(colFamily, rowKey, column);
+        } else {
+            if (column.isSetValue()) {
+                writeColumn(colFamily, rowKey, column);
+            } else {
+                deleteColumn(colFamily, rowKey, Bytes.fromBytes(column.getName()));
+            }
+        }
+    }
+
+    /**
      * Write a list of columns to a key
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -90,6 +115,23 @@ public class Mutator extends Operand {
     public void writeColumns(String colFamily, Bytes rowKey, List<Column> columns) {
         for (Column column : columns) {
             writeColumn(colFamily, rowKey, column);
+        }
+    }
+
+    /**
+     * Write a list of columns to a key.  This method will automatically issue deletes if the deleteIfNullValue is true and the
+     * provided column does not have a value.
+     *
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param columns                   The list of columns to write
+     * @param deleteIfNullValue         If true and if the provided columns do NOT have value (as determined by the
+     *                                  {@link org.apache.cassandra.thrift.Column#isSetValue()} method) then issue a
+     *                                  {@link #deleteColumn(String, Bytes, Bytes) delete} instead.
+     */
+    public void writeColumns(String colFamily, Bytes rowKey, List<Column> columns, boolean deleteIfNullValue) {
+        for (Column column : columns) {
+            writeColumn(colFamily, rowKey, column, deleteIfNullValue);
         }
     }
 
@@ -118,7 +160,7 @@ public class Mutator extends Operand {
     }
 
     /**
-     * Write a single sub-column value to a super column. If wish to write multiple sub-columns for a
+     * Write a single sub-column value to a super column. If you wish to write multiple sub-columns for a
      * super column, then it is more efficient to use <code>writeSubColumns</code>
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -165,6 +207,51 @@ public class Mutator extends Operand {
         Mutation mutation = new Mutation();
         mutation.setColumn_or_supercolumn(cosc);
         getMutationList(colFamily, rowKey).add(mutation);
+    }
+
+    /**
+     * Write multiple sub-column values to a super column.  This method will automatically delete sub columns if the
+     * deleteIfNullValue is true and any of the sub columns do not have a value.
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param colName                   The name of the super column
+     * @param subColumns                A list of the sub-columns to write
+     * @param deleteIfNullValue         If true and if the provided columns do NOT have values (as determined by the
+     *                                  {@link org.apache.cassandra.thrift.Column#isSetValue()} method) then issue a
+     *                                  call to {@link #deleteSubColumns(String, String, Bytes)} with the columns that
+     *                                  have no values.
+     */
+    public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns, boolean deleteIfNullValue) {
+        if (!deleteIfNullValue) {
+            writeSubColumns(colFamily, rowKey, colName, subColumns);
+        } else {
+            // figure out if we need to worry about columns with empty values
+            boolean isEmptyColumnPresent = false;
+            for (Column subColumn : subColumns) {
+                if (!subColumn.isSetValue()) {
+                    isEmptyColumnPresent = true;
+                    break;
+                }
+            }
+
+            if (!isEmptyColumnPresent) {
+                writeSubColumns(colFamily, rowKey, colName, subColumns);
+            } else {
+                // separate out the columns that have a value from those that don't
+                List<Column> subColumnsWithValue = new ArrayList<Column>(subColumns.size());
+                List<Bytes> subColumnsWithoutValue = new ArrayList<Bytes>(subColumns.size());
+                for (Column subColumn : subColumns) {
+                    if (subColumn.isSetValue()) {
+                        subColumnsWithValue.add(subColumn);
+                    } else {
+                        subColumnsWithoutValue.add(Bytes.fromBytes(subColumn.getName()));
+                    }
+                }
+
+                writeSubColumns(colFamily, rowKey, colName, subColumnsWithValue);
+                deleteSubColumns(colFamily, rowKey, colName, subColumnsWithoutValue);
+            }
+        }
     }
 
     /**
