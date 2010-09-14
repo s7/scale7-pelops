@@ -622,13 +622,9 @@ public class Bytes {
      * @return The UTF-8 string object represented by the byte array
      */
     public static String toUTF8(byte[] bytes) {
-		if (bytes == null)
-			return null;
-        try {
-            return new String(bytes, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+        if (bytes == null)
+            return null;
+        return new String(bytes, UTF8);
     }
 
     /**
