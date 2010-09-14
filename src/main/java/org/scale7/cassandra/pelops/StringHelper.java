@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class StringHelper {
 
 	/**
@@ -11,6 +12,7 @@ public class StringHelper {
 	 * @param string						The <code>String</code> to convert
 	 * @return								The string as UTF-8 bytes
 	 */
+    @Deprecated
 	public static byte[] toBytes(String string) {
 		try {
 			return string.getBytes("utf-8");
@@ -24,6 +26,7 @@ public class StringHelper {
 	 * @param bytes							The array of UTF-8 bytes
 	 * @return								The <code>String</code> object
 	 */
+    @Deprecated
 	public static String toUTF8(byte[] bytes) {
 		if (bytes == null)
 			return null;
@@ -40,6 +43,7 @@ public class StringHelper {
 	 * @return
      * @deprecated Use {@link Bytes#transformUTF8ToList(java.util.Collection)} instead.
 	 */
+    @Deprecated
     public static List<byte[]> toByteArrayList(List<String> list) {
         if (list == null)
         	return null;
