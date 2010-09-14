@@ -1,5 +1,6 @@
 package org.scale7.cassandra.pelops;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -613,6 +614,21 @@ public class Bytes {
      */
     public String toUTF8() {
         return isNull() ? null : new String(this.bytes, UTF8);
+    }
+
+    /**
+     * Convert a raw byte array to a UTF-8 string
+     * @param bytes	The UTF-8 string, encoded as raw bytes
+     * @return The UTF-8 string object represented by the byte array
+     */
+    public static String toUTF8(byte[] bytes) {
+		if (bytes == null)
+			return null;
+        try {
+            return new String(bytes, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**

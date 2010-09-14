@@ -12,7 +12,6 @@ import org.apache.cassandra.thrift.*;
 import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
-import static org.scale7.cassandra.pelops.StringHelper.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.
