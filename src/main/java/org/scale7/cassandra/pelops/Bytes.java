@@ -20,6 +20,7 @@ import java.util.*;
  */
 public class Bytes {
     public static final Bytes EMPTY = new Bytes(new byte[0]);
+    public static final Bytes NULL = new Bytes(null);
 
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
