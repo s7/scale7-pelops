@@ -99,6 +99,32 @@ public class Pelops {
 	}
 
 	/**
+	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+	 * must only be used to execute 1 mutation operation.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+	 * @param timestamp				The default time stamp to use for operations
+     * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
+     *                      passed to the various write methods.
+	 * @return						A new <code>Mutator</code> object
+	 */
+	public static Mutator createMutator(String poolName, long timestamp, boolean deleteIfNull) {
+		return poolMap.get(poolName).createMutator(timestamp, deleteIfNull);
+	}
+
+	/**
+	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
+	 * must only be used to execute 1 mutation operation.
+	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
+	 * @param clock				    The default clock instance to use for operations
+     * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
+     *                      passed to the various write methods.
+	 * @return						A new <code>Mutator</code> object
+	 */
+	public static Mutator createMutator(String poolName, Clock clock, boolean deleteIfNull) {
+		return poolMap.get(poolName).createMutator(clock, deleteIfNull);
+	}
+
+	/**
 	 * Create a {@link RowDeletor row deletor} object using the current time as the operation time stamp.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
 	 * @return						A new {@link RowDeletor row deletor} object

@@ -68,6 +68,10 @@ public class IntegrationTestHelper {
             pool.shutdown();
     }
 
+    public Cluster getCluster() {
+        return cluster;
+    }
+
     protected IThriftPool getPool() {
         return pool;
     }

@@ -67,11 +67,7 @@ public class Mutator extends Operand {
      * @param column                    The value of the column
      */
     public void writeColumn(String colFamily, Bytes rowKey, Column column) {
-        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
-        cosc.setColumn(column);
-        Mutation mutation = new Mutation();
-        mutation.setColumn_or_supercolumn(cosc);
-        getMutationList(colFamily, rowKey).add(mutation);
+        writeColumn(colFamily, rowKey, column, this.deleteIfNull);
     }
 
     /**
@@ -86,14 +82,22 @@ public class Mutator extends Operand {
      */
     public void writeColumn(String colFamily, Bytes rowKey, Column column, boolean deleteIfNullValue) {
         if (!deleteIfNullValue) {
-            writeColumn(colFamily, rowKey, column);
+            writeColumnInternal(colFamily, rowKey, column);
         } else {
             if (column.isSetValue()) {
-                writeColumn(colFamily, rowKey, column);
+                writeColumnInternal(colFamily, rowKey, column);
             } else {
                 deleteColumn(colFamily, rowKey, Bytes.fromBytes(column.getName()));
             }
         }
+    }
+
+    private void writeColumnInternal(String colFamily, Bytes rowKey, Column column) {
+        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
+        cosc.setColumn(column);
+        Mutation mutation = new Mutation();
+        mutation.setColumn_or_supercolumn(cosc);
+        getMutationList(colFamily, rowKey).add(mutation);
     }
 
     /**
@@ -201,12 +205,7 @@ public class Mutator extends Operand {
      * @param subColumns                A list of the sub-columns to write
      */
     public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
-        SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
-        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
-        cosc.setSuper_column(scol);
-        Mutation mutation = new Mutation();
-        mutation.setColumn_or_supercolumn(cosc);
-        getMutationList(colFamily, rowKey).add(mutation);
+        writeSubColumns(colFamily, rowKey, colName, subColumns, this.deleteIfNull);
     }
 
     /**
@@ -223,7 +222,7 @@ public class Mutator extends Operand {
      */
     public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns, boolean deleteIfNullValue) {
         if (!deleteIfNullValue) {
-            writeSubColumns(colFamily, rowKey, colName, subColumns);
+            writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
         } else {
             // figure out if we need to worry about columns with empty values
             boolean isEmptyColumnPresent = false;
@@ -235,7 +234,7 @@ public class Mutator extends Operand {
             }
 
             if (!isEmptyColumnPresent) {
-                writeSubColumns(colFamily, rowKey, colName, subColumns);
+                writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
             } else {
                 // separate out the columns that have a value from those that don't
                 List<Column> subColumnsWithValue = new ArrayList<Column>(subColumns.size());
@@ -248,10 +247,19 @@ public class Mutator extends Operand {
                     }
                 }
 
-                writeSubColumns(colFamily, rowKey, colName, subColumnsWithValue);
+                writeSubColumnsInternal(colFamily, rowKey, colName, subColumnsWithValue);
                 deleteSubColumns(colFamily, rowKey, colName, subColumnsWithoutValue);
             }
         }
+    }
+
+    private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
+        SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
+        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
+        cosc.setSuper_column(scol);
+        Mutation mutation = new Mutation();
+        mutation.setColumn_or_supercolumn(cosc);
+        getMutationList(colFamily, rowKey).add(mutation);
     }
 
     /**
@@ -569,25 +577,27 @@ public class Mutator extends Operand {
 
     private final Map<Bytes, Map<String, List<Mutation>>> batch;
     private final Clock clock;
+    protected final boolean deleteIfNull;
 
     /**
      * Create a batch mutation operation.
      */
     protected Mutator(IThriftPool thrift) {
-        this(thrift, new Clock(System.currentTimeMillis() * 1000));
+        this(thrift, new Clock(System.currentTimeMillis() * 1000), thrift.getOperandPolicy().isDeleteIfNull());
     }
 
     /**
      * Create a batch mutation operation.
      * @param clock                   The clock that encapsulates the time stamp to use for the operation.
      */
-    protected Mutator(IThriftPool thrift, Clock clock) {
+    protected Mutator(IThriftPool thrift, Clock clock, boolean deleteIfNull) {
         super(thrift);
         this.clock = clock;
+        this.deleteIfNull = deleteIfNull;
         batch = new MutationsByKey();
     }
 
-    private MutationList getMutationList(String colFamily, Bytes key) {
+    protected MutationList getMutationList(String colFamily, Bytes key) {
         MutationsByCf mutsByCf = (MutationsByCf) batch.get(key);
         if (mutsByCf == null) {
             mutsByCf = new MutationsByCf();

@@ -7,9 +7,7 @@ import org.apache.cassandra.thrift.Clock;
  */
 public abstract class ThriftPoolBase implements IThriftPool {
     /**
-     * Create a <code>Selector</code> object.
-     *
-     * @return A new <code>Selector</code> object
+     * {@inheritDoc}.
      */
     @Override
     public Selector createSelector() {
@@ -18,10 +16,7 @@ public abstract class ThriftPoolBase implements IThriftPool {
     }
 
     /**
-     * Create a <code>Mutator</code> object using the current time as the operation time stamp. The <code>Mutator</code> object
-     * must only be used to execute 1 mutation operation.
-     *
-     * @return A new <code>Mutator</code> object
+     * {@inheritDoc}.
      */
     @Override
     public Mutator createMutator() {
@@ -30,35 +25,40 @@ public abstract class ThriftPoolBase implements IThriftPool {
     }
 
     /**
-     * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-     * must only be used to execute 1 mutation operation.
-     *
-     * @param timestamp The default time stamp to use for operations
-     * @return A new <code>Mutator</code> object
+     * {@inheritDoc}.
      */
     @Override
     public Mutator createMutator(long timestamp) {
-        validateKeyspaceSet();
-        return new Mutator(this, new Clock(timestamp));
+        return createMutator(timestamp, this.getOperandPolicy().isDeleteIfNull());
     }
 
     /**
-     * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-     * must only be used to execute 1 mutation operation.
-     *
-     * @param clock The default clock instance to use for operations
-     * @return A new <code>Mutator</code> object
+     * {@inheritDoc}.
      */
     @Override
-    public Mutator createMutator(Clock clock) {
+    public Mutator createMutator(long timestamp, boolean deleteIfNull) {
         validateKeyspaceSet();
-        return new Mutator(this, clock);
+        return new Mutator(this, new Clock(timestamp), deleteIfNull);
     }
 
     /**
-     * Create a <code>KeyDeletor</code> object using the current time as the operation time stamp.
-     *
-     * @return A new <code>KeyDeletor</code> object
+     * {@inheritDoc}.
+     */    @Override
+    public Mutator createMutator(Clock clock) {
+        return createMutator(clock, this.getOperandPolicy().isDeleteIfNull());
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public Mutator createMutator(Clock clock, boolean deleteIfNull) {
+        validateKeyspaceSet();
+        return new Mutator(this, clock, deleteIfNull);
+    }
+
+    /**
+     * {@inheritDoc}.
      */
     @Override
     public RowDeletor createRowDeletor() {
@@ -67,10 +67,7 @@ public abstract class ThriftPoolBase implements IThriftPool {
     }
 
     /**
-     * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-     *
-     * @param timestamp The default time stamp to use for operations
-     * @return A new <code>KeyDeletor</code> object
+     * {@inheritDoc}.
      */
     @Override
     public RowDeletor createRowDeletor(long timestamp) {
@@ -79,10 +76,7 @@ public abstract class ThriftPoolBase implements IThriftPool {
     }
 
     /**
-     * Create a <code>KeyDeletor</code> object with an arbitrary time stamp.
-     *
-     * @param clock The default clock instance to use for operations
-     * @return A new <code>KeyDeletor</code> object
+     * {@inheritDoc}.
      */
     @Override
     public RowDeletor createRowDeletor(Clock clock) {
