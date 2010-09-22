@@ -1,7 +1,6 @@
 package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
-import org.apache.cassandra.thrift.Clock;
 
 /**
  * The contract for connection pools used by pelops.
@@ -42,27 +41,6 @@ public interface IThriftPool {
      * @return A new {@link Mutator mutator} object
      */
     Mutator createMutator(long timestamp, boolean deleteIfNull);
-
-    /**
-     * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-     * must only be used to execute 1 mutation operation.
-     * <p>The created mutator will be created with the value of {@link OperandPolicy#isDeleteIfNull()}.
-     *
-     * @param clock The default clock instance to use for operations
-     * @return A new <code>Mutator</code> object
-     */
-    Mutator createMutator(Clock clock);
-
-    /**
-     * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-     * must only be used to execute 1 mutation operation.
-     *
-     * @param clock The default clock instance to use for operations
-     * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
-     *                      passed to the various write methods.
-     * @return A new <code>Mutator</code> object
-     */
-    Mutator createMutator(Clock clock, boolean deleteIfNull);
 
     /**
      * Create a {@link RowDeletor key deletor} object using the current time as the operation time stamp.
@@ -109,14 +87,6 @@ public interface IThriftPool {
      * @return the current policy
      */
     OperandPolicy getOperandPolicy();
-
-    /**
-     * Create a {@link RowDeletor row deletor} object with an arbitrary time stamp.
-     *
-     * @param clock The default clock instance to use for operations
-     * @return A new {@link RowDeletor row deletor} object
-     */
-    RowDeletor createRowDeletor(Clock clock);
 
     /**
      * The keyspace this connection operates on.

@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.cassandra.thrift.Clock;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -91,17 +90,6 @@ public class Pelops {
 	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
 	 * must only be used to execute 1 mutation operation.
 	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param clock				    The default clock instance to use for operations
-	 * @return						A new <code>Mutator</code> object
-	 */
-	public static Mutator createMutator(String poolName, Clock clock) {
-		return poolMap.get(poolName).createMutator(clock);
-	}
-
-	/**
-	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
 	 * @param timestamp				The default time stamp to use for operations
      * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
      *                      passed to the various write methods.
@@ -109,19 +97,6 @@ public class Pelops {
 	 */
 	public static Mutator createMutator(String poolName, long timestamp, boolean deleteIfNull) {
 		return poolMap.get(poolName).createMutator(timestamp, deleteIfNull);
-	}
-
-	/**
-	 * Create a <code>Mutator</code> object with an arbitrary time stamp. The <code>Mutator</code> object
-	 * must only be used to execute 1 mutation operation.
-	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param clock				    The default clock instance to use for operations
-     * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
-     *                      passed to the various write methods.
-	 * @return						A new <code>Mutator</code> object
-	 */
-	public static Mutator createMutator(String poolName, Clock clock, boolean deleteIfNull) {
-		return poolMap.get(poolName).createMutator(clock, deleteIfNull);
 	}
 
 	/**
@@ -141,16 +116,6 @@ public class Pelops {
 	 */
 	public static RowDeletor createRowDeletor(String poolName, long timestamp) {
 		return poolMap.get(poolName).createRowDeletor(timestamp);
-	}
-
-	/**
-	 * Create a {@link RowDeletor row deletor} object with an arbitrary time stamp.
-	 * @param poolName				The name of the connection pool to use (this determines the Cassandra database cluster)
-	 * @param clock				    The default clock instance to use for operations
-     * @return						A new {@link RowDeletor row deletor} object
-	 */
-	public static RowDeletor createRowDeletor(String poolName, Clock clock) {
-		return poolMap.get(poolName).createRowDeletor(clock);
 	}
 
     /**
@@ -178,7 +143,6 @@ public class Pelops {
      * example, adding or removing a column family.
      * @param cluster
      * @param keyspace
-     * @param policy
      * @return
      */
     public static ColumnFamilyManager createColumnFamilyManager(Cluster cluster, String keyspace) {

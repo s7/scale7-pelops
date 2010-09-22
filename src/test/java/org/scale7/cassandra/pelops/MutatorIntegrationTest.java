@@ -55,7 +55,7 @@ public class MutatorIntegrationTest {
     @Test
     public void testConstructorDeleteIfNullState() {
         IThriftPool pool = Mockito.mock(IThriftPool.class);
-        Mutator mutator = new Mutator(pool, new Clock(System.currentTimeMillis()), true);
+        Mutator mutator = new Mutator(pool, System.currentTimeMillis(), true);
         assertTrue("Mutator is not in the expected state", mutator.deleteIfNull);
     }
 

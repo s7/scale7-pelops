@@ -334,7 +334,7 @@ public class Mutator extends Operand {
     public void deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
-        Deletion deletion = new Deletion(clock);
+        Deletion deletion = new Deletion(timestamp);
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
@@ -484,7 +484,7 @@ public class Mutator extends Operand {
      * @param subColNames               The sub-column names to delete
      */
     public void deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
-        Deletion deletion = new Deletion(clock);
+        Deletion deletion = new Deletion(timestamp);
         deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
         deletion.setPredicate(
@@ -533,7 +533,7 @@ public class Mutator extends Operand {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(Bytes colName, Bytes colValue) {
-        return new Column(nullSafeGet(colName), nullSafeGet(colValue), clock);
+        return new Column(nullSafeGet(colName), nullSafeGet(colValue), timestamp);
     }
 
     /**
@@ -554,7 +554,7 @@ public class Mutator extends Operand {
      * @return                           A byte array containing the time stamp <code>long</code> value
      */
     public Bytes getMutationTimestamp(boolean microsToMillis) {
-        long result = clock.getTimestamp();
+        long result = timestamp;
         if (microsToMillis)
             result /= 1000;
         return Bytes.fromLong(result);
@@ -565,7 +565,7 @@ public class Mutator extends Operand {
      * @return                            The raw time stamp value being used
      */
     public long getMutationTimestampValue() {
-        return clock.getTimestamp();
+        return timestamp;
     }
 
     @SuppressWarnings("serial")
@@ -576,23 +576,23 @@ public class Mutator extends Operand {
     class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
 
     private final Map<Bytes, Map<String, List<Mutation>>> batch;
-    private final Clock clock;
+    private final long timestamp;
     protected final boolean deleteIfNull;
 
     /**
      * Create a batch mutation operation.
      */
     protected Mutator(IThriftPool thrift) {
-        this(thrift, new Clock(System.currentTimeMillis() * 1000), thrift.getOperandPolicy().isDeleteIfNull());
+        this(thrift, System.currentTimeMillis() * 1000, thrift.getOperandPolicy().isDeleteIfNull());
     }
 
     /**
      * Create a batch mutation operation.
-     * @param clock                   The clock that encapsulates the time stamp to use for the operation.
+     * @param timestamp The time stamp to use for the operation.
      */
-    protected Mutator(IThriftPool thrift, Clock clock, boolean deleteIfNull) {
+    protected Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull) {
         super(thrift);
-        this.clock = clock;
+        this.timestamp = timestamp;
         this.deleteIfNull = deleteIfNull;
         batch = new MutationsByKey();
     }

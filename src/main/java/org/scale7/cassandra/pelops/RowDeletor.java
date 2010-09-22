@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.Clock;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.scale7.cassandra.pelops.IThriftPool.IConnection;
@@ -16,7 +15,7 @@ import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
  */
 public class RowDeletor extends Operand {
 
-	private final Clock clock;
+	private final long timestamp;
 
 	/**
 	 * Delete a row with a specified key from a specified column family. The function succeeds even if
@@ -44,7 +43,7 @@ public class RowDeletor extends Operand {
 			public Void execute(IConnection conn) throws Exception {
 
 				ColumnPath path = new ColumnPath(columnFamily);
-				conn.getAPI().remove(nullSafeGet(rowKey), path, clock, cLevel);
+				conn.getAPI().remove(nullSafeGet(rowKey), path, timestamp, cLevel);
 				return null;
 			}
 		};
@@ -52,11 +51,11 @@ public class RowDeletor extends Operand {
 	}
 
 	protected RowDeletor(IThriftPool thrift) {
-		this(thrift, new Clock(System.currentTimeMillis() * 1000));
+		this(thrift, System.currentTimeMillis() * 1000);
 	}
 
-	protected RowDeletor(IThriftPool thrift, Clock clock) {
+	protected RowDeletor(IThriftPool thrift, long timestamp) {
 		super(thrift);
-        this.clock = new Clock(clock);
+        this.timestamp = timestamp;
 	}
 }

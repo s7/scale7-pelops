@@ -1,0 +1,12 @@
+---- sample commands to deploy latest cassandra deps ---
+
+export CASSANDRA_HOME=/path/to/cassandra/install
+
+mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=cassandra -Dversion=0.7.0-2010-2010-09-22_13-09-02 \
+-Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true \
+-Dfile=${CASSANDRA_HOME}/lib/apache-cassandra-2010-09-22_13-09-02.jar \
+-Durl=file:///Users/dan/Development/Projects/scale7/mvnrepo -DrepositoryId=maven.scale7.org.local
+
+mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=libthrift -Dversion=r959516 \
+-Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true -Dfile=${CASSANDRA_HOME}/lib/libthrift-r959516.jar \
+-Durl=file:///Users/dan/Development/Projects/scale7/mvnrepo -DrepositoryId="maven.scale7.org.local"

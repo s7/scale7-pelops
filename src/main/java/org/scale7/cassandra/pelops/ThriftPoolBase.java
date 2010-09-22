@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.Clock;
 
 /**
  * Abstract impl of {@link IThriftPool}.
@@ -38,23 +37,7 @@ public abstract class ThriftPoolBase implements IThriftPool {
     @Override
     public Mutator createMutator(long timestamp, boolean deleteIfNull) {
         validateKeyspaceSet();
-        return new Mutator(this, new Clock(timestamp), deleteIfNull);
-    }
-
-    /**
-     * {@inheritDoc}.
-     */    @Override
-    public Mutator createMutator(Clock clock) {
-        return createMutator(clock, this.getOperandPolicy().isDeleteIfNull());
-    }
-
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public Mutator createMutator(Clock clock, boolean deleteIfNull) {
-        validateKeyspaceSet();
-        return new Mutator(this, clock, deleteIfNull);
+        return new Mutator(this, timestamp, deleteIfNull);
     }
 
     /**
@@ -72,16 +55,7 @@ public abstract class ThriftPoolBase implements IThriftPool {
     @Override
     public RowDeletor createRowDeletor(long timestamp) {
         validateKeyspaceSet();
-        return new RowDeletor(this, new Clock(timestamp));
-    }
-
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public RowDeletor createRowDeletor(Clock clock) {
-        validateKeyspaceSet();
-        return new RowDeletor(this, clock);
+        return new RowDeletor(this, timestamp);
     }
 
     private void validateKeyspaceSet() throws IllegalStateException {
