@@ -1205,6 +1205,97 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve columns from a range of indexed rows using its secondary index.
+     * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A index key range selecting the rows
+     * @param colPredicate                    The column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws Exception if an error occurs
+     */
+    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    	return getIndexedColumns(newColumnParent(colParent), indexClause, colPredicate, cLevel);
+    }
+    
+    /**
+     * Retrieve columns from a range of indexed rows using its secondary index.
+     * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A index key range selecting the rows
+     * @param colPredicate                    The column selector predicate
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws Exception if an error occurs
+     */
+    public Map<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+            @Override
+            public Map<Bytes, List<Column>> execute(IConnection conn) throws Exception {
+                List<KeySlice> apiResult = conn.getAPI().get_indexed_slices(colParent, indexClause, colPredicate, cLevel);
+                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
+                for (KeySlice ks : apiResult) {
+                    List<ColumnOrSuperColumn> coscList = ks.columns;
+                    List<Column> colList = new ArrayList<Column>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList)
+                        colList.add(cosc.column);
+                    result.put(fromBytes(ks.key), colList);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
+    }
+    
+    /**
+     * Create a new <code>IndexExpression</code> instance.
+     * @param colName						The name of the column
+     * @param op							The index expression operator (for now only EQ works)
+     * @param value		 					Lookup value
+     * @return								The new <code>IndexExpression</code>
+     */
+    public static IndexExpression newIndexExpression(Bytes colName, IndexOperator op, Bytes value) {
+    	return new IndexExpression(colName.getBytes(), op, value.getBytes());
+    }
+    
+    /**
+     * Create a new <code>IndexExpression</code> instance.
+     * @param colName						The name of the column
+     * @param op							The index expression operator (for now only EQ works)
+     * @param value		 					Lookup value
+     * @return								The new <code>IndexExpression</code>
+     */
+    public static IndexExpression newIndexExpression(String colName, IndexOperator op, Bytes value) {
+    	return newIndexExpression(fromUTF8(colName), op, value);
+    }
+    
+    /**
+     * Create a new <code>IndexClause</code> instance.
+     * @param startName						The inclusive column start name of the index range to select in the slice
+     * @param count							The maximum number of rows to return
+     * @param expressions 					Index value lookup expressions
+     * @return								The new <code>IndexClause</code>
+     */
+    public static IndexClause newIndexClause(String startName, int count, IndexExpression... expressions) {
+    	return newIndexClause(fromUTF8(startName), count, expressions);
+    }
+    
+    /**
+     * Create a new <code>IndexClause</code> instance.
+     * @param startName						The inclusive column start name of the index range to select in the slice
+     * @param count							The maximum number of rows to return
+     * @param expressions 					Index value lookup expressions
+     * @return								The new <code>IndexClause</code>
+     */
+    public static IndexClause newIndexClause(Bytes startName, int count, IndexExpression... expressions) {
+    	return new IndexClause(Arrays.asList(expressions), startName.getBytes(), count);
+    }
+    
+    /**
      * Create a new <code>SlicePredicate</code> instance that selects "all" columns
      * @param reversed                        Whether the results should be returned in reverse order
      * @param maxColCount                     The maximum number of columns to return

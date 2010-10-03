@@ -10,12 +10,12 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
-import static org.scale7.cassandra.pelops.Bytes.fromBytes;
-import static org.scale7.cassandra.pelops.Bytes.fromChar;
-import static org.scale7.cassandra.pelops.Bytes.fromLong;
+import static junit.framework.Assert.*;
+import static org.scale7.cassandra.pelops.Bytes.*;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 
 /**
@@ -25,6 +25,7 @@ public class SelectorIntegrationTest {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(SelectorIntegrationTest.class);
 
     public static final String CF = "SEL_CF";
+    public static final String CF_INDEXED = "SEL_I_CF";
     public static final String SCF = "SEL_SCF";
 
     private static IntegrationTestHelper helper = new IntegrationTestHelper();
@@ -32,6 +33,19 @@ public class SelectorIntegrationTest {
     @BeforeClass
     public static void setup() throws Exception {
         helper.setup(Arrays.asList(
+                new CfDef(IntegrationTestHelper.KEYSPACE, CF_INDEXED)
+						.setColumn_type(CFDEF_TYPE_STANDARD)
+						.setComparator_type(CFDEF_COMPARATOR_BYTES)
+						.setDefault_validation_class(CFDEF_COMPARATOR_BYTES)
+						.setColumn_metadata(Arrays.asList(
+								new ColumnDef(Bytes.fromUTF8("name").getBytes(), CFDEF_COMPARATOR_BYTES)
+									// using default CF validation class (CFDEF_COMPARATOR_BYTES)
+									.setIndex_name("NameIndex")
+									.setIndex_type(IndexType.KEYS),
+								new ColumnDef(Bytes.fromUTF8("age").getBytes(), CFDEF_COMPARATOR_LONG)
+									.setValidation_class(CFDEF_COMPARATOR_LONG)
+									.setIndex_name("AgeIndex")
+									.setIndex_type(IndexType.KEYS))),
                 new CfDef(IntegrationTestHelper.KEYSPACE, CF)
                         .setColumn_type(CFDEF_TYPE_STANDARD)
                         .setComparator_type(CFDEF_COMPARATOR_BYTES),
@@ -54,19 +68,24 @@ public class SelectorIntegrationTest {
     }
 
     protected void prepareData() throws Exception {
-        // prep the column family data
         Mutator mutator = helper.getPool().createMutator();
+        
+        // prep the column family data
         for (long i = 0; i < 100; i++) {
             mutator.writeColumns(CF, fromLong(i), createAlphabetColumns(mutator));
-        }
 
-        // prep the super column family data
-        for (long i = 0; i < 100; i++) {
+            // prep the super column family data
             for (char letter = 'A'; letter <= 'Z'; letter++) {
                 mutator.writeSubColumns(SCF, fromLong(i), fromChar(letter), createAlphabetColumns(mutator));
             }
         }
 
+        // prep indexed column family data
+        for (long i = 0; i <= 2; i++) {
+            mutator.writeColumn(CF_INDEXED, fromLong(i), mutator.newColumn("name", fromUTF8("name-" + (char)('a' + i))));
+            mutator.writeColumn(CF_INDEXED, fromLong(i), mutator.newColumn("age", fromLong(i % 2)));
+        }
+        
         mutator.execute(ConsistencyLevel.ONE);
     }
 
@@ -79,6 +98,108 @@ public class SelectorIntegrationTest {
         return columns;
     }
 
+    @Test
+    public void testGetIndexedColumns() throws Exception {
+    	int MAX_ROWS_IN_RESULT = 3;
+    	int MAX_COLUMNS_PER_KEY = 3;
+
+    	Selector selector = helper.getPool().createSelector();
+    	Map<Bytes, List<Column>> keys = selector.getIndexedColumns(CF_INDEXED,
+    			Selector.newIndexClause(Bytes.EMPTY, MAX_ROWS_IN_RESULT,
+    					Selector.newIndexExpression("age", IndexOperator.EQ, Bytes.fromLong(1))),
+    			Selector.newColumnsPredicateAll(true, MAX_COLUMNS_PER_KEY), ConsistencyLevel.ONE);
+    	
+    	assertEquals("Wrong number of keys returned", 1, keys.size());
+    	
+    	Bytes key = keys.keySet().iterator().next();
+
+    	assertEquals("Wrong number key value returned", 1, key.toLong());
+    	
+    	assertEquals("Wrong number of columns in key returned", 2, keys.get(key).size());
+    	
+    	Column column = keys.get(key).get(0);
+    	
+    	assertEquals("Wrong column 'name' value", "name-b", toUTF8(column.getValue()));
+
+    	column = keys.get(key).get(1);
+    	
+    	assertEquals("Wrong column 'value' value", 1L, Bytes.fromBytes(column.getValue()).toLong());
+    }
+
+    @Test
+    public void testGetIndexedColumnsMoreResults() throws Exception {
+    	int MAX_ROWS_IN_RESULT = 3;
+    	int MAX_COLUMNS_PER_KEY = 3;
+
+    	Selector selector = helper.getPool().createSelector();
+    	Map<Bytes, List<Column>> keys = selector.getIndexedColumns(CF_INDEXED,
+    			Selector.newIndexClause(Bytes.EMPTY, MAX_ROWS_IN_RESULT,
+    					Selector.newIndexExpression("age", IndexOperator.EQ, Bytes.fromLong(0))),
+    			Selector.newColumnsPredicateAll(false, MAX_COLUMNS_PER_KEY), ConsistencyLevel.ONE);
+    	
+    	assertEquals("Wrong number of keys returned", 2, keys.size());
+    	
+    	List<Long> keyList = new ArrayList<Long>();
+    	
+    	for (Bytes key : keys.keySet()) {
+    		keyList.add(key.toLong());
+    	}
+    	
+    	Collections.sort(keyList);
+    	
+    	assertEquals("Wrong key value", 0L, keyList.get(0).longValue());
+    	assertEquals("Wrong key value", 2L, keyList.get(1).longValue());
+    }
+    
+    @Test
+    public void testGetIndexedColumnsNonEq() throws Exception {
+    	int MAX_ROWS_IN_RESULT = 3;
+    	int MAX_COLUMNS_PER_KEY = 3;
+
+    	try {
+    	Selector selector = helper.getPool().createSelector();
+    		Map<Bytes, List<Column>> keys = selector.getIndexedColumns(CF_INDEXED,
+    			Selector.newIndexClause(Bytes.EMPTY, MAX_ROWS_IN_RESULT,
+    					Selector.newIndexExpression("age", IndexOperator.LT, Bytes.fromLong(1))),
+    			Selector.newColumnsPredicateAll(true, MAX_COLUMNS_PER_KEY), ConsistencyLevel.ONE);
+    	
+    		assertEquals("Wrong number of keys returned", 1, keys.size());
+    	
+    		Bytes key = keys.keySet().iterator().next();
+
+    		assertEquals("Wrong number key value returned", 0, key.toLong());
+    	
+    		assertEquals("Wrong number of columns in key returned", 2, keys.get(key).size());
+    	
+    		Column column = keys.get(key).get(0);
+    	
+    		assertEquals("Wrong column 'name' value", "name-1", toUTF8(column.getValue()));
+
+    		column = keys.get(key).get(1);
+    	
+    		assertEquals("Wrong column 'value' value", 0L, Bytes.fromBytes(column.getValue()).toLong());
+    		
+    		fail("Other than EQ index operator is supported now.");
+    	}
+    	catch (InvalidRequestException e) {
+    		assertEquals("No indexed columns present in index clause with operator EQ", e.getWhy());
+    	}
+    }
+    
+    @Test
+    public void testGetIndexedColumnsNoMatches() throws Exception {
+    	int MAX_ROWS_IN_RESULT = 3;
+    	int MAX_COLUMNS_PER_KEY = 3;
+
+    	Selector selector = helper.getPool().createSelector();
+    	Map<Bytes, List<Column>> keys = selector.getIndexedColumns(CF_INDEXED,
+    			Selector.newIndexClause(Bytes.EMPTY, MAX_ROWS_IN_RESULT,
+    					Selector.newIndexExpression("age", IndexOperator.EQ, Bytes.fromLong(11))),
+    			Selector.newColumnsPredicateAll(true, MAX_COLUMNS_PER_KEY), ConsistencyLevel.ONE);
+    	
+    	assertEquals("Wrong number of keys returned", 0, keys.size());
+    }
+    
     @Test
     public void testGetPageOfColumnsFromRow() throws Exception {
         Selector selector = helper.getPool().createSelector();
