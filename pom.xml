@@ -7,45 +7,44 @@
 	<version>0.906-0.7.0-SNAPSHOT</version>
 	<name>Pelops - A library for accessing the Cassandra database</name>
 	<url>http://github.com/s7/pelops</url>
-    <properties>
-       <!--
-          The ${scale7.deploy.dir} should point to the directory that contains the clone of http://github.com/s7/mvnrepo.
-          By default it assumes that it's a sibling of the current project directory.  To change the default value alter
-          your ~/.m2/settings.xml file.
-       -->
-       <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
-       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-       <cassandra.version>0.7.0-2010-2010-09-22_13-09-02</cassandra.version>
-    </properties>
-    <developers>
-        <developer>
-            <name>Dominic Williams</name>
-            <roles>
-                <role>Project Lead</role>
-            </roles>
-        </developer>
-        <developer>
-            <name>Dan Washusen</name>
-            <roles>
-                <role>Contributor</role>
-            </roles>
-        </developer>
-    </developers>
-    <scm>
-        <connection>scm:git:http://github.com/s7/scale7-pelops.git</connection>
-        <developerConnection>scm:git:ssh://github.com/s7/scale7-pelops.git</developerConnection>
-        <url>http://github.com/s7/scale7-pelops</url>
-    </scm>
-    <issueManagement>
-        <url>http://github.com/s7/scale7-pelops/issues</url>
-    </issueManagement>
-    <mailingLists>
-        <mailingList>
-            <name>users</name>
-            <archive>http://groups.google.com/group/scale7</archive>
-        </mailingList>
-    </mailingLists>
-	 <dependencies>
+	<properties>
+		<!-- The ${scale7.deploy.dir} should point to the directory that contains 
+			the clone of http://github.com/s7/mvnrepo. By default it assumes that it's 
+			a sibling of the current project directory. To change the default value alter 
+			your ~/.m2/settings.xml file. -->
+		<scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<cassandra.version>0.7.0-2010-2010-09-22_13-09-02</cassandra.version>
+	</properties>
+	<developers>
+		<developer>
+			<name>Dominic Williams</name>
+			<roles>
+				<role>Project Lead</role>
+			</roles>
+		</developer>
+		<developer>
+			<name>Dan Washusen</name>
+			<roles>
+				<role>Contributor</role>
+			</roles>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:http://github.com/s7/scale7-pelops.git</connection>
+		<developerConnection>scm:git:ssh://github.com/s7/scale7-pelops.git</developerConnection>
+		<url>http://github.com/s7/scale7-pelops</url>
+	</scm>
+	<issueManagement>
+		<url>http://github.com/s7/scale7-pelops/issues</url>
+	</issueManagement>
+	<mailingLists>
+		<mailingList>
+			<name>users</name>
+			<archive>http://groups.google.com/group/scale7</archive>
+		</mailingList>
+	</mailingLists>
+	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -71,36 +70,108 @@
 			<artifactId>libthrift</artifactId>
 			<version>r959516</version>
 		</dependency>
-	    <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>3.0.4.RELEASE</version>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>3.0.4.RELEASE</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.8.1</version>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.8.4</version>
-            <scope>test</scope>
-        </dependency>
 		<dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.5.11</version>
-            <scope>test</scope>
-        </dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>1.8.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.5.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>snakeyaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.6</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>avro</artifactId>
+			<version>1.4.0-rc4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay.jetty</groupId>
+			<artifactId>jetty</artifactId>
+			<version>6.1.21</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay.jetty</groupId>
+			<artifactId>jetty-util</artifactId>
+			<version>6.1.21</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>r06</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.reardencommerce</groupId>
+			<artifactId>clhm-production</artifactId>
+			<version>1.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cliffc.high_scale_lib</groupId>
+			<artifactId>high-scale-lib</artifactId>
+			<version>1.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.safehaus.jug</groupId>
+			<artifactId>jug-asl</artifactId>
+			<version>2.0.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>1.4.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-core-asl</artifactId>
+			<version>1.4.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
@@ -171,102 +242,95 @@
 						</execution>
 					</executions>
 				</plugin>
-                <!--
-                    START NOTE: this is usually handled by the release plugin...
-                -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <configuration>
-                        <updateReleaseInfo>true</updateReleaseInfo>
-                    </configuration>
-                </plugin>
-                <!--
-                    END NOTE: this is usually handled by the release plugin...
-                -->
+				<!-- START NOTE: this is usually handled by the release plugin... -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>attach-sources</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>attach-javadocs</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<configuration>
+						<updateReleaseInfo>true</updateReleaseInfo>
+					</configuration>
+				</plugin>
+				<!-- END NOTE: this is usually handled by the release plugin... -->
 			</plugins>
 		</pluginManagement>
 		<plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+			</plugin>
 		</plugins>
 	</build>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.0.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-changelog-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
-        </plugins>
-    </reporting>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.0.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.7</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<version>2.2</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changelog-plugin</artifactId>
+				<version>2.2</version>
+			</plugin>
+		</plugins>
+	</reporting>
 	<distributionManagement>
 		<repository>
 			<id>maven.scale7.org.local</id>
 			<name>Deployment Staging Area</name>
-			<!--
-				The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file
-				and it should point to the directory that contains the clone of
-				http://github.com/s7/mvnrepo. e.g.
-				file:///Users/dan/Development/Projects/scale7/mvnrepo
-			-->
+			<!-- The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file 
+				and it should point to the directory that contains the clone of http://github.com/s7/mvnrepo. 
+				e.g. file:///Users/dan/Development/Projects/scale7/mvnrepo -->
 			<url>${scale7.deploy.dir}</url>
 			<layout>default</layout>
 		</repository>

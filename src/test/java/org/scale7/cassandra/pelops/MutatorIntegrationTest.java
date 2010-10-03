@@ -1,57 +1,48 @@
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.*;
-import org.apache.thrift.protocol.TProtocolException;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.scale7.cassandra.pelops.Bytes.fromBytes;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
+import static org.scale7.cassandra.pelops.Selector.newColumnsPredicateAll;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static junit.framework.Assert.*;
-import static org.scale7.cassandra.pelops.Bytes.fromBytes;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
-import static org.scale7.cassandra.pelops.Selector.newColumnsPredicateAll;
+import org.apache.cassandra.thrift.CfDef;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.Mutation;
+import org.apache.thrift.protocol.TProtocolException;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 /**
  * Tests the {@link Selector} class.
  */
-public class MutatorIntegrationTest {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(MutatorIntegrationTest.class);
+public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
-    public static final String CF = "MUT_CF";
+	public static final String CF = "MUT_CF";
     public static final String SCF = "MUT_SCF";
-
-    private static IntegrationTestHelper helper = new IntegrationTestHelper();
-
-    @BeforeClass
-    public static void setup() throws Exception {
-        helper.setup(Arrays.asList(
-                new CfDef(IntegrationTestHelper.KEYSPACE, CF)
-                        .setColumn_type(CFDEF_TYPE_STANDARD)
-                        .setComparator_type(CFDEF_COMPARATOR_BYTES),
-                new CfDef(IntegrationTestHelper.KEYSPACE, SCF)
-                        .setColumn_type(CFDEF_TYPE_SUPER)
-                        .setComparator_type(CFDEF_COMPARATOR_BYTES)
-                        .setSubcomparator_type(CFDEF_COMPARATOR_BYTES)
-        ));
-    }
-
-    @AfterClass
-    public static void teardown() {
-        helper.teardown();
-    }
-
-    @Before
-    public void truncate() throws Exception {
-        helper.truncate();
-    }
-
+    
+	@BeforeClass
+	public static void setup() throws Exception {
+		setup(Arrays.asList(
+                new CfDef(KEYSPACE, CF)
+                .setColumn_type(CFDEF_TYPE_STANDARD)
+                .setComparator_type(CFDEF_COMPARATOR_BYTES),
+        new CfDef(KEYSPACE, SCF)
+                .setColumn_type(CFDEF_TYPE_SUPER)
+                .setComparator_type(CFDEF_COMPARATOR_BYTES)
+                .setSubcomparator_type(CFDEF_COMPARATOR_BYTES)));
+	}    
+	
     @Test
     public void testConstructorDeleteIfNullState() {
         IThriftPool pool = Mockito.mock(IThriftPool.class);
@@ -73,7 +64,7 @@ public class MutatorIntegrationTest {
 
     @Test
     public void testWriteColumnsWithDeleteIfNullFromConstructor() throws Exception {
-        IThriftPool pool = new DebuggingPool(helper.getCluster(), IntegrationTestHelper.KEYSPACE, new OperandPolicy(3, true));
+        IThriftPool pool = new DebuggingPool(getCluster(), KEYSPACE, new OperandPolicy(3, true));
 
         Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
 
@@ -98,6 +89,8 @@ public class MutatorIntegrationTest {
         }
 
         assertTrue("There should be one deletion", isOneDeletion);
+        
+        pool.shutdown();
     }
 
     /**
@@ -109,7 +102,7 @@ public class MutatorIntegrationTest {
         Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
 
         // write out the value to be replaced (deleted)
-        Mutator mutator = helper.getPool().createMutator();
+        Mutator mutator = getPool().createMutator();
         List<Column> columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('a')),
                 mutator.newColumn(Bytes.fromInt(2), Bytes.fromChar('b')),
@@ -119,7 +112,7 @@ public class MutatorIntegrationTest {
         mutator.execute(ConsistencyLevel.ONE);
 
         // make sure the data was written as expected
-        Selector selector = helper.getPool().createSelector();
+        Selector selector = createSelector();
         List<Column> persistedColumns = selector.getColumnsFromRow(
                 CF, rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
         );
@@ -127,7 +120,7 @@ public class MutatorIntegrationTest {
         verifyColumns(columns, persistedColumns);
 
         // write out the replacement values
-        mutator = helper.getPool().createMutator();
+        mutator = createMutator();
         columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('d')),
                 mutator.newColumn(Bytes.fromInt(2), (Bytes) null),
@@ -137,7 +130,7 @@ public class MutatorIntegrationTest {
         mutator.execute(ConsistencyLevel.ONE);
 
         // make sure the data was written as expected and that the appropriate columns have been deleted
-        selector = helper.getPool().createSelector();
+        selector = createSelector();
         persistedColumns = selector.getColumnsFromRow(
                 CF, rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
         );
@@ -149,7 +142,7 @@ public class MutatorIntegrationTest {
     public void testWriteColumnsDeleteIfNullDisabled() throws Exception {
         Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
 
-        Mutator mutator = helper.getPool().createMutator();
+        Mutator mutator = createMutator();
         assertFalse("Mutator is not in a valid state for this test", mutator.deleteIfNull);
         List<Column> columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), (Bytes) null)
@@ -174,7 +167,7 @@ public class MutatorIntegrationTest {
         Bytes columnName = Bytes.fromShort(Short.MAX_VALUE);
 
         // write out the value to be replaced (deleted)
-        Mutator mutator = helper.getPool().createMutator();
+        Mutator mutator = createMutator();
         List<Column> columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('a')),
                 mutator.newColumn(Bytes.fromInt(2), Bytes.fromChar('b')),
@@ -184,7 +177,7 @@ public class MutatorIntegrationTest {
         mutator.execute(ConsistencyLevel.ONE);
 
         // make sure the data was written as expected
-        Selector selector = helper.getPool().createSelector();
+        Selector selector = createSelector();
         List<Column> persistedColumns = selector.getSubColumnsFromRow(
                 SCF, rowKey, columnName, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
         );
@@ -192,7 +185,7 @@ public class MutatorIntegrationTest {
         verifyColumns(columns, persistedColumns);
 
         // write out the replacement values
-        mutator = helper.getPool().createMutator();
+        mutator = createMutator();
         columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('d')),
                 mutator.newColumn(Bytes.fromInt(2), (Bytes) null),
@@ -202,7 +195,7 @@ public class MutatorIntegrationTest {
         mutator.execute(ConsistencyLevel.ONE);
 
         // make sure the data was written as expected and that the appropriate columns have been deleted
-        selector = helper.getPool().createSelector();
+        selector = createSelector();
         persistedColumns = selector.getSubColumnsFromRow(
                 SCF, rowKey, columnName, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
         );
@@ -215,7 +208,7 @@ public class MutatorIntegrationTest {
         Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
         Bytes columnName = Bytes.fromShort(Short.MAX_VALUE);
 
-        Mutator mutator = helper.getPool().createMutator();
+        Mutator mutator = createMutator();
 
         assertFalse("Mutator is not in a valid state for this test", mutator.deleteIfNull);
         List<Column> columns = mutator.newColumnList(
