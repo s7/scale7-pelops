@@ -101,15 +101,15 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>snakeyaml</groupId>
+			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
 			<version>1.6</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
+			<groupId>org.apache.avro</groupId>
 			<artifactId>avro</artifactId>
-			<version>1.4.0-rc4</version>
+			<version>1.4.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -186,6 +186,29 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>riptano</id>
+			<name>riptano</name>
+			<url>http://mvn.riptano.com/content/repositories/public/</url>
+		</repository>
+		<repository>
+			<id>codehaus</id>
+			<name>codehaus</name>
+			<url>http://repository.codehaus.org/</url>
+		</repository>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>interval:10080</updatePolicy>
+			</releases>
+			<id>jboss.release</id>
+			<name>JBoss releases</name>
+			<url>https://repository.jboss.org/nexus/content/groups/public/</url>
 		</repository>
 	</repositories>
 	<build>
