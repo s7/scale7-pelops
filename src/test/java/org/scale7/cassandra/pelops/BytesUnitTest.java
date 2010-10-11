@@ -1,11 +1,15 @@
 package org.scale7.cassandra.pelops;
 
-import org.junit.Test;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.UUID;
 
-import static junit.framework.Assert.*;
+import org.junit.Test;
+import org.scale7.cassandra.pelops.serializable.SerializableObject;
 
 /**
  * Tests the {@link Bytes} class.
@@ -362,6 +366,37 @@ public class BytesUnitTest {
         assertEquals("Conversion did not match", time, to.getTime());
         assertEquals("Conversion did not match", clockSeq, to.getClockSeqAndNode());
     }
+    
+    
+    @Test
+    public void testSerializableToBytes() {
+    	
+    	SerializableObject original = new SerializableObject();
+    	
+    	Bytes serialized = Bytes.fromObject(original);
+    	
+    	SerializableObject returned = serialized.toObject(null);
+    	
+        assertEquals("Conversion did not match", original, returned);
+    }
+    
+    @Test
+    public void testSerializableNullToBytes() {
+    	SerializableObject original = null;
+    	
+    	Bytes serialized = Bytes.fromObject(original);
+    	
+    	SerializableObject returned = serialized.toObject(null);
+    	
+        assertEquals("Conversion did not match", original, returned);
+    }
+    
+
+    
+ 
+    
+    
+   
 
     @Test
     public void testNulls() {
