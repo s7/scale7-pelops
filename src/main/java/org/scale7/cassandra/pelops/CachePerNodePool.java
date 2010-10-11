@@ -252,7 +252,11 @@ public class CachePerNodePool extends ThriftPoolBase {
             this.node = node;
             this.keyspace = keyspace;
             this.releaseHandler = releaseHandler;
-            TSocket socket = new TSocket(node, port);
+            TSocket socket =  new TSocket(node, port);
+
+            if (getPoolPolicy().getConnectionTimeout() != null)
+                socket.setTimeout(getPoolPolicy().getConnectionTimeout());
+
             transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
 			protocol = new TBinaryProtocol(transport);
 			//socket.getSocket().setKeepAlive(true);
@@ -552,6 +556,8 @@ public class CachePerNodePool extends ThriftPoolBase {
 
         boolean killNodeConnsOnException = true;
 
+        Integer connectionTimeout = null;
+
         public boolean getDynamicNodeDiscovery() {
         	return dynamicNodeDiscovery;
         }
@@ -634,6 +640,23 @@ public class CachePerNodePool extends ThriftPoolBase {
          */
         public void setKillNodeConnsOnException(boolean killNodeConnsOnException) {
             this.killNodeConnsOnException = killNodeConnsOnException;
+        }
+
+        /**
+         * The timeout value passed to the org.apache.thrift.transport.TSocket constructor.
+         * @return the timeout value
+         */
+        public Integer getConnectionTimeout() {
+            return connectionTimeout;
+        }
+
+        /**
+         * The timeout value passed to the org.apache.thrift.transport.TSocket constructor.
+         * <p>If null (default) the default Thrift value will be used.
+         * @param connectionTimeout the timeout value
+         */
+        public void setConnectionTimeout(Integer connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
         }
     }
 }
