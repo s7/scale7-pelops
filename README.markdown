@@ -24,22 +24,22 @@ To use Pelops with Cassandra 0.7.x use the following:
 			</repository>
 		</repositories>
 
-2a. If you're using Cassandra 0.7.0-beta1 then add the following dep to your project:
+2a. If you're using Cassandra 0.7.0-beta2 then add the following dep to your project:
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.903-0.7.0-SNAPSHOT</version>
+			<version>0.907-0.7.0-SNAPSHOT</version>
 		</dependency>
 
-2b. If Cassandra 0.7.0-beta1 isn't bleeding edge enough for you then add the following dep to your project
+2b. If Cassandra 0.7.0-beta2 isn't bleeding edge enough for you then add the following dep to your project
 and use the latest build available from
-[Hudson](https://hudson.apache.org/hudson/job/Cassandra/lastSuccessfulBuild/artifact/cassandra/build/) (apache-cassandra-2010-09-22_13-09-02-bin.tar.gz):
+[Hudson](https://hudson.apache.org/hudson/job/Cassandra/lastSuccessfulBuild/artifact/cassandra/build/) (head currently on beta2):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.906-0.7.0-SNAPSHOT</version>
+			<version>0.907-0.7.0-SNAPSHOT</version>
 		</dependency>
 
 Note: this version is the only one getting Pelops fixes and updates.

@@ -4,7 +4,7 @@
 	<groupId>org.scale7</groupId>
 	<artifactId>scale7-pelops</artifactId>
 	<packaging>jar</packaging>
-	<version>0.906-0.7.0-SNAPSHOT</version>
+	<version>0.907-0.7.0-SNAPSHOT</version>
 	<name>Pelops - A library for accessing the Cassandra database</name>
 	<url>http://github.com/s7/pelops</url>
     <properties>
@@ -15,7 +15,7 @@
        -->
        <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-       <cassandra.version>0.7.0-2010-2010-09-22_13-09-02</cassandra.version>
+       <cassandra.version>0.7.0-beta2</cassandra.version>
     </properties>
     <developers>
         <developer>
