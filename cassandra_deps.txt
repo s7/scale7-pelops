@@ -1,4 +1,5 @@
 ---- sample commands to deploy latest cassandra deps ---
+---- NOTE: only required for nightly hudson builds   ---
 
 export CASSANDRA_HOME=/path/to/cassandra/install
 
@@ -6,7 +7,3 @@ mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=cassandra -Dv
 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true \
 -Dfile=${CASSANDRA_HOME}/lib/apache-cassandra-0.7.0-beta2.jar \
 -Durl=file:///Users/dan/Development/Projects/scale7/mvnrepo -DrepositoryId=maven.scale7.org.local
-
-mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=libthrift -Dversion=r959516 \
--Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true -Dfile=${CASSANDRA_HOME}/lib/libthrift-r959516.jar \
--Durl=file:///Users/dan/Development/Projects/scale7/mvnrepo -DrepositoryId="maven.scale7.org.local"

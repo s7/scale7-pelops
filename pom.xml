@@ -66,11 +66,11 @@
 			<artifactId>cassandra</artifactId>
 			<version>${cassandra.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.cassandra</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>r959516</version>
-		</dependency>
+         <dependency>
+             <groupId>libthrift</groupId>
+             <artifactId>libthrift</artifactId>
+             <version>959516</version>
+         </dependency>
 	    <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
