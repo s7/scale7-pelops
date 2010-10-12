@@ -596,6 +596,10 @@ public class Mutator extends Operand {
         this.deleteIfNull = deleteIfNull;
         batch = new MutationsByKey();
     }
+    
+    protected Map<Bytes, Map<String, List<Mutation>>> getBatch() {
+		return batch;
+	}
 
     protected MutationList getMutationList(String colFamily, Bytes key) {
         MutationsByCf mutsByCf = (MutationsByCf) batch.get(key);
