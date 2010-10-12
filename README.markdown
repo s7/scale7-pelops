@@ -14,6 +14,11 @@ To use Pelops with Cassandra 0.7.x use the following:
 				<name>Maven Central Repo</name>
 				<url>http://repo1.maven.org/maven2</url>
 			</repository>
+            <repository>
+                <id>riptano</id>
+                <name>riptano</name>
+                <url>http://mvn.riptano.com/content/repositories/public/</url>
+            </repository>
 			<repository>
 				<id>maven.scale7.org</id>
 				<name>Scale7 Maven Repo</name>
