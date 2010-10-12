@@ -366,32 +366,7 @@ public class BytesUnitTest {
         assertEquals("Conversion did not match", time, to.getTime());
         assertEquals("Conversion did not match", clockSeq, to.getClockSeqAndNode());
     }
-    
-    
-    @Test
-    public void testSerializableToBytes() {
-    	
-    	SerializableObject original = new SerializableObject();
-    	
-    	Bytes serialized = Bytes.fromObject(original);
-    	
-    	SerializableObject returned = serialized.toObject(null);
-    	
-        assertEquals("Conversion did not match", original, returned);
-    }
-    
-    @Test
-    public void testSerializableNullToBytes() {
-    	SerializableObject original = null;
-    	
-    	Bytes serialized = Bytes.fromObject(original);
-    	
-    	SerializableObject returned = serialized.toObject(null);
-    	
-        assertEquals("Conversion did not match", original, returned);
-    }
-    
-
+   
     
  
     

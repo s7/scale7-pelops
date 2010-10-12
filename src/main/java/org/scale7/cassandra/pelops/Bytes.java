@@ -464,68 +464,8 @@ public class Bytes {
 				: new Bytes(value.getBytes(UTF8));
 	}
 
-	/**
-	 * Take any Serializable object and turn it into bytes
-	 * 
-	 * @param s
-	 * @return
-	 */
-	public static Bytes fromObject(Serializable s) {
-		if (s == null) {
-			return Bytes.NULL;
-		}
+	
 
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos;
-
-			oos = new ObjectOutputStream(bos);
-
-			oos.writeObject(s);
-			oos.flush();
-
-			byte[] bytes = bos.toByteArray();
-
-			oos.close();
-			bos.close();
-
-			return new Bytes(bytes);
-		} catch (IOException e) {
-			throw new RuntimeException(
-					"Unable to serialize the Serializable instance to bytes", e);
-		}
-
-	}
-
-	/**
-	 * Return an instance of the serialized object
-	 * 
-	 * @param <T>
-	 * @param defaultIfNull
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public <T extends Serializable> T toObject(T defaultIfNull) {
-
-		if (isNull()) {
-			return defaultIfNull;
-		}
-
-		try {
-
-			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-			ObjectInputStream ois;
-			ois = new ObjectInputStream(bis);
-			T serialized = (T) ois.readObject();
-			ois.close();
-			bis.close();
-			return serialized;
-		} catch (Exception e) {
-			throw new RuntimeException(
-					"Unable to read bytes to serialized object", e);
-		}
-
-	}
 
 	/**
 	 * Converts the backing array to the appropriate object instance handling
