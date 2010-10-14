@@ -31,9 +31,9 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:http://github.com/s7/scale7-pelops.git</connection>
-		<developerConnection>scm:git:ssh://github.com/s7/scale7-pelops.git</developerConnection>
-		<url>http://github.com/s7/scale7-pelops</url>
+		<connection>scm:git:http://github.com/tnine/scale7-pelops.git</connection>
+		<developerConnection>scm:git:ssh:///git@github.com/tnine/scale7-pelops.git</developerConnection>
+		<url>http://github.com/tnine/scale7-pelops</url>
 	</scm>
 	<issueManagement>
 		<url>http://github.com/s7/scale7-pelops/issues</url>
@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-core</artifactId>
-			<version>1.3-SNAPSHOT</version>
+			<version>1.3.1-st</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
@@ -298,6 +298,19 @@
 					</configuration>
 				</plugin>
 				<!-- END NOTE: this is usually handled by the release plugin... -->
+				<!--  jar up tests -->
+				<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
 			</plugins>
 		</pluginManagement>
 		<plugins>
