@@ -3,7 +3,7 @@
 	<groupId>org.scale7</groupId>
 	<artifactId>scale7-pelops</artifactId>
 	<packaging>jar</packaging>
-	<version>0.906-0.7.0-st</version>
+	<version>0.907-0.7.0-st-SNAPSHOT</version>
 	<name>Pelops - A library for accessing the Cassandra database</name>
 	<url>http://github.com/s7/pelops</url>
 	<properties>
