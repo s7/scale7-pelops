@@ -31,7 +31,7 @@
 	</developers>
 	<scm>
 		<connection>scm:git:http://github.com/tnine/scale7-pelops.git</connection>
-		<developerConnection>scm:git:ssh:///git@github.com/tnine/scale7-pelops.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com/tnine/scale7-pelops.git</developerConnection>
 		<url>http://github.com/tnine/scale7-pelops</url>
 	</scm>
 	<issueManagement>
