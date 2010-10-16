@@ -41,6 +41,16 @@ public class ColumnFamilyManager extends ManagerOperand {
         return tryOperation(operation);
     }
 
+    public String updateColumnFamily(final CfDef columnFamilyDefinition) throws Exception {
+    	IManagerOperation<String> operation = new IManagerOperation<String>() {
+            @Override
+            public String execute(Client conn) throws Exception {
+                return conn.system_update_column_family(columnFamilyDefinition);
+            }
+        };
+        return tryOperation(operation);
+    }
+
     public String dropColumnFamily(final String columnFamily) throws Exception {
     	IManagerOperation<String> operation = new IManagerOperation<String>() {
             @Override
