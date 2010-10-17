@@ -55,6 +55,8 @@ public class EmbeddedCassandraServer {
 	private CassandraDaemon cassandraDaemon;
 
 	private Thread cassandraThread;
+	
+	private boolean retainData;
 
 	/**
 	 * @return RPC port (default: 19160)
@@ -91,33 +93,39 @@ public class EmbeddedCassandraServer {
 
 	public EmbeddedCassandraServer(String listenAddress, int rpcPort,
 			String baseDirectory) {
-		this(listenAddress, rpcPort, 17000, baseDirectory);
+		this(listenAddress, rpcPort, 17000, baseDirectory, false);
 	}
 
 	public EmbeddedCassandraServer(String listenAddress, int rpcPort,
 			int storagePort) {
 		this(listenAddress, rpcPort, storagePort, "/tmp/pelops.cassandra."
-				+ System.currentTimeMillis());
+				+ System.currentTimeMillis(), false);
 	}
 
 	public EmbeddedCassandraServer(String listenAddress, int rpcPort,
-			int storagePort, String baseDirectory) {
+			int storagePort, String baseDirectory, boolean retainData) {
 		this.listenAddress = listenAddress;
 		this.rpcPort = rpcPort;
 		this.storagePort = storagePort;
 		this.baseDirectory = baseDirectory;
+		this.retainData = retainData;
 	}
 
 	/**
 	 * starts embedded Cassandra server.
+	 * 
+	 * @param clean true if the data should be deleted 
 	 * 
 	 * @throws Exception
 	 *             if an error occurs
 	 */
 	public void start() throws Exception {
 		try {
-			cleanupDirectoriesFailover();
-			
+
+			if (!retainData) {
+				cleanupDirectoriesFailover();
+			}
+
 			FileUtils.createDirectory(baseDirectory);
 
 			copy("/log4j.properties", baseDirectory);
