@@ -82,10 +82,16 @@ public class EmbeddedCassandraServer {
 	public EmbeddedCassandraServer() {
 		this("localhost", 19160, 17000);
 	}
+	
+	public EmbeddedCassandraServer(boolean retainData) {
+		this("localhost", 19160, 17000, retainData);
+	}
 
 	public EmbeddedCassandraServer(int rpcPort) {
 		this("localhost", rpcPort, 17000);
 	}
+	
+	
 
 	public EmbeddedCassandraServer(String listenAddress, int rpcPort) {
 		this(listenAddress, rpcPort, 17000);
@@ -98,6 +104,12 @@ public class EmbeddedCassandraServer {
 
 	public EmbeddedCassandraServer(String listenAddress, int rpcPort,
 			int storagePort) {
+		this(listenAddress, rpcPort, storagePort, "/tmp/pelops.cassandra."
+				+ System.currentTimeMillis(), false);
+	}
+	
+	public EmbeddedCassandraServer(String listenAddress, int rpcPort,
+			int storagePort, boolean retainData) {
 		this(listenAddress, rpcPort, storagePort, "/tmp/pelops.cassandra."
 				+ System.currentTimeMillis(), false);
 	}
