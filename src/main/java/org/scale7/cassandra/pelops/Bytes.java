@@ -661,7 +661,7 @@ public class Bytes {
 
     /**
      * Transforms the provided list of {@link String} instances into a list of byte arrays.
-     * @param strings the list of Bytes instances
+     * @param strings the list of String instances
      * @return the list of byte arrays
      */
     public static Set<byte[]> transformUTF8ToSet(Collection<String> strings) {
@@ -677,7 +677,7 @@ public class Bytes {
 
     /**
      * Transforms the provided list of {@link String} instances into a list of byte arrays.
-     * @param strings the list of Bytes instances
+     * @param strings the list of String instances
      * @return the list of byte arrays
      */
     public static List<byte[]> transformUTF8ToList(Collection<String> strings) {
