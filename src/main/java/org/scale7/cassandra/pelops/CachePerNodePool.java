@@ -459,9 +459,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 		    connReleaseCalledCount.incrementAndGet();
 			// Is this connection still open/reusable?
 			if (!networkException) {
-			    if ( conn.isOpen() &&
-			            (countInUse.get() + countCached.get() <= poolPolicy.getTargetConnectionsPerNode() ||
-			                    countCached.get() < poolPolicy.getTargetConnectionsPerNode()) ) {
+			    if (conn.isOpen() && (countInUse.get() + countCached.get() <= poolPolicy.getTargetConnectionsPerNode())) {
                     connReturnedToCacheCount.incrementAndGet();
                     connCache.add(conn);
                     countCached.incrementAndGet();
@@ -469,14 +467,6 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 		        else {
 		            conn.close();
 		        }
-//				// Yes, we can keep this connection if we still want it!
-//				if (conn.isOpen() && (countInUse.get() + countCached.get()) <= poolPolicy.getTargetConnectionsPerNode()) {
-//				    connReturnedToCacheCount.incrementAndGet();
-//					connCache.add(conn);
-//					countCached.incrementAndGet();
-//				} else {
-//                    conn.close();
-//                }
 	            
 	            // This connection is no longer in use
 	            countInUse.decrementAndGet();
