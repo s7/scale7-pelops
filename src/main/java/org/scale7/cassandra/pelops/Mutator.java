@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
-import static org.scale7.cassandra.pelops.Bytes.transformBytesToSet;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -299,6 +298,16 @@ public class Mutator extends Operand {
      * @param colNames                  The column and/or super column names to delete
      */
     public void deleteColumns(String colFamily, String rowKey, Bytes... colNames) {
+        deleteColumns(colFamily, Bytes.fromUTF8(rowKey), Arrays.asList(colNames));
+    }
+
+    /**
+     * Delete a list of columns or super columns.
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param colNames                  The column and/or super column names to delete
+     */
+    public void deleteColumns(String colFamily, Bytes rowKey, Bytes... colNames) {
         deleteColumns(colFamily, rowKey, Arrays.asList(colNames));
     }
 
@@ -312,7 +321,7 @@ public class Mutator extends Operand {
         List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
             colNameList.add(fromUTF8(colName));
-        deleteColumns(colFamily, rowKey, colNameList);
+        deleteColumns(colFamily, Bytes.fromUTF8(rowKey), colNameList);
     }
 
     /**
