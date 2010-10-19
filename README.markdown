@@ -64,7 +64,7 @@ Cassandra 0.6.x users can use:
 			<artifactId>pelops</artifactId>
 			<version>0.805-0.6.4</version>
 		</dependency>
-Please note that this version is not maintained and has known issues that have been fixed in trunk.  If you're interested in helping maintaining the 0.6.x branch let us know...
+**Please note that the 0.6.x version is not maintained and has known issues**.  These issues have been fixed in the 0.7.x version.  If you're interested in helping maintaining the 0.6.x branch let us know...
 
 More Resources:
 [Mailing List](http://groups.google.com/group/scale7)
