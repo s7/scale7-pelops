@@ -83,6 +83,7 @@ public class KeyspaceManager extends ManagerOperand {
         return schemaVersion;
     }
 
+    /* - https://issues.apache.org/jira/browse/CASSANDRA-1630
     public String renameKeyspace(final String oldName, final String newName) throws Exception {
         if (logger.isInfoEnabled()) logger.info("Renaming keyspace '{}' to '{}'", oldName, newName);
         IManagerOperation<String> operation = new IManagerOperation<String>() {
@@ -96,4 +97,5 @@ public class KeyspaceManager extends ManagerOperand {
 
         return schemaVersion;
     }
+    */
 }

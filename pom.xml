@@ -3,47 +3,55 @@
 	<groupId>org.scale7</groupId>
 	<artifactId>scale7-pelops</artifactId>
 	<packaging>jar</packaging>
-	<version>0.908-0.7.0-SNAPSHOT</version>
+	<version>0.907-0.7.0-st-SNAPSHOT</version>
 	<name>Pelops - A library for accessing the Cassandra database</name>
 	<url>http://github.com/s7/pelops</url>
-	<properties>
-		<!-- The ${scale7.deploy.dir} should point to the directory that contains 
-			the clone of http://github.com/s7/mvnrepo. By default it assumes that it's 
-			a sibling of the current project directory. To change the default value alter 
-			your ~/.m2/settings.xml file. -->
-		<scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<cassandra.version>0.7.0-2010-2010-09-22_13-09-02</cassandra.version>
-	</properties>
-	<developers>
-		<developer>
-			<name>Dominic Williams</name>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-		</developer>
-		<developer>
-			<name>Dan Washusen</name>
-			<roles>
-				<role>Contributor</role>
-			</roles>
-		</developer>
-	</developers>
-	<scm>
+    <properties>
+       <!--
+          The ${scale7.deploy.dir} should point to the directory that contains the clone of http://github.com/s7/mvnrepo.
+          By default it assumes that it's a sibling of the current project directory.  To change the default value alter
+          your ~/.m2/settings.xml file.
+       -->
+       <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+       <cassandra.version>0.7.0-rc1-SNAPSHOT-trunk-0-gacbba44</cassandra.version>
+    </properties>
+    <developers>
+        <developer>
+            <name>Dominic Williams</name>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Dan Washusen</name>
+            <roles>
+                <role>Contributor</role>
+            </roles>
+        </developer>
+          <developer>
+            <name>Todd Nine</name>
+            <roles>
+                <role>Contributor</role>
+            </roles>
+        </developer>
+    </developers>
+   <scm>
 		<connection>scm:git:http://github.com/tnine/scale7-pelops.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/tnine/scale7-pelops.git</developerConnection>
 		<url>http://github.com/tnine/scale7-pelops</url>
 	</scm>
-	<issueManagement>
-		<url>http://github.com/s7/scale7-pelops/issues</url>
-	</issueManagement>
-	<mailingLists>
-		<mailingList>
-			<name>users</name>
-			<archive>http://groups.google.com/group/scale7</archive>
-		</mailingList>
-	</mailingLists>
-	<dependencies>
+    <issueManagement>
+        <url>http://github.com/s7/scale7-pelops/issues</url>
+    </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>users</name>
+            <archive>http://groups.google.com/group/scale7</archive>
+        </mailingList>
+    </mailingLists>
+	 <dependencies>
+
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -64,23 +72,23 @@
 			<artifactId>cassandra</artifactId>
 			<version>${cassandra.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.cassandra</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>r959516</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>3.0.4.RELEASE</version>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+         <dependency>
+             <groupId>libthrift</groupId>
+             <artifactId>libthrift</artifactId>
+             <version>0.5</version>
+         </dependency>
+	    <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>3.0.4.RELEASE</version>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -179,17 +187,17 @@
 			<url>http://repo1.maven.org/maven2</url>
 		</repository>
 		<repository>
+			<id>riptano</id>
+			<name>riptano</name>
+			<url>http://mvn.riptano.com/content/repositories/public/</url>
+		</repository>
+		<repository>
 			<id>maven.scale7.org</id>
 			<name>Scale7 Maven Repo</name>
 			<url>http://github.com/s7/mvnrepo/raw/master</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>
-		<repository>
-			<id>riptano</id>
-			<name>riptano</name>
-			<url>http://mvn.riptano.com/content/repositories/public/</url>
 		</repository>
 		<repository>
 			<id>codehaus</id>
@@ -310,62 +318,102 @@
 				</executions>
 			</plugin>
 			
+                <!--
+                    START NOTE: this is usually handled by the release plugin...
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <configuration>
+                        <updateReleaseInfo>true</updateReleaseInfo>
+                    </configuration>
+                </plugin>
+                <!--
+                    END NOTE: this is usually handled by the release plugin...
+                -->
 			</plugins>
 		</pluginManagement>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-failsafe-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
 		</plugins>
 	</build>
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>2.0.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.7</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jxr-plugin</artifactId>
-				<version>2.2</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-changelog-plugin</artifactId>
-				<version>2.2</version>
-			</plugin>
-		</plugins>
-	</reporting>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.0.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-changelog-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+        </plugins>
+    </reporting>
 	<distributionManagement>
 		<repository>
 			<id>maven.scale7.org.local</id>
 			<name>Deployment Staging Area</name>
-			<!-- The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file 
-				and it should point to the directory that contains the clone of http://github.com/s7/mvnrepo. 
-				e.g. file:///Users/dan/Development/Projects/scale7/mvnrepo -->
+			<!--
+				The ${scale7.deploy.dir} is defined in your ~/.m2/settings.xml file
+				and it should point to the directory that contains the clone of
+				http://github.com/s7/mvnrepo. e.g.
+				file:///Users/dan/Development/Projects/scale7/mvnrepo
+			-->
 			<url>${scale7.deploy.dir}</url>
 			<layout>default</layout>
 		</repository>

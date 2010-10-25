@@ -12,9 +12,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -36,7 +37,7 @@ import org.slf4j.Logger;
  * @author dominicwilliams
  *
  */
-public class CachePerNodePool extends ThriftPoolBase {
+public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePoolMXBean {
 
 	private static final Logger logger = SystemProxy.getLoggerFromFactory(CachePerNodePool.class);
 
@@ -48,6 +49,28 @@ public class CachePerNodePool extends ThriftPoolBase {
 	private ExecutorService clusterWatcherExec = Executors.newSingleThreadExecutor();
     private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
+    private AtomicLong getConnCount = new AtomicLong();
+    private AtomicLong leastLoadedSelectedCount = new AtomicLong();
+    private AtomicLong leastLoadedNotSelectedCount = new AtomicLong();
+    private AtomicLong cacheConnNotSelectedCount = new AtomicLong();
+    private AtomicLong cacheConnSelectedCount = new AtomicLong();
+    private AtomicLong connSelectedAlreadyOpenCount = new AtomicLong();
+    private AtomicLong connSelectedNotAlreadyOpenCount = new AtomicLong();
+    private AtomicLong connCannotOpenCount = new AtomicLong();
+    private AtomicLong connClosedCount = new AtomicLong();
+    private AtomicLong connCreatedCount = new AtomicLong();
+    private AtomicLong connReleaseCalledCount = new AtomicLong();
+    private AtomicLong connAddToCacheCount = new AtomicLong();
+    private AtomicLong connCreateExceptionCount = new AtomicLong();
+    private AtomicLong connOpenedCount = new AtomicLong();
+    private AtomicLong connReturnedToCacheCount = new AtomicLong();
+    private AtomicLong deadConnCount = new AtomicLong();
+    private AtomicLong networkExceptionCount = new AtomicLong();
+    private AtomicLong purgeAllSessionConnsCount = new AtomicLong();
+    private AtomicLong refillBackoffCount = new AtomicLong();
+    private AtomicLong refillNeedConnCount = new AtomicLong();
+    private AtomicLong getConnBackoffCount = new AtomicLong();
+    
     /**
 	 * Get a Cassandra connection to the least loaded node represented in the connection pool.
 	 * @return						A connection to Cassandra
@@ -60,13 +83,14 @@ public class CachePerNodePool extends ThriftPoolBase {
     /**
      * Constructs a pool instance.
      * Note: unless you are performing management options the keyspace should be provided.
-     * @param defaultPort the port to content the nodes on (9160)
+     * @param cluster the cluster info to connect to
      * @param keyspace the keyspace to use (note: as of 0.7.0 this is basically a required parameter)
      * @param generalPolicy the general pelops policy
      * @param poolPolicy the pool policy
      */
 	public CachePerNodePool(Cluster cluster, String keyspace, OperandPolicy generalPolicy, Policy poolPolicy) {
-        this.cluster = cluster;
+	    JmxMBeanManager.getInstance().registerMBean(this, JMX_MBEAN_OBJ_NAME+"-"+keyspace);
+	    this.cluster = cluster;
         this.generalPolicy = generalPolicy;
         pool = new MultiNodePool();
 		this.keyspace = keyspace;
@@ -90,6 +114,8 @@ public class CachePerNodePool extends ThriftPoolBase {
 	 */
 	@Override
     public IConnection getConnectionExcept(String notNode) throws Exception {
+	    getConnCount.incrementAndGet();
+
 		// Create a list of nodes we have already tried, and therefore should avoid in preference
 		// to trying new nodes.
 		List<String> triedNodes = null;
@@ -109,13 +135,17 @@ public class CachePerNodePool extends ThriftPoolBase {
 				for (NodeContext nodeContext : nodeContexts) {
 					if (nodeContext.isAvailable()) {
 						if (triedNodes == null || !triedNodes.contains(nodeContext.node))
-							if (leastLoaded == null || leastLoaded.getNodeLoadIndex() >= nodeContext.getNodeLoadIndex())
+							if (leastLoaded == null || leastLoaded.getNodeLoadIndex() >= nodeContext.getNodeLoadIndex()) {
 								leastLoaded = nodeContext;
+								leastLoadedSelectedCount.incrementAndGet();
+							}
 					}
 				}
 				// If we could not find an available untried node then break out and try any node
-				if (leastLoaded == null)
+				if (leastLoaded == null) {
+                    leastLoadedNotSelectedCount.incrementAndGet();
 					break;
+				}
 				// otherwise, try to return a connection from this least loaded untried node
 				IConnection conn = leastLoaded.getConnection();
 				if (conn != null)
@@ -138,6 +168,9 @@ public class CachePerNodePool extends ThriftPoolBase {
 				if (conn != null)
 					return conn;
 			}
+			
+			getConnBackoffCount.incrementAndGet();
+			
 			// Nope, that didn't work so need to back off and try again in a moment
 			logger.warn("Unable to find a node to connect to. Backing off...");
 			failedAttempts++;
@@ -249,10 +282,16 @@ public class CachePerNodePool extends ThriftPoolBase {
 		int nodeSessionId = 0;
 
 		Connection(String node, int port, String keyspace, ConnectionReleaseHandler releaseHandler) throws SocketException, TException, InvalidRequestException {
-            this.node = node;
+            connCreatedCount.incrementAndGet();
+            
+		    this.node = node;
             this.keyspace = keyspace;
             this.releaseHandler = releaseHandler;
-            TSocket socket = new TSocket(node, port);
+            TSocket socket =  new TSocket(node, port);
+
+            if (getPoolPolicy().getConnectionTimeout() != null)
+                socket.setTimeout(getPoolPolicy().getConnectionTimeout());
+
             transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
 			protocol = new TBinaryProtocol(transport);
 			//socket.getSocket().setKeepAlive(true);
@@ -331,6 +370,7 @@ public class CachePerNodePool extends ThriftPoolBase {
          */
 		@Override
         public void close() {
+		    connClosedCount.incrementAndGet();
 			transport.close();
 		}
     }
@@ -391,14 +431,22 @@ public class CachePerNodePool extends ThriftPoolBase {
 					synchronized (connCacheLock) {
 						conn = connCache.poll();
 					}
-					if (conn == null)
+					if (conn == null) {
+					    cacheConnNotSelectedCount.incrementAndGet();
 						return null;
-					else
+					}
+					else {
+					    cacheConnSelectedCount.incrementAndGet();
 						countCached.decrementAndGet();
+					}
 
 					if (conn.isOpen()) {
 						countInUse.incrementAndGet();
+						connSelectedAlreadyOpenCount.incrementAndGet();
 						return conn;
+					}
+					else {
+                        connSelectedNotAlreadyOpenCount.incrementAndGet();
 					}
 				}
 			} finally {
@@ -408,18 +456,25 @@ public class CachePerNodePool extends ThriftPoolBase {
 		}
 
 		void onConnectionRelease(Connection conn, boolean networkException) {
-			// This connection is no longer in use
-			countInUse.decrementAndGet();
+		    connReleaseCalledCount.incrementAndGet();
 			// Is this connection still open/reusable?
 			if (!networkException) {
-				// Yes, we can keep this connection if we still want it!
-				if (conn.isOpen() && (countInUse.get() + countCached.get()) < poolPolicy.getTargetConnectionsPerNode()) {
-					connCache.add(conn);
-					countCached.incrementAndGet();
-				} else {
-                    conn.close();
-                }
+			    if (conn.isOpen() && (countInUse.get() + countCached.get() <= poolPolicy.getTargetConnectionsPerNode())) {
+                    connReturnedToCacheCount.incrementAndGet();
+                    connCache.add(conn);
+                    countCached.incrementAndGet();
+			    }
+		        else {
+		            conn.close();
+		        }
+	            
+	            // This connection is no longer in use
+	            countInUse.decrementAndGet();
 			} else {
+	            // This connection is no longer in use
+	            countInUse.decrementAndGet();
+
+	            networkExceptionCount.incrementAndGet();
 				// close connection
 				conn.close();
 				// kill all connections to this node?
@@ -442,17 +497,23 @@ public class CachePerNodePool extends ThriftPoolBase {
                     }
                 });
 			} catch (Exception e) {
+			    connCreateExceptionCount.incrementAndGet();
                 logger.error(e.getMessage(), e);
 				return null;
 			}
 
-			if (conn.open(sessionId.get()))
+			if (conn.open(sessionId.get())) {
+			    connOpenedCount.incrementAndGet();;
 				return conn;
+			}
+			
+			connCannotOpenCount.incrementAndGet();
 
 			return null;
 		}
 
 		private void purgeConnsCreatedToSession(int nodeSessionId) {
+		    purgeAllSessionConnsCount.incrementAndGet();
 			logger.warn("{} NodeContext killing all pooled connections for session {}", node, nodeSessionId);
 			int killedCount = 0;
 			synchronized (connCacheLock) {
@@ -494,6 +555,7 @@ public class CachePerNodePool extends ThriftPoolBase {
 					int foundDead = 0;
 					for (IConnection conn : connCache)
 						if (!conn.isOpen()) {
+						    deadConnCount.incrementAndGet();
 							countCached.decrementAndGet();
 							connCache.remove(conn);
 							foundDead++;
@@ -507,9 +569,11 @@ public class CachePerNodePool extends ThriftPoolBase {
 						// Do we actually want to create any more connections?
 						while (countCached.get() < poolPolicy.getMinCachedConnectionsPerNode() ||
 								(countInUse.get() + countCached.get()) < poolPolicy.getTargetConnectionsPerNode()) {
+						    refillNeedConnCount.incrementAndGet();
 							// Yup create new connection for cache
 							IConnection conn = createConnection();
 							if (conn == null) {
+							    refillBackoffCount.incrementAndGet();
 								// Connection error occurred. Calculate back off delay
 								failureCount++;
 								backOffDelay = NetworkAlgorithms.getBinaryBackoffDelay(
@@ -520,6 +584,7 @@ public class CachePerNodePool extends ThriftPoolBase {
 							}
 							// We managed to create new connection
 							failureCount = 0;
+							connAddToCacheCount.incrementAndGet();
 							// Add new connection to waiting cache
 							countCached.incrementAndGet();
 							connCache.add(conn);
@@ -551,6 +616,8 @@ public class CachePerNodePool extends ThriftPoolBase {
         int defaultTargetRefillCheckPause = 2500;
 
         boolean killNodeConnsOnException = true;
+
+        Integer connectionTimeout = null;
 
         public boolean getDynamicNodeDiscovery() {
         	return dynamicNodeDiscovery;
@@ -635,5 +702,126 @@ public class CachePerNodePool extends ThriftPoolBase {
         public void setKillNodeConnsOnException(boolean killNodeConnsOnException) {
             this.killNodeConnsOnException = killNodeConnsOnException;
         }
+
+        /**
+         * The timeout value passed to the org.apache.thrift.transport.TSocket constructor.
+         * @return the timeout value
+         */
+        public Integer getConnectionTimeout() {
+            return connectionTimeout;
+        }
+
+        /**
+         * The timeout value passed to the org.apache.thrift.transport.TSocket constructor.
+         * <p>If null (default) the default Thrift value will be used.
+         * @param connectionTimeout the timeout value
+         */
+        public void setConnectionTimeout(Integer connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+        }
+    }
+
+    @Override
+    public long getGetConnCount() {
+        return getConnCount.get();
+    }
+
+    @Override
+    public long getLeastLoadedSelectedCount() {
+        return leastLoadedSelectedCount.get();
+    }
+
+    @Override
+    public long getLeastLoadedNotSelectedCount() {
+        return leastLoadedNotSelectedCount.get();
+    }
+
+    @Override
+    public long getCacheConnNotSelectedCount() {
+        return cacheConnNotSelectedCount.get();
+    }
+
+    @Override
+    public long getCacheConnSelectedCount() {
+        return cacheConnSelectedCount.get();
+    }
+
+    @Override
+    public long getConnSelectedAlreadyOpenCount() {
+        return connSelectedAlreadyOpenCount.get();
+    }
+
+    @Override
+    public long getConnSelectedNotAlreadyOpenCount() {
+        return connSelectedNotAlreadyOpenCount.get();
+    }
+
+    @Override
+    public long getConnCannotOpenCount() {
+        return connCannotOpenCount.get();
+    }
+
+    @Override
+    public long getConnClosedCount() {
+        return connClosedCount.get();
+    }
+
+    @Override
+    public long getConnCreatedCount() {
+        return connCreatedCount.get();
+    }
+
+    @Override
+    public long getConnReleaseCalledCount() {
+        return connReleaseCalledCount.get();
+    }
+
+    @Override
+    public long getConnAddToCacheCount() {
+        return connAddToCacheCount.get();
+    }
+
+    @Override
+    public long getConnCreateExceptionCount() {
+        return connCreateExceptionCount.get();
+    }
+
+    @Override
+    public long getConnOpenedCount() {
+        return connOpenedCount.get();
+    }
+
+    @Override
+    public long getConnReturnedToCacheCount() {
+        return connReturnedToCacheCount.get();
+    }
+
+    @Override
+    public long getDeadConnCount() {
+        return deadConnCount.get();
+    }
+
+    @Override
+    public long getNetworkExceptionCount() {
+        return networkExceptionCount.get();
+    }
+
+    @Override
+    public long getPurgeAllSessionConnsCount() {
+        return purgeAllSessionConnsCount.get();
+    }
+
+    @Override
+    public long getRefillBackoffCount() {
+        return refillBackoffCount.get();
+    }
+
+    @Override
+    public long getRefillNeedConnCount() {
+        return refillNeedConnCount.get();
+    }
+
+    public long getGetConnBackoffCount() {
+        return getConnBackoffCount.get();
     }
 }

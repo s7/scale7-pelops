@@ -12,6 +12,7 @@ import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_L
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,11 +48,11 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
 				.setComparator_type(CFDEF_COMPARATOR_BYTES)
 				.setDefault_validation_class(CFDEF_COMPARATOR_BYTES)
 				.setColumn_metadata(Arrays.asList(
-						new ColumnDef(Bytes.fromUTF8("name").getBytes(), CFDEF_COMPARATOR_BYTES)
+						new ColumnDef(ByteBuffer.wrap(Bytes.fromUTF8("name").getBytes()), CFDEF_COMPARATOR_BYTES)
 							// using default CF validation class (CFDEF_COMPARATOR_BYTES)
 							.setIndex_name("NameIndex")
 							.setIndex_type(IndexType.KEYS),
-						new ColumnDef(Bytes.fromUTF8("age").getBytes(), CFDEF_COMPARATOR_LONG)
+						new ColumnDef(ByteBuffer.wrap(Bytes.fromUTF8("age").getBytes()), CFDEF_COMPARATOR_LONG)
 							.setValidation_class(CFDEF_COMPARATOR_LONG)
 							.setIndex_name("AgeIndex")
 							.setIndex_type(IndexType.KEYS))),

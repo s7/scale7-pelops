@@ -4,6 +4,8 @@ makes the underlying semantics clear to reviewers. Without compromising power, P
 productivity and code quality while greatly reducing the learning curve for new users. In fact, these objectives go
 hand in hand.
 
+Pelops is provided under the [MIT licence](http://www.opensource.org/licenses/mit-license.php). 
+
 To use Pelops with Cassandra 0.7.x use the following:
 
 1. Add the following repository to your project repositories:
@@ -14,6 +16,11 @@ To use Pelops with Cassandra 0.7.x use the following:
 				<name>Maven Central Repo</name>
 				<url>http://repo1.maven.org/maven2</url>
 			</repository>
+            <repository>
+                <id>riptano</id>
+                <name>riptano</name>
+                <url>http://mvn.riptano.com/content/repositories/public/</url>
+            </repository>
 			<repository>
 				<id>maven.scale7.org</id>
 				<name>Scale7 Maven Repo</name>
@@ -24,35 +31,40 @@ To use Pelops with Cassandra 0.7.x use the following:
 			</repository>
 		</repositories>
 
-2a. If you're using Cassandra 0.7.0-beta1 then add the following dep to your project:
+2. Choose the appropriate Pelops version. 
+
+    If you're using Cassandra 0.7.0-beta2 then add the following dep to your project:
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.903-0.7.0-SNAPSHOT</version>
+			<version>0.907-0.7.0-SNAPSHOT</version>
 		</dependency>
 
-2b. If Cassandra 0.7.0-beta1 isn't bleeding edge enough for you then add the following dep to your project
+    If Cassandra 0.7.0-beta2 isn't bleeding edge enough for you then add the following dep to your project
 and use the latest build available from
-[Hudson](https://hudson.apache.org/hudson/job/Cassandra/lastSuccessfulBuild/artifact/cassandra/build/) (apache-cassandra-2010-09-22_13-09-02-bin.tar.gz):
+[Hudson](https://hudson.apache.org/hudson/job/Cassandra/lastSuccessfulBuild/artifact/cassandra/build/) (head currently on beta2):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.906-0.7.0-SNAPSHOT</version>
+			<version>0.907-0.7.0-SNAPSHOT</version>
 		</dependency>
 
-Note: this version is the only one getting Pelops fixes and updates.
+    Note: this version is the only one getting Pelops fixes and updates.
 
 3. Start using Pelops.
 
-Cassandra 0.6.x users should use:
+
+
+Cassandra 0.6.x users can use:
 
 		<dependency>
 			<groupId>org.wyki</groupId>
 			<artifactId>pelops</artifactId>
 			<version>0.805-0.6.4</version>
 		</dependency>
+**Please note that the 0.6.x version is not maintained and has known issues**.  These issues have been fixed in the 0.7.x version.  If you're interested in helping maintaining the 0.6.x branch let us know...
 
 More Resources:
 [Mailing List](http://groups.google.com/group/scale7)

@@ -71,6 +71,7 @@ public class ColumnFamilyManager extends ManagerOperand {
    
 
 
+    /* - https://issues.apache.org/jira/browse/CASSANDRA-1630
     public String renameColumnFamily(final String oldName, final String newName) throws Exception {
     	IManagerOperation<String> operation = new IManagerOperation<String>() {
             @Override
@@ -80,4 +81,5 @@ public class ColumnFamilyManager extends ManagerOperand {
         };
         return tryOperation(operation);
     }
+    */
 }

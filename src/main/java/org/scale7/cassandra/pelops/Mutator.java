@@ -1,19 +1,25 @@
 package org.scale7.cassandra.pelops;
 
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.thrift.*;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.Deletion;
+import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SuperColumn;
 import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
-import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
-import static org.scale7.cassandra.pelops.Bytes.transformBytesToSet;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -33,9 +39,9 @@ public class Mutator extends Operand {
      * @throws Exception
      */
     public void execute(final ConsistencyLevel cLevel) throws Exception {
-        final HashMap<byte[], Map<String, List<Mutation>>> convertedBatch = new HashMap<byte[], Map<String, List<Mutation>>>(batch.size());
+        final HashMap<ByteBuffer, Map<String, List<Mutation>>> convertedBatch = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(batch.size());
         for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
-            convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
+            convertedBatch.put(ByteBuffer.wrap(batchEntry.getKey().getBytes()), batchEntry.getValue());
         }
 
         IOperation<Void> operation = new IOperation<Void>() {
@@ -299,6 +305,16 @@ public class Mutator extends Operand {
      * @param colNames                  The column and/or super column names to delete
      */
     public void deleteColumns(String colFamily, String rowKey, Bytes... colNames) {
+        deleteColumns(colFamily, Bytes.fromUTF8(rowKey), Arrays.asList(colNames));
+    }
+
+    /**
+     * Delete a list of columns or super columns.
+     * @param colFamily                 The column family
+     * @param rowKey                    The key of the row to modify
+     * @param colNames                  The column and/or super column names to delete
+     */
+    public void deleteColumns(String colFamily, Bytes rowKey, Bytes... colNames) {
         deleteColumns(colFamily, rowKey, Arrays.asList(colNames));
     }
 
@@ -312,7 +328,7 @@ public class Mutator extends Operand {
         List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
             colNameList.add(fromUTF8(colName));
-        deleteColumns(colFamily, rowKey, colNameList);
+        deleteColumns(colFamily, Bytes.fromUTF8(rowKey), colNameList);
     }
 
     /**
