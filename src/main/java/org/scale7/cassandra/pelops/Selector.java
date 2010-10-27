@@ -923,7 +923,7 @@ public class Selector extends Operand {
                         assert cosc.super_column != null : "The super column should not be null";
                         columns.add(cosc.super_column);
                     }
-                    result.put(Bytes.fromBytes(rowKey.array()), columns);
+                    result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
             }
@@ -951,7 +951,7 @@ public class Selector extends Operand {
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.super_column);
-                    result.put(toUTF8(rowKey.array()), columns);
+                    result.put(fromByteBuffer(rowKey).toUTF8(), columns);
                 }
                 return result;
             }
@@ -972,7 +972,7 @@ public class Selector extends Operand {
                         assert cosc.column != null : "The column should not be null";
                         columns.add(cosc.column);
                     }
-                    result.put(Bytes.fromBytes(rowKey.array()), columns);
+                    result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
             }
@@ -991,7 +991,7 @@ public class Selector extends Operand {
                     List<Column> columns = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         columns.add(cosc.column);
-                    result.put(toUTF8(rowKey.array()), columns);
+                    result.put(fromByteBuffer(rowKey).toUTF8(), columns);
                 }
                 return result;
             }

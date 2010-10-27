@@ -132,6 +132,21 @@ public class Bytes  {
     public static Bytes fromBytes(byte[] value) {
         return new Bytes(value);
     }
+    
+
+    /**
+     * Creates an instance based on the provided byte array.  The major difference from the {@link Bytes#Bytes(byte[])}
+     * method is that this will return null if null is provided.
+     * @param value the value
+     * @return the Bytes instance or null (if null is provided)
+     */
+    public static Bytes fromByteBuffer(ByteBuffer buff) {
+    	byte[] value = new byte[buff.remaining()];
+    	
+    	buff.get(value, buff.arrayOffset(), buff.remaining());
+    	
+        return new Bytes(value);
+    }
 
     /**
      * Creates an instance based on the provided value.
