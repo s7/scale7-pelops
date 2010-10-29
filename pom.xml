@@ -14,7 +14,8 @@
        -->
        <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-       <cassandra.version>0.7.0-rc1-SNAPSHOT-trunk-0-gacbba44</cassandra.version>
+       <cassandra.version>2010-10-25_12-57-56</cassandra.version>
+
     </properties>
     <developers>
         <developer>
@@ -70,7 +71,7 @@
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra</artifactId>
-			<version>${cassandra.version}</version>
+			<version>0.7.0-beta3-eevans</version>
 		</dependency>
          <dependency>
              <groupId>libthrift</groupId>

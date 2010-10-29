@@ -1,5 +1,6 @@
 package org.scale7.cassandra.pelops;
 
+
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
 
@@ -41,7 +42,7 @@ public class Mutator extends Operand {
     public void execute(final ConsistencyLevel cLevel) throws Exception {
         final HashMap<ByteBuffer, Map<String, List<Mutation>>> convertedBatch = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(batch.size());
         for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
-            convertedBatch.put(ByteBuffer.wrap(batchEntry.getKey().getBytes()), batchEntry.getValue());
+            convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
         }
 
         IOperation<Void> operation = new IOperation<Void>() {
