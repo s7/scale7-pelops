@@ -75,14 +75,14 @@ public class Bytes {
     }
 
     /**
-     * Returns a string representation of the bytes as defined by the {@link java.util.Arrays#toString(byte[])} method.
+     * Returns an (expensive) string representation of the bytes as defined by the {@link java.util.Arrays#toString(byte[])} method.
      * <p><b>NOTE</b>: The {@link #toUTF8()} method provides the reverse value of the {@link #fromUTF8(String)} method.
      *
      * @return the string representation
      */
     @Override
     public String toString() {
-        return Arrays.toString(this.bytes.array());
+        return Arrays.toString(Arrays.copyOfRange(bytes.array(), bytes.position(), bytes.remaining()));
     }
 
     /**
