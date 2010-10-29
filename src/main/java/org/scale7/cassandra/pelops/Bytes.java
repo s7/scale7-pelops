@@ -498,14 +498,18 @@ public class Bytes  {
     
     
     /**
-     * Returns the bytes in the buffer as a byte array
+     * Returns the bytes in the buffer as a byte array.  This does not observe position.  It rewinds the
+     * buffer to the initial insert and retrieves all bytes that are currently in the buffer.
+     * 
      * @param value the value
      * @return the Bytes instance or null (if null is provided)
      */
     public byte[] toBytes() {
+    	this.bytes.rewind();
+    	
     	byte[] value = new byte[this.bytes.remaining()];
     	
-    	this.bytes.get(value, this.bytes.arrayOffset(), this.bytes.remaining());
+    	this.bytes.get(value);
     	
         return value;
     }

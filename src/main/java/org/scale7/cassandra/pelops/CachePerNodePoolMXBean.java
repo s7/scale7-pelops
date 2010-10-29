@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import java.util.concurrent.atomic.AtomicLong;
 
 public interface CachePerNodePoolMXBean {
     String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops:type=CachePerNodePool";

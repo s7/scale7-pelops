@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.scale7.cassandra.pelops.serializable.SerializableObject;
 
 /**
  * Tests the {@link Bytes} class.

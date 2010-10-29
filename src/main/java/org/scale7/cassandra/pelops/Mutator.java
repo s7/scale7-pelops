@@ -19,8 +19,6 @@ import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SuperColumn;
 import org.scale7.cassandra.pelops.IThriftPool.IConnection;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -32,7 +30,6 @@ import org.slf4j.Logger;
  *
  */
 public class Mutator extends Operand {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
