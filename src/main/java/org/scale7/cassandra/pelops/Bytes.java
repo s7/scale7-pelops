@@ -499,7 +499,8 @@ public class Bytes  {
     
     /**
      * Returns the bytes in the buffer as a byte array.  This does not observe position.  It rewinds the
-     * buffer to the initial insert and retrieves all bytes that are currently in the buffer.
+     * buffer to the initial insert and retrieves all bytes that are currently in the buffer.  The position
+     * in the buffer is then reset to it's position before this method was invoked.
      * 
      * @param value the value
      * @return the Bytes instance or null (if null is provided)
@@ -510,6 +511,8 @@ public class Bytes  {
     	byte[] value = new byte[this.bytes.remaining()];
     	
     	this.bytes.get(value);
+    	
+    	this.bytes.position(this.position);
     	
         return value;
     }
