@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -14,12 +13,6 @@ import java.util.*;
  * <p>In an effort to provide a very stable and well tested marshalling strategy
  * this class uses the various methods available on {@link java.nio.ByteBuffer} to perform serialization.  The exceptions
  * to this are the UUID and String methods (see their javadoc comments for details).</p>
- * <p/>
- * <p>The down side of the marshalling strategy used in this class this class is a LOT of ByteBuffer instances being
- * created.  If you think this will be an issue then consider avoiding the {@link #fromBoolean(boolean) various}
- * {@link #toBoolean() helper} {@link #fromTimeUuid(com.eaio.uuid.UUID) methods} and instead use the
- * {@link #fromBytes(byte[])} and {@link #getBytes()} methods directly.
- * <b>Note: as of 0.7.0 beta3 this is less of an issue because ByteBuffer instances are required/provided by Cassandra.</b></p>
  */
 public class Bytes {
     public static final Bytes EMPTY = new Bytes(new byte[0]);
@@ -45,6 +38,7 @@ public class Bytes {
     static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final ByteBuffer bytes;
+    private final int position;
     private int hashCode = -1;
 
     /**
@@ -53,16 +47,24 @@ public class Bytes {
      * @param bytes the bytes
      */
     public Bytes(byte[] bytes) {
-        this.bytes = ByteBuffer.wrap(bytes);
+        this(ByteBuffer.wrap(bytes));
     }
 
     /**
-     * Constructs a new instance based on the provided byte buffer.
+     * Constructs a new instance based on the provided byte buffer.  The {@link java.nio.ByteBuffer#position()} must be
+     * in the correct position to read the appropriate value from it.
      *
      * @param bytes the bytes
      */
     public Bytes(ByteBuffer bytes) {
         this.bytes = bytes;
+
+        // mark the point to reset to
+        // could use mark/reset but want to avoid making changes to the byte buffer instance
+        if (!isNull())
+            position = this.bytes.position();
+        else
+            position = -1;
     }
 
     /**
@@ -71,7 +73,7 @@ public class Bytes {
      * @param bytes the bytes
      */
     private Bytes(Buffer bytes) {
-        this.bytes = (ByteBuffer) bytes;
+        this((ByteBuffer) bytes);
     }
 
     /**
@@ -82,11 +84,14 @@ public class Bytes {
      */
     @Override
     public String toString() {
-        return Arrays.toString(Arrays.copyOfRange(bytes.array(), bytes.position(), bytes.remaining()));
+        if (isNull()) return null;
+
+        bytes.position(position);
+        return Arrays.toString(Arrays.copyOfRange(bytes.array(), bytes.position(), bytes.limit()));
     }
 
     /**
-     * The raw byte array.
+     * Returns the underlying {@link ByteBuffer}.
      *
      * @return the raw byte array
      */
@@ -441,8 +446,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public char toChar() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getChar();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -471,8 +476,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public byte toByte() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.get();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -501,8 +506,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public long toLong() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getLong();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -531,8 +536,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public int toInt() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getInt();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -561,8 +566,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public short toShort() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getShort();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -591,8 +596,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public double toDouble() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getDouble();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -621,8 +626,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public float toFloat() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.getFloat();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -651,8 +656,8 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public boolean toBoolean() throws IllegalStateException {
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             return this.bytes.get() != BOOLEAN_FALSE;
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
@@ -670,8 +675,8 @@ public class Bytes {
     public UUID toUuid() throws IllegalStateException {
         if (isNull()) return null;
 
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             long msb = this.bytes.getLong();
             long lsb = this.bytes.getLong();
 
@@ -692,8 +697,8 @@ public class Bytes {
     public com.eaio.uuid.UUID toTimeUuid() throws IllegalStateException {
         if (isNull()) return null;
 
-        int position = this.bytes.position();
         try {
+            this.bytes.position(position);
             long time = this.bytes.getLong();
             long clockSeqAndNode = this.bytes.getLong();
 
@@ -714,11 +719,19 @@ public class Bytes {
      * @return the deserialized instance or null if the backing array was null
      */
     public String toUTF8() {
-        return isNull() ? null : new String(this.bytes.array(), this.bytes.position(), this.bytes.remaining(), UTF8);
+        if (isNull()) return null;
+
+        try {
+            this.bytes.position(position);
+            return new String(this.bytes.array(), this.bytes.position(), this.bytes.remaining(), UTF8);
+        } finally {
+            this.bytes.position(position);
+        }
     }
 
     /**
-     * Convert the byte buffer to a UTF-8 string
+     * Convert the byte buffer to a UTF-8 string.  The byte buffer will maintain it's original
+     * {@link java.nio.ByteBuffer#position()}.
      *
      * @param bytes The UTF-8 string, encoded as raw bytes
      * @return The UTF-8 string object represented by the byte array
@@ -726,7 +739,12 @@ public class Bytes {
     public static String toUTF8(ByteBuffer bytes) {
         if (bytes == null)
             return null;
-        return new String(bytes.array(), bytes.position(), bytes.remaining(), UTF8);
+        int position = bytes.position();
+        try {
+            return new String(bytes.array(), position, bytes.remaining(), UTF8);
+        } finally {
+            bytes.position(position);
+        }
     }
 
     /**
@@ -816,9 +834,13 @@ public class Bytes {
      * @return the underlying byte array of the instance or null
      */
     public static ByteBuffer nullSafeGet(Bytes bytes) {
-        return bytes == null ? null : bytes.getBytes();
+        return bytes == null ? null : bytes.getBytes(); 
     }
 
+    /**
+     * Helper used to determine if the underlying {@link ByteBuffer} is null.
+     * @return true if null, otherwise false
+     */
     public boolean isNull() {
         return this.bytes == null;
     }
