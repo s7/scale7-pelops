@@ -62,6 +62,23 @@ public class BytesUnitTest {
 
         assertTrue("Conversion did not match", Arrays.equals(value, to));
     }
+    
+    @Test
+    public void testToBytesFromBuffer() {
+    	ByteBuffer buff = ByteBuffer.allocate(8*3+4);
+    	
+    	buff.putLong(0);
+    	buff.putInt(100);
+    	buff.putLong(2000);
+    	buff.putLong(4000);
+    	
+    	
+    	
+        Bytes from = Bytes.fromByteBuffer(buff);
+        byte[] to = from.toBytes();
+
+        assertTrue("Conversion did not match", Arrays.equals(buff.array(), to));
+    }
 
     @Test
     public void testByte() {
