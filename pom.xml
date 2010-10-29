@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra</artifactId>
-			<version>0.7.0-beta3-eevans</version>
+			<version>0.7.0-beta3</version>
 		</dependency>
          <dependency>
              <groupId>libthrift</groupId>
