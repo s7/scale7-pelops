@@ -2,6 +2,7 @@ package org.scale7.cassandra.pelops;
 
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ import static junit.framework.Assert.*;
 public class BytesUnitTest {
     @Test
     public void testNullArray() {
-        Bytes bytes = new Bytes(null);
+        Bytes bytes = Bytes.NULL;
         assertNull("The underlying array should not be null", bytes.getBytes());
     }
     
@@ -53,7 +54,7 @@ public class BytesUnitTest {
     public void testBytes() {
         byte[] value = {1, 2, 3, 4, 5};
         Bytes from = Bytes.fromBytes(value);
-        byte[] to = from.getBytes();
+        byte[] to = from.getBytes().array();
 
         assertTrue("Conversion did not match", Arrays.equals(value, to));
     }
@@ -65,6 +66,31 @@ public class BytesUnitTest {
         byte to = from.toByte();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toByte();
+    }
+
+    /**
+     * The thrift API passes an array full of all kinds of stuff.  This test ensures that the Bytes class operates correctly
+     * when this is the case (e.g. when read results from cassandra).
+     */
+    @Test
+    public void testByteBuffer() {
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + Bytes.SIZEOF_BYTE + Bytes.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).put((byte) 9).putLong(Long.MAX_VALUE);
+
+        Bytes from = Bytes.fromByteBuffer(
+                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE + 1, Bytes.SIZEOF_BYTE)
+        );
+        byte to = from.toByte();
+
+        assertEquals("Conversion did not match", Byte.MAX_VALUE, to);
+
+        // make sure the buffer is rewound
+        to = from.toByte();
+        
+        assertEquals("Conversion did not match", Byte.MAX_VALUE, to);
     }
 
     @Test
@@ -93,6 +119,9 @@ public class BytesUnitTest {
         boolean to = from.toBoolean();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toBoolean();
     }
 
     @Test
@@ -103,6 +132,9 @@ public class BytesUnitTest {
         boolean to = from.toBoolean();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toBoolean();
     }
 
     @Test
@@ -132,6 +164,9 @@ public class BytesUnitTest {
         char to = from.toChar();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toChar();
     }
 
     @Test
@@ -159,6 +194,9 @@ public class BytesUnitTest {
         short to = from.toShort();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toShort();
     }
 
     @Test
@@ -186,6 +224,9 @@ public class BytesUnitTest {
         int to = from.toInt();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toInt();
     }
 
     @Test
@@ -213,6 +254,9 @@ public class BytesUnitTest {
         long to = from.toLong();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toLong();
     }
 
     @Test
@@ -240,6 +284,9 @@ public class BytesUnitTest {
         float to = from.toFloat();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toFloat();
     }
 
     @Test
@@ -267,6 +314,9 @@ public class BytesUnitTest {
         double to = from.toDouble();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toDouble();
     }
 
     @Test
@@ -294,6 +344,9 @@ public class BytesUnitTest {
         UUID to = from.toUuid();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toUuid();
     }
 
     @Test
@@ -302,7 +355,7 @@ public class BytesUnitTest {
         Bytes from = Bytes.fromUuid(value);
         UUID to = from.toUuid();
 
-        assertEquals("Conversion did not match", value, to);
+        assertEquals("Conversion did not match", value, to);;
     }
 
     @Test
@@ -332,6 +385,9 @@ public class BytesUnitTest {
         com.eaio.uuid.UUID to = from.toTimeUuid();
 
         assertEquals("Conversion did not match", value, to);
+
+        // make sure the buffer is rewound
+        from.toTimeUuid();
     }
 
     @Test
@@ -363,9 +419,43 @@ public class BytesUnitTest {
         assertEquals("Conversion did not match", clockSeq, to.getClockSeqAndNode());
     }
 
+    /**
+     * The thrift API passes an array full of all kinds of stuff.  This test ensures that the Bytes class operates correctly
+     * when this is the case (e.g. when read results from cassandra).
+     */
+    @Test
+    public void testUTF8Buffer() {
+        String string = "This is a test";
+
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + string.length() + Bytes.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.UTF8)).putLong(Long.MAX_VALUE);
+
+        Bytes from = Bytes.fromByteBuffer(
+                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, string.length())
+        );
+        String to = from.toUTF8();
+
+        assertEquals("Conversion did not match", string, to);
+
+        // make sure the buffer is rewound
+        to = from.toUTF8();
+
+        assertEquals("Conversion did not match", string, to);
+    }
+
+    @Test
+    public void testLength() {
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + Bytes.SIZEOF_INT + Bytes.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).putInt(Integer.MIN_VALUE).putLong(Long.MAX_VALUE);
+
+        Bytes bytes = Bytes.fromByteBuffer(ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, Bytes.SIZEOF_INT));
+
+        assertEquals("The length method didn't return the correct value", Bytes.SIZEOF_INT, bytes.length());
+    }
+
     @Test
     public void testNulls() {
-        Bytes bytes = new Bytes(null);
+        Bytes bytes = Bytes.NULL;
         assertNull(bytes.toBoolean(null));
         assertNull(bytes.toByte(null));
         assertNull(bytes.toChar(null));

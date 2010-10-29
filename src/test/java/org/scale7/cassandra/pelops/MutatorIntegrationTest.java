@@ -124,7 +124,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('d')),
                 mutator.newColumn(Bytes.fromInt(2), (Bytes) null),
-                mutator.newColumn(Bytes.fromInt(3), new Bytes(null))
+                mutator.newColumn(Bytes.fromInt(3), Bytes.NULL)
         );
         mutator.writeColumns(CF, rowKey, columns, true);
         mutator.execute(ConsistencyLevel.ONE);
@@ -189,7 +189,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         columns = mutator.newColumnList(
                 mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('d')),
                 mutator.newColumn(Bytes.fromInt(2), (Bytes) null),
-                mutator.newColumn(Bytes.fromInt(3), new Bytes(null))
+                mutator.newColumn(Bytes.fromInt(3), Bytes.NULL)
         );
         mutator.writeSubColumns(SCF, rowKey, columnName, columns, true);
         mutator.execute(ConsistencyLevel.ONE);

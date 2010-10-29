@@ -1,6 +1,7 @@
 package org.scale7.cassandra.pelops;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
@@ -39,7 +40,7 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily), rowKey, predicate, cLevel);
@@ -51,7 +52,7 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
@@ -64,7 +65,7 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), predicate, cLevel);
@@ -77,7 +78,7 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
@@ -91,7 +92,7 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), predicate, cLevel);
@@ -104,7 +105,7 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
@@ -118,7 +119,7 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception
+     * @throws Exception if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, predicate, cLevel);
@@ -560,66 +561,6 @@ public class Selector extends Operand {
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row containing the columns
      * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param orderType                     The scheme used to determine how the column names are ordered
-     * @param reversed                      Whether the scan should proceed in descending column name order
-     * @param count                         The maximum number of columns that can be retrieved by the scan
-     * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of columns
-     * @throws Exception if an error occurs
-     * @deprecated Use {@link #getPageOfColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
-     */
-    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-
-        SlicePredicate predicate;
-        if (startBeyondName == null)
-            predicate = Selector.newColumnsPredicateAll(reversed, count);
-        else {
-            Bytes startName;
-            if (reversed)
-                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
-            else
-                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
-
-            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
-        }
-        return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-    }
-
-    /**
-     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
-     * @param columnFamily                  The column family containing the row
-     * @param rowKey                        The key of the row containing the columns
-     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param orderType                     The scheme used to determine how the column names are ordered
-     * @param reversed                      Whether the scan should proceed in descending column name order
-     * @param count                         The maximum number of columns that can be retrieved by the scan
-     * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of columns
-     * @throws Exception if an error occurs
-     * @deprecated Use {@link #getPageOfColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
-     */
-    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-
-        SlicePredicate predicate;
-        if (startBeyondName == null)
-            predicate = Selector.newColumnsPredicateAll(reversed, count);
-        else {
-            Bytes startName;
-            if (reversed)
-                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
-            else
-                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
-
-            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
-        }
-        return getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
-    }
-
-    /**
-     * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
-     * @param columnFamily                  The column family containing the row
-     * @param rowKey                        The key of the row containing the columns
-     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
      * @param reversed                      Whether the scan should proceed in descending column name order
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
@@ -682,60 +623,13 @@ public class Selector extends Operand {
             List<Column> columns = getColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
             if (columns.size() > 0) {
             	Column first = columns.get(0);
-            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            	if (first.name.equals(startBeyondName.getBytes()))
             		return columns.subList(1, columns.size());
             	else if (columns.size() == incrementedCount)
             		return columns.subList(0, columns.size()-1);
             }
             return columns;
         }
-    }
-
-    /**
-     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
-     * @param columnFamily                  The name of the column family containing the super columns
-     * @param rowKey                        The key of the row
-     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param orderType                     The scheme used to determine how the column names are ordered
-     * @param reversed                      Whether the scan should proceed in descending super column name order
-     * @param count                         The maximum number of super columns that can be retrieved by the scan
-     * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of super columns
-     * @throws Exception if an error occurs
-     * @deprecated Use {@link #getPageOfSuperColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
-     */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-        return getPageOfSuperColumnsFromRow(columnFamily, Bytes.fromUTF8(rowKey), startBeyondName != null ? Bytes.fromUTF8(startBeyondName) : null, orderType, reversed, count, cLevel);
-    }
-
-    /**
-     * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
-     * @param columnFamily                  The name of the column family containing the super columns
-     * @param rowKey                        The key of the row
-     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param orderType                     The scheme used to determine how the column names are ordered
-     * @param reversed                      Whether the scan should proceed in descending super column name order
-     * @param count                         The maximum number of super columns that can be retrieved by the scan
-     * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of super columns
-     * @throws Exception if an error occurs
-     * @deprecated Use {@link #getPageOfSuperColumnsFromRow(String, Bytes, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} instead.
-     */
-    @Deprecated
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final OrderType orderType, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
-        SlicePredicate predicate;
-        if (startBeyondName == null)
-            predicate = Selector.newColumnsPredicateAll(reversed, count);
-        else {
-            Bytes startName;
-            if (reversed)
-                startName = Selector.bumpDownColumnName(startBeyondName, orderType);
-            else
-                startName = Selector.bumpUpColumnName(startBeyondName, orderType);
-
-            predicate = Selector.newColumnsPredicate(startName, Bytes.EMPTY, reversed, count);
-        }
-        return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
     }
 
     /**
@@ -804,7 +698,7 @@ public class Selector extends Operand {
             List<SuperColumn> columns = getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
             if (columns.size() > 0) {
             	SuperColumn first = columns.get(0);
-            	if (Arrays.equals(first.name, startBeyondName.getBytes()))
+            	if (first.name.equals(startBeyondName.getBytes()))
             		return columns.subList(1, columns.size());
             	else if (columns.size() == incrementedCount)
             		return columns.subList(0, columns.size()-1);
@@ -913,16 +807,16 @@ public class Selector extends Operand {
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
-                for (byte[] rowKey : apiResult.keySet()) {
+                for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList) {
                         assert cosc.super_column != null : "The super column should not be null";
                         columns.add(cosc.super_column);
                     }
-                    result.put(Bytes.fromBytes(rowKey), columns);
+                    result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
             }
@@ -943,9 +837,9 @@ public class Selector extends Operand {
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
-                for (byte[] rowKey : apiResult.keySet()) {
+                for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
@@ -962,16 +856,16 @@ public class Selector extends Operand {
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), colParent, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), colParent, colPredicate, cLevel);
                 Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
-                for (byte[] rowKey : apiResult.keySet()) {
+                for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<Column> columns = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList) {
                         assert cosc.column != null : "The column should not be null";
                         columns.add(cosc.column);
                     }
-                    result.put(Bytes.fromBytes(rowKey), columns);
+                    result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
             }
@@ -983,9 +877,9 @@ public class Selector extends Operand {
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IConnection conn) throws Exception {
-                Map<byte[], List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), colParent, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), colParent, colPredicate, cLevel);
                 Map<String, List<Column>> result = new HashMap<String, List<Column>>();
-                for (byte[] rowKey : apiResult.keySet()) {
+                for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
                     List<Column> columns = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
@@ -1127,7 +1021,7 @@ public class Selector extends Operand {
                     List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.super_column);
-                    result.put(fromBytes(ks.key), colList);
+                    result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
             }
@@ -1177,7 +1071,7 @@ public class Selector extends Operand {
                     List<Column> colList = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.column);
-                    result.put(fromBytes(ks.key), colList);
+                    result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
             }
@@ -1209,8 +1103,8 @@ public class Selector extends Operand {
      * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
-     * @param columnFamily                    The column family containing the rows
-     * @param keyRange                        A index key range selecting the rows
+     * @param colParent                    The column parent containing the rows
+     * @param indexClause                        A index clause
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
@@ -1225,8 +1119,8 @@ public class Selector extends Operand {
      * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
      * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
-     * @param columnFamily                    The column family containing the rows
-     * @param keyRange                        A index key range selecting the rows
+     * @param colParent                    The column parent
+     * @param indexClause                        A index key range selecting the rows
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
@@ -1243,7 +1137,7 @@ public class Selector extends Operand {
                     List<Column> colList = new ArrayList<Column>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList)
                         colList.add(cosc.column);
-                    result.put(fromBytes(ks.key), colList);
+                    result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
             }
@@ -1303,7 +1197,7 @@ public class Selector extends Operand {
      */
     public static SlicePredicate newColumnsPredicateAll(boolean reversed, int maxColCount) {
         SlicePredicate predicate = new SlicePredicate();
-        predicate.setSlice_range(new SliceRange(new byte[] {}, new byte[] {}, reversed, maxColCount));
+        predicate.setSlice_range(new SliceRange(Bytes.EMPTY.getBytes(), Bytes.EMPTY.getBytes(), reversed, maxColCount));
         return predicate;
     }
 
@@ -1339,7 +1233,7 @@ public class Selector extends Operand {
      * @return                                The new <code>SlicePredicate</code>
      */
     public static SlicePredicate newColumnsPredicate(String... colNames) {
-        List<byte[]> asList = new ArrayList<byte[]>(32);
+        List<ByteBuffer> asList = new ArrayList<ByteBuffer>(32);
         for (String colName : colNames)
             asList.add(fromUTF8(colName).getBytes());
         SlicePredicate predicate = new SlicePredicate();
@@ -1353,7 +1247,7 @@ public class Selector extends Operand {
      * @return                                The new <code>SlicePredicate</code>
      */
     public static SlicePredicate newColumnsPredicate(Bytes... colNames) {
-        List<byte[]> asList = new ArrayList<byte[]>(32);
+        List<ByteBuffer> asList = new ArrayList<ByteBuffer>(32);
         for (Bytes colName : colNames)
             asList.add(nullSafeGet(colName));
         SlicePredicate predicate = new SlicePredicate();
@@ -1418,7 +1312,7 @@ public class Selector extends Operand {
      */
     public static boolean superColumnExists(List<SuperColumn> superColumns, Bytes superColName) {
         for (SuperColumn superColumn : superColumns)
-            if (Arrays.equals(superColumn.name, nullSafeGet(superColName)))
+            if (superColumn.name.equals(nullSafeGet(superColName)))
                 return true;
         return false;
     }
@@ -1432,7 +1326,7 @@ public class Selector extends Operand {
      */
     public static SuperColumn getSuperColumn(List<SuperColumn> superColumns, Bytes superColName) throws ArrayIndexOutOfBoundsException {
         for (SuperColumn superColumn : superColumns)
-            if (Arrays.equals(superColumn.name, nullSafeGet(superColName)))
+            if (superColumn.name.equals(nullSafeGet(superColName)))
                 return superColumn;
         throw new ArrayIndexOutOfBoundsException();
     }
@@ -1498,8 +1392,8 @@ public class Selector extends Operand {
      */
     public static Bytes getColumnValue(List<Column> columns, Bytes colName, Bytes defaultValue) {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return fromBytes(column.value);
+            if (column.name.equals(nullSafeGet(colName)))
+                return fromByteBuffer(column.value);
         return defaultValue;
     }
 
@@ -1513,8 +1407,8 @@ public class Selector extends Operand {
      */
     public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) throws UnsupportedEncodingException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return fromBytes(column.value).toUTF8();
+            if (column.name.equals(nullSafeGet(colName)))
+                return fromByteBuffer(column.value).toUTF8();
         return defaultValue;
     }
 
@@ -1526,7 +1420,7 @@ public class Selector extends Operand {
      */
     public static boolean columnExists(List<Column> columns, Bytes colName) {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
+            if (column.name.equals(nullSafeGet(colName)))
                 return true;
         return false;
     }
@@ -1550,8 +1444,8 @@ public class Selector extends Operand {
      */
     public static Bytes getColumnValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return fromBytes(column.value);
+            if (column.name.equals(nullSafeGet(colName)))
+                return fromByteBuffer(column.value);
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -1588,8 +1482,8 @@ public class Selector extends Operand {
      */
     public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
-                return fromBytes(column.value).toUTF8();
+            if (column.name.equals(nullSafeGet(colName)))
+                return fromByteBuffer(column.value).toUTF8();
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -1598,11 +1492,11 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws ArrayIndexOutOfBoundsException
+     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
     public static long getColumnTimestamp(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
-            if (Arrays.equals(column.name, nullSafeGet(colName)))
+            if (column.name.equals(nullSafeGet(colName)))
                 return column.getTimestamp();
         throw new ArrayIndexOutOfBoundsException();
     }
@@ -1612,184 +1506,10 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws ArrayIndexOutOfBoundsException
+     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
     public static long getColumnTimestamp(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
         return getColumnTimestamp(columns, fromUTF8(colName));
-    }
-
-    /**
-     * Return a bumped up copy of the column name that it is the minimum value greater than the specified value.
-     * <code>null</code> is returned if no such value exists.
-     * @param colName                        The column name
-     * @return                               The bumped up column name, or same value if there is no higher value
-     * @throws UnsupportedEncodingException if an error occurs
-     */
-    @Deprecated
-    public static Bytes bumpUpColumnName(String colName, OrderType orderType) {
-        if (orderType != OrderType.UTF8Type)
-            throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
-        StringBuilder sb = new StringBuilder(32);
-        boolean doneInc = false;
-        for (int i=colName.length()-1; i >= 0; i--) {
-            char c = colName.charAt(i);
-            if (!doneInc && c < Character.MAX_VALUE) {
-                sb.append(++c);
-                doneInc = true;
-            } else {
-                sb.append(c);
-            }
-        }
-        sb.reverse();
-        return fromUTF8(sb.toString());
-    }
-
-    /**
-     * Return a bumped up copy of the column name that it is the minimum value greater than the specified value.
-     * <code>null</code> is returned if no such value exists.
-     * @param colName                        The column name
-     * @return                               The bumped up column name, or same value if there is no higher value
-     * @throws UnsupportedEncodingException if an error occurs
-     */
-    @Deprecated
-    public static Bytes bumpUpColumnName(Bytes colName, OrderType orderType) {
-
-        if (orderType == OrderType.BytesType) {
-            byte[] newName = Arrays.copyOf(nullSafeGet(colName), colName.length());
-            for (int i=newName.length-1; i >= 0; i--) {
-                if ((newName[i] & 0xFF) < 255) {
-                    newName[i] = (byte)((newName[i] & 0xFF) + 1);
-                    break;
-                }
-            }
-            return fromBytes(newName);
-        }
-        else if (orderType == OrderType.LongType) {
-            if (colName.length() != 8)
-                throw new IllegalArgumentException("A Long argument should be 8 bytes");
-            long l = colName.toLong();
-            if (l < Long.MAX_VALUE)
-                l++;
-            return fromLong(l);
-        }
-        else if (orderType == OrderType.LexicalUUIDType) {
-            if (colName.length() != 16)
-                throw new IllegalArgumentException("A lexical UUID argument should be 16 bytes");
-            long msb = NumberHelper.toLong(nullSafeGet(colName), 0, 8);
-            long lsb = NumberHelper.toLong(nullSafeGet(colName), 8, 8);
-            if (lsb < Long.MAX_VALUE)
-                lsb++;
-            else
-                if (msb < Long.MAX_VALUE)
-                    msb++;
-            byte[] newName = new byte[16];
-            NumberHelper.toBytes(msb, newName, 0, 8);
-            NumberHelper.toBytes(lsb, newName, 8, 8);
-            return fromBytes(newName);
-        }
-        else if (orderType == OrderType.TimeUUIDType) {
-            if (colName.length() != 16)
-                throw new IllegalArgumentException("A time UUID argument should be 16 bytes");
-            byte[] newName = Arrays.copyOf(nullSafeGet(colName), 16);
-            for (int i=15; i >= 8; i--) {
-                if ((newName[i] & 0xFF) < 255) {
-                    newName[i] = (byte)((newName[i] & 0xFF) + 1);
-                    return fromBytes(newName);
-                }
-            }
-            long timestamp = NumberHelper.toLong(newName, 0, 8);
-            if (timestamp < Long.MAX_VALUE)
-                timestamp++;
-            NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return fromBytes(newName);
-        }
-        throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
-    }
-
-    /**
-     * Return a bumped down copy of the column name that is the maximum value less than the specified value.
-     * <code>null</code> is returned if no such value exists.
-     * @param colName                        The column name
-     * @return                               The bumped down column name, or same value if there is no lower value
-     */
-    @Deprecated
-    public static Bytes bumpDownColumnName(String colName, OrderType orderType) {
-        if (orderType != OrderType.UTF8Type)
-            throw new IllegalArgumentException("You must pass a UTF-8 column name to this function variant");
-        StringBuilder sb = new StringBuilder(32);
-        boolean doneDec = false;
-        for (int i=colName.length()-1; i >= 0; i--) {
-            char c = colName.charAt(i);
-            if (!doneDec && c > Character.MIN_VALUE) {
-                sb.append(--c);
-                doneDec = true;
-            } else {
-                sb.append(c);
-            }
-        }
-        sb.reverse();
-        return fromUTF8(sb.toString());
-    }
-
-    /**
-     * Return a bumped down copy of the column name that is the maximum value less than the specified value.
-     * <code>null</code> is returned if no such value exists.
-     * @param colName                        The column name
-     * @return                               The bumped down column name, or same value if there is no lower value
-     */
-    @Deprecated
-    public static Bytes bumpDownColumnName(Bytes colName, OrderType orderType) {
-
-        if (orderType == OrderType.BytesType) {
-            byte[] newName = Arrays.copyOf(nullSafeGet(colName), colName.length());
-            for (int i=newName.length-1; i >= 0; i--) {
-                if ((newName[i] & 0xFF) > 0) {
-                    newName[i] = (byte)((newName[i] & 0xFF) - 1);
-                    break;
-                }
-            }
-            return fromBytes(newName);
-        }
-        else if (orderType == OrderType.LongType) {
-            if (colName.length() != 8)
-                throw new IllegalArgumentException("A Long argument should be 8 bytes");
-            long l = NumberHelper.toLong(nullSafeGet(colName));
-            if (l > Long.MIN_VALUE)
-                l--;
-            return fromLong(l);
-        }
-        else if (orderType == OrderType.LexicalUUIDType) {
-            if (colName.length() != 16)
-                throw new IllegalArgumentException("A lexical UUID argument should be 16 bytes");
-            long msb = NumberHelper.toLong(nullSafeGet(colName), 0, 8);
-            long lsb = NumberHelper.toLong(nullSafeGet(colName), 8, 8);
-            if (lsb > Long.MIN_VALUE)
-                lsb--;
-            else
-                if (msb > Long.MIN_VALUE)
-                    msb--;
-            byte[] newName = new byte[16];
-            NumberHelper.toBytes(msb, newName, 0, 8);
-            NumberHelper.toBytes(lsb, newName, 8, 8);
-            return fromBytes(newName);
-        }
-        else if (orderType == OrderType.TimeUUIDType) {
-            if (colName.length() != 16)
-                throw new IllegalArgumentException("A time UUID argument should be 16 bytes");
-            byte[] newName = Arrays.copyOf(nullSafeGet(colName), 16);
-            for (int i=15; i >= 8; i--) {
-                if ((newName[i] & 0xFF) > 0) {
-                    newName[i] = (byte)((newName[i] & 0xFF) - 1);
-                    return fromBytes(newName);
-                }
-            }
-            long timestamp = NumberHelper.toLong(newName, 0, 8);
-            if (timestamp > Long.MIN_VALUE)
-                timestamp--;
-            NumberHelper.toBytes(timestamp, newName, 0, 8);
-            return fromBytes(newName);
-        }
-        throw new UnsupportedOperationException("Not implemented yet. Please update Pelops.");
     }
 
     /**

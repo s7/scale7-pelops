@@ -1,5 +1,6 @@
 package org.scale7.cassandra.pelops;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class Mutator extends Operand {
      * @throws Exception
      */
     public void execute(final ConsistencyLevel cLevel) throws Exception {
-        final HashMap<byte[], Map<String, List<Mutation>>> convertedBatch = new HashMap<byte[], Map<String, List<Mutation>>>(batch.size());
+        final HashMap<ByteBuffer, Map<String, List<Mutation>>> convertedBatch = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(batch.size());
         for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
             convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
         }

@@ -3,7 +3,7 @@
 
 export CASSANDRA_HOME=/path/to/cassandra/install
 
-mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=cassandra -Dversion=0.7.0-beta2 \
+mvn deploy:deploy-file -DgroupId=org.apache.cassandra -DartifactId=cassandra -Dversion=0.7.0-beta3 \
 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true \
--Dfile=${CASSANDRA_HOME}/lib/apache-cassandra-0.7.0-beta2.jar \
+-Dfile=${CASSANDRA_HOME}/lib/apache-cassandra-0.7.0-beta3.jar \
 -Durl=file:///Users/dan/Development/Projects/scale7/mvnrepo -DrepositoryId=maven.scale7.org.local
