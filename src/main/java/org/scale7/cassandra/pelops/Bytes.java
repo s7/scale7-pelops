@@ -490,6 +490,20 @@ public class Bytes  {
             this.bytes.position(position);
         }
     }
+    
+    
+    /**
+     * Returns the bytes in the buffer as a byte array
+     * @param value the value
+     * @return the Bytes instance or null (if null is provided)
+     */
+    public byte[] toBytes() {
+    	byte[] value = new byte[this.bytes.remaining()];
+    	
+    	this.bytes.get(value, this.bytes.arrayOffset(), this.bytes.remaining());
+    	
+        return value;
+    }
 
     /**
      * Converts the backing array to the appropriate object instance handling nulls.

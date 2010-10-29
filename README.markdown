@@ -22,49 +22,26 @@ To use Pelops with Cassandra 0.7.x use the following:
                 <url>http://mvn.riptano.com/content/repositories/public/</url>
             </repository>
 			<repository>
-				<id>maven.scale7.org</id>
-				<name>Scale7 Maven Repo</name>
-				<url>http://github.com/s7/mvnrepo/raw/master</url>
-				<snapshots>
-					<enabled>true</enabled>
-				</snapshots>
-			</repository>
+        		<id>maven.spidertracks.com</id>
+        		<name>Scale7 Maven Repo</name>
+        		<url>http://github.com/tnine/m2repo/raw/master</url>
+		        <snapshots>
+		            <enabled>true</enabled>
+		        </snapshots>
+		    </repository>
 		</repositories>
 
-2. Choose the appropriate Pelops version. 
-
-    If you're using Cassandra 0.7.0-beta2 then add the following dep to your project:
+2. Choose the appropriate Pelops version. We're using the latest trunk, which is the 0.7.0 rc1 source.  The nightly hudson build is included.
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>0.907-0.7.0-SNAPSHOT</version>
+			<version>0.907-0.7.0-st-SNAPSHOT</version>
 		</dependency>
 
-    If Cassandra 0.7.0-beta2 isn't bleeding edge enough for you then add the following dep to your project
-and use the proposed beta3 release available from
-[http://people.apache.org/~eevans/apache-cassandra-0.7.0-beta3-bin.tar.gz](http://people.apache.org/~eevans/apache-cassandra-0.7.0-beta3-bin.tar.gz):
-
-		<dependency>
-			<groupId>org.scale7</groupId>
-			<artifactId>scale7-pelops</artifactId>
-			<version>0.908-0.7.0-SNAPSHOT</version>
-		</dependency>
-
-    Note: this version is the only one getting Pelops fixes and updates.
 
 3. Start using Pelops.
 
-
-
-Cassandra 0.6.x users can use:
-
-		<dependency>
-			<groupId>org.wyki</groupId>
-			<artifactId>pelops</artifactId>
-			<version>0.805-0.6.4</version>
-		</dependency>
-**Please note that the 0.6.x version is not maintained and has known issues**.  These issues have been fixed in the 0.7.x version.  If you're interested in helping maintaining the 0.6.x branch let us know...
 
 More Resources:
 [Mailing List](http://groups.google.com/group/scale7)
