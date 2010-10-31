@@ -25,6 +25,16 @@ public class JmxMBeanManager {
         return thisObj;
     }
 
+    public boolean isRegistered(String name) {
+        try {
+            ObjectName objName = new ObjectName(name);
+            return mbs.isRegistered(objName);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("exception while checking if MBean is registered, " + name, e);
+        }
+    }
+
     public void registerMBean(Object theBean, String name) {
         try {
             ObjectName objName = new ObjectName(name);
@@ -32,6 +42,16 @@ public class JmxMBeanManager {
         }
         catch (Exception e) {
             throw new RuntimeException("exception while registering MBean, " + name, e);
+        }
+    }
+
+    public void unregisterMBean(String name) {
+        try {
+            ObjectName objName = new ObjectName(name);
+            mbs.unregisterMBean(objName);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("exception while unregistering MBean, " + name, e);
         }
     }
 

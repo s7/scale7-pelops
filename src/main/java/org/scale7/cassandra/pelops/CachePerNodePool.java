@@ -89,19 +89,26 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
      * @param poolPolicy the pool policy
      */
 	public CachePerNodePool(Cluster cluster, String keyspace, OperandPolicy generalPolicy, Policy poolPolicy) {
-	    JmxMBeanManager.getInstance().registerMBean(this, JMX_MBEAN_OBJ_NAME+"-"+keyspace);
 	    this.cluster = cluster;
         this.generalPolicy = generalPolicy;
         pool = new MultiNodePool();
-		this.keyspace = keyspace;
-		this.poolPolicy = poolPolicy;
-		String[] nodesSnapshot = cluster.getCurrentNodesSnapshot();
-		for (String node : nodesSnapshot)
+        this.keyspace = keyspace;
+        this.poolPolicy = poolPolicy;
+        String[] nodesSnapshot = cluster.getCurrentNodesSnapshot();
+        for (String node : nodesSnapshot)
 			touchNodeContext(node);
-		if (poolPolicy.getDynamicNodeDiscovery())
+        if (poolPolicy.getDynamicNodeDiscovery())
 			clusterWatcherExec.execute(clusterWatcher);
 		else
 			logger.warn("Dynamic node discovery is false. Pelops will not automatically discover nodes added to the cluster, or nodes that have not been specified");
+
+        String beanName = getMBeanName();
+        if (JmxMBeanManager.getInstance().isRegistered(beanName)) {
+            logger.warn("MBean {} is already registered, removing...", beanName);
+            JmxMBeanManager.getInstance().unregisterMBean(beanName);
+        }
+
+        JmxMBeanManager.getInstance().registerMBean(this, beanName);
 	}
 
 	/**
@@ -205,8 +212,16 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
+            // unregister the JMX bean
+            if (JmxMBeanManager.getInstance().isRegistered(getMBeanName()))
+                JmxMBeanManager.getInstance().unregisterMBean(getMBeanName());
         }
 	}
+
+    private String getMBeanName() {
+        return JMX_MBEAN_OBJ_NAME + "-" + keyspace;
+    }
 
     /**
 	 * Get the current policy in force, which controls the behavioral parameters of the connection pool.
