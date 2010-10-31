@@ -70,13 +70,22 @@ public class BytesUnitTest {
     	buff.putInt(100);
     	buff.putLong(2000);
     	buff.putLong(4000);
+    	buff.position(8);
+    	
+    	ByteBuffer buff2 = ByteBuffer.allocate(8*2+4);
+    	
+    	buff2.putInt(100);
+    	buff2.putLong(2000);
+    	buff2.putLong(4000);
+    	
+    	buff2.position(0);
     	
     	
     	
         Bytes from = Bytes.fromByteBuffer(buff);
         byte[] to = from.toBytes();
 
-        assertTrue("Conversion did not match", Arrays.equals(buff.array(), to));
+        assertTrue("Conversion did not match", Arrays.equals(buff2.array(), to));
     }
 
     @Test
