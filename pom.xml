@@ -62,7 +62,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
-			<artifactId>cassandra</artifactId>
+			<artifactId>apache-cassandra</artifactId>
 			<version>0.7.0-beta3</version>
 		</dependency>
          <dependency>
@@ -182,7 +182,7 @@
 		<repository>
 			<id>riptano</id>
 			<name>riptano</name>
-			<url>http://mvn.riptano.com/content/repositories/public/</url>
+			<url>http://mvn.riptano.com/content/repositories/public</url>
 		</repository>
 		<repository>
 			<id>maven.scale7.org</id>
@@ -208,7 +208,7 @@
 			</releases>
 			<id>jboss.release</id>
 			<name>JBoss releases</name>
-			<url>https://repository.jboss.org/nexus/content/groups/public/</url>
+			<url>https://repository.jboss.org/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
 	<build>
