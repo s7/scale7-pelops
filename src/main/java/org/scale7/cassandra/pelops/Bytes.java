@@ -13,6 +13,8 @@ import java.util.*;
  * <p>In an effort to provide a very stable and well tested marshalling strategy
  * this class uses the various methods available on {@link java.nio.ByteBuffer} to perform serialization.  The exceptions
  * to this are the UUID and String methods (see their javadoc comments for details).</p>
+ *
+ * <b>Note</b>: Instances of this class should *not* be considered thread safe.
  */
 public class Bytes {
     public static final Bytes EMPTY = new Bytes(new byte[0]);
@@ -97,6 +99,17 @@ public class Bytes {
      */
     public ByteBuffer getBytes() {
         return bytes;
+    }
+
+    /**
+     * Returns a duplicate of the bytes instance.  The underlying {@link java.nio.ByteBuffer} is duplicated using the
+     * {@link java.nio.ByteBuffer#duplicate()} method.
+     *
+     * @return the raw byte array
+     * @see java.nio.ByteBuffer#duplicate()
+     */
+    public Bytes duplicate() {
+        return isNull() ? Bytes.NULL : new Bytes(bytes.duplicate());
     }
 
     /**

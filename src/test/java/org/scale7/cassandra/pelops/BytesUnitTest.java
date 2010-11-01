@@ -465,4 +465,22 @@ public class BytesUnitTest {
         assertNull(bytes.toShort(null));
         assertNull(bytes.toLong(null));
     }
+
+    @Test
+    public void testDuplicate() {
+        Bytes bytes = Bytes.NULL;
+        assertEquals("Duplicate not equal", Bytes.NULL, bytes.duplicate());
+
+        bytes = Bytes.fromUTF8("some  bytes");
+        assertEquals("Duplicate not equal", bytes, bytes.duplicate());
+
+        String string = "some string";
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + string.length() + Bytes.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.UTF8)).putLong(Long.MAX_VALUE);
+
+        bytes = Bytes.fromByteBuffer(
+                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, string.length())
+        );
+        assertEquals("Duplicate not equal", bytes, bytes.duplicate());
+    }
 }
