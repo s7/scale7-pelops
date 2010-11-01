@@ -520,10 +520,32 @@ public class Mutator extends Operand {
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
+     * @param ttl                        The time to live (in seconds) for the column
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(String colName, String colValue, int ttl) {
+        return newColumn(fromUTF8(colName), fromUTF8(colValue), ttl);
+    }
+
+    /**
+     * Create new Column object with the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(Bytes colName, String colValue) {
         return newColumn(colName, fromUTF8(colValue));
+    }
+
+    /**
+     * Create new Column object with the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param colValue                   The column value
+     * @param ttl                        The time to live (in seconds) for the column
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(Bytes colName, String colValue, int ttl) {
+        return newColumn(colName, fromUTF8(colValue), ttl);
     }
 
     /**
@@ -540,10 +562,34 @@ public class Mutator extends Operand {
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
+     * @param ttl                        The time to live (in seconds) for the column
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(String colName, Bytes colValue, int ttl) {
+        return newColumn(fromUTF8(colName), colValue, ttl);
+    }
+
+    /**
+     * Create new Column object with the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param colValue                   The column value
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(Bytes colName, Bytes colValue) {
-        return new Column(nullSafeGet(colName), nullSafeGet(colValue), timestamp);
+        return newColumn(colName, colValue, this.ttl);
+    }
+
+    /**
+     * Create new Column object with the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param colValue                   The column value
+     * @param ttl                        The time to live (in seconds) for the column (-1 for default)
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(Bytes colName, Bytes colValue, int ttl) {
+        Column column = new Column(nullSafeGet(colName), nullSafeGet(colValue), timestamp);
+        if (ttl != NO_TTL) column.setTtl(ttl);
+        return column;
     }
 
     /**
@@ -585,9 +631,17 @@ public class Mutator extends Operand {
     @SuppressWarnings("serial")
     class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
 
+    /**
+     * Used to indicate that the ttl property on column instances should not be set.
+     */
+    public static final int NO_TTL = -1;
+
     private final Map<Bytes, Map<String, List<Mutation>>> batch;
-    private final long timestamp;
+    protected final long timestamp;
     protected final boolean deleteIfNull;
+    protected final int ttl;
+
+
 
     /**
      * Create a batch mutation operation.
@@ -601,9 +655,22 @@ public class Mutator extends Operand {
      * @param timestamp The time stamp to use for the operation.
      */
     protected Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull) {
+        this(thrift, timestamp, deleteIfNull, NO_TTL);
+    }
+
+    /**
+     * Create a batch mutation operation.
+     * @param thrift the pool
+     * @param timestamp The time stamp to use for the operation.
+     * @param deleteIfNull determine if null values on columns will result in a delete
+     * @param ttl the ttl (in seconds) that columns created using the various {@link #newColumn(Bytes, Bytes)}
+     * helper methods will default to (null to indicate no default)
+     */
+    protected Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull, int ttl) {
         super(thrift);
         this.timestamp = timestamp;
         this.deleteIfNull = deleteIfNull;
+        this.ttl = ttl;
         batch = new MutationsByKey();
     }
     

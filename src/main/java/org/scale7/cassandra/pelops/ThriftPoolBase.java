@@ -31,6 +31,11 @@ public abstract class ThriftPoolBase implements IThriftPool {
         return createMutator(timestamp, this.getOperandPolicy().isDeleteIfNull());
     }
 
+    @Override
+    public Mutator createMutator(long timestamp, int ttl) {
+        return createMutator(timestamp, this.getOperandPolicy().isDeleteIfNull(), ttl);
+    }
+
     /**
      * {@inheritDoc}.
      */
@@ -38,6 +43,12 @@ public abstract class ThriftPoolBase implements IThriftPool {
     public Mutator createMutator(long timestamp, boolean deleteIfNull) {
         validateKeyspaceSet();
         return new Mutator(this, timestamp, deleteIfNull);
+    }
+
+    @Override
+    public Mutator createMutator(long timestamp, boolean deleteIfNull, int ttl) {
+        validateKeyspaceSet();
+        return new Mutator(this, timestamp, this.getOperandPolicy().isDeleteIfNull(), ttl);
     }
 
     /**

@@ -34,6 +34,17 @@ public interface IThriftPool {
     /**
      * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
      * must only be used to execute 1 mutation operation.
+     * <p>The created mutator will be created with the value of {@link OperandPolicy#isDeleteIfNull()}.
+     *
+     * @param timestamp The default time stamp to use for operations
+     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(Bytes, Bytes)} will default to
+     * @return A new {@link Mutator mutator} object
+     */
+    Mutator createMutator(long timestamp, int ttl);
+
+    /**
+     * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
+     * must only be used to execute 1 mutation operation.
      *
      * @param timestamp The default time stamp to use for operations
      * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
@@ -41,6 +52,18 @@ public interface IThriftPool {
      * @return A new {@link Mutator mutator} object
      */
     Mutator createMutator(long timestamp, boolean deleteIfNull);
+
+    /**
+     * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
+     * must only be used to execute 1 mutation operation.
+     *
+     * @param timestamp The default time stamp to use for operations
+     * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
+     *                      passed to the various write methods.
+     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(Bytes, Bytes)} will default to
+     * @return A new {@link Mutator mutator} object
+     */
+    Mutator createMutator(long timestamp, boolean deleteIfNull, int ttl);
 
     /**
      * Create a {@link RowDeletor key deletor} object using the current time as the operation time stamp.

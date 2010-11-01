@@ -63,6 +63,52 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testConstructorArgs() {
+        IThriftPool pool = Mockito.mock(IThriftPool.class);
+
+        Mutator mutator = new Mutator(pool, Long.MAX_VALUE, true, Integer.MAX_VALUE);
+        assertEquals("Mutator timestamp is not in the expected state", Long.MAX_VALUE, mutator.timestamp);
+        assertTrue("Mutator deleteIfNull is not in the expected state", mutator.deleteIfNull);
+        assertEquals("Mutator TTL is not in the expected state", Integer.MAX_VALUE, (int) mutator.ttl);
+    }
+
+    @Test
+    public void testNewColumnWithTTL() {
+        IThriftPool pool = Mockito.mock(IThriftPool.class);
+
+        Mutator mutator = new Mutator(pool, Long.MAX_VALUE, true, Integer.MAX_VALUE);
+        Column column = mutator.newColumn(Bytes.fromUTF8("a"), Bytes.fromUTF8("b"), 1234);
+
+        assertEquals("column name is not in the expected state", Bytes.fromUTF8("a").getBytes(), column.name);
+        assertEquals("column value is not in the expected state", Bytes.fromUTF8("b").getBytes(), column.value);
+        assertEquals("column TTL is not in the expected state", 1234, column.ttl);
+    }
+
+    @Test
+    public void testNewColumnWithTTLDefaultFromMemberVariable() {
+        IThriftPool pool = Mockito.mock(IThriftPool.class);
+
+        Mutator mutator = new Mutator(pool, Long.MAX_VALUE, true, Integer.MAX_VALUE);
+        Column column = mutator.newColumn(Bytes.fromUTF8("a"), Bytes.fromUTF8("b"));
+
+        assertEquals("column name is not in the expected state", Bytes.fromUTF8("a").getBytes(), column.name);
+        assertEquals("column value is not in the expected state", Bytes.fromUTF8("b").getBytes(), column.value);
+        assertEquals("column TTL is not in the expected state", Integer.MAX_VALUE, column.ttl);
+    }
+
+    @Test
+    public void testNewColumnWithTTLNotSet() {
+        IThriftPool pool = Mockito.mock(IThriftPool.class);
+
+        Mutator mutator = new Mutator(pool, Long.MAX_VALUE, true, Integer.MAX_VALUE);
+        Column column = mutator.newColumn(Bytes.fromUTF8("a"), Bytes.fromUTF8("b"), Mutator.NO_TTL);
+
+        assertEquals("column name is not in the expected state", Bytes.fromUTF8("a").getBytes(), column.name);
+        assertEquals("column value is not in the expected state", Bytes.fromUTF8("b").getBytes(), column.value);
+        assertFalse("column TTL is not in the expected state", column.isSetTtl());
+    }
+
+    @Test
     public void testWriteColumnsWithDeleteIfNullFromConstructor() throws Exception {
         IThriftPool pool = new DebuggingPool(getCluster(), KEYSPACE, new OperandPolicy(3, true));
 
