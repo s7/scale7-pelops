@@ -60,6 +60,15 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testByteArray() {
+        byte[] value = {1, 2, 3, 4, 5};
+        Bytes from = Bytes.fromBytes(value);
+        byte[] to = from.toByteArray();
+
+        assertTrue("Conversion did not match", Arrays.equals(value, to));
+    }
+
+    @Test
     public void testByte() {
         byte value = (byte) 9;
         Bytes from = Bytes.fromByte(value);
