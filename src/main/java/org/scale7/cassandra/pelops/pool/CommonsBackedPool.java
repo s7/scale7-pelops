@@ -27,9 +27,16 @@ public class CommonsBackedPool extends ThriftPoolBase {
     private final String keyspace;
 
     private final OperandPolicy operandPolicy;
+
     private GenericKeyedObjectPool pool;
 
     private ScheduledExecutorService executorService;
+
+    /* running stats */
+    private AtomicInteger connectionsCreated;
+    private AtomicInteger connectionsDestroyed;
+    private AtomicInteger connectionsCorrupted;
+    private AtomicInteger connectionsActive;
 
     public CommonsBackedPool(Cluster cluster, Config config, INodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
         this.cluster = cluster;
@@ -37,6 +44,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
         this.nodeSelectionPolicy = nodeSelectionPolicy;
         this.operandPolicy = operandPolicy;
         this.keyspace = keyspace;
+
+        connectionsCreated = new AtomicInteger();
+        connectionsDestroyed = new AtomicInteger();
+        connectionsCorrupted = new AtomicInteger();
+        connectionsActive = new AtomicInteger();
 
         logger.info("Initialising pool with: {}", config.toString());
 
@@ -53,6 +65,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     protected void configureScheduledTasks() {
         if (config.getTimeBetweenScheduledTaskRunsMillis() > 0) {
+            logger.debug("Configuring scheduled tasks to run every {} milliseconds", config.getTimeBetweenScheduledTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable runnable) {
@@ -75,6 +88,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
                     config.getTimeBetweenScheduledTaskRunsMillis(),
                     TimeUnit.MILLISECONDS
             );
+        } else {
+            logger.debug("Disabling scheduled tasks");
         }
     }
 
@@ -130,14 +145,30 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     protected void addNode(String nodeAddress) {
         logger.info("Preparing connections for node '{}'", nodeAddress);
+
+        // prepare min idle connetions etc...
         pool.preparePool(nodeAddress, true);
-        nodes.put(nodeAddress, new PooledNode(nodeAddress));
+
+        // initialise (JMX etc)
+        PooledNode node = new PooledNode(nodeAddress);
+
+        // add it as a candidate
+        nodes.put(nodeAddress, node);
     }
 
     protected void removeNode(String nodeAddress) {
         logger.info("Removing connections for node '{}'", nodeAddress);
-        nodes.remove(nodeAddress);
+
+        // remove from the the nodes list so it's no longer considered a candidate
+        PooledNode node = nodes.remove(nodeAddress);
+
+        // shutdown all the connections and clear it from the backing pool
         pool.clear(nodeAddress);
+
+        // decommission (JMX etc)
+        if (node != null) {
+            node.decommission();
+        }
     }
 
     @Override
@@ -176,12 +207,24 @@ public class CommonsBackedPool extends ThriftPoolBase {
             throw new TimeoutException("Failed to get a connection within the configured wait time.");
         }
 
+        logger.debug("Borrowing connection '{}'", connection);
+        connectionsActive.incrementAndGet();
         return connection;
     }
 
     @Override
     public IPooledConnection getConnectionExcept(String notNode) throws Exception {
         return getConnection();
+    }
+
+    protected void releaseConnection(PooledConnection connection) {
+        logger.debug("Returning connection '{}'", connection);
+        try {
+            pool.returnObject(connection.getNode().getAddress(), connection);
+            connectionsActive.decrementAndGet();
+        } catch (Exception e) {
+            // do nothing
+        }
     }
 
     @Override
@@ -215,6 +258,49 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     protected PooledNode getPooledNode(String nodeAddress) {
         return nodes.get(nodeAddress);
+    }
+
+    protected void reportConnectionCreated(String nodeAddress) {
+        connectionsCreated.incrementAndGet();
+
+        PooledNode node = getPooledNode(nodeAddress);
+
+        if (node != null)
+            node.reportConnectionCreated();
+    }
+
+    protected void reportConnectionDestroyed(String nodeAddress) {
+        connectionsDestroyed.incrementAndGet();
+
+        PooledNode node = getPooledNode(nodeAddress);
+
+        if (node != null)
+            node.reportConnectionDestroyed();
+    }
+
+    protected void reportConnectionCorrupted(String nodeAddress) {
+        connectionsCorrupted.incrementAndGet();
+
+        PooledNode pooledNode = getPooledNode(nodeAddress);
+
+        if (pooledNode != null)  // it's possible that the pooled node has been removed
+            pooledNode.reportConnectionCorrupted();
+    }
+
+    public int getConnectionsCreated() {
+        return connectionsCreated.get();
+    }
+
+    public int getConnectionsDestroyed() {
+        return connectionsDestroyed.get();
+    }
+
+    public int getConnectionsCorrupted() {
+        return connectionsCorrupted.get();
+    }
+
+    public int getConnectionsActive() {
+        return connectionsActive.get();
     }
 
     public static class Config {
@@ -352,6 +438,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
             connectionsDestroyed = new AtomicInteger();
         }
 
+        public void decommission() {
+
+        }
+
         public String getAddress() {
             return address;
         }
@@ -398,19 +488,12 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         @Override
         public void release() {
-            try {
-                pool.returnObject(getNode().getAddress(), this);
-            } catch (Exception e) {
-                // do nothing
-            }
+            releaseConnection(this);
         }
 
         @Override
         public void corrupted() {
             corrupt = true;
-            PooledNode pooledNode = getPooledNode(getNode().getAddress());
-            if (pooledNode != null)  // it's possible that the pooled node has been removed
-                pooledNode.reportConnectionCorrupted();
         }
 
         public boolean isCorrupt() {
@@ -428,9 +511,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
             );
             connection.open();
 
-            PooledNode node = getPooledNode(nodeAddress);
-            if (node != null)
-                node.reportConnectionCreated();
+            reportConnectionCreated(nodeAddress);
 
             return connection;
         }
@@ -442,9 +523,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
             ((PooledConnection) obj).close();
 
-            PooledNode node = getPooledNode(nodeAddress);
-            if (node != null)
-                node.reportConnectionDestroyed();
+            reportConnectionDestroyed(nodeAddress);
         }
 
         @Override
@@ -463,6 +542,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         @Override
         public void passivateObject(Object key, Object obj) throws Exception {
+            String nodeAddress = (String) key;
+
+            reportConnectionCorrupted(nodeAddress);
         }
     }
 
