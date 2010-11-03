@@ -5,7 +5,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.*;
 import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
-import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionPolicy;
+import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
             assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
             assertNotNull("The factory didn't initialize a default operand policy instance", factoryBean.getOperandPolicy());
             assertNotNull("The factory didn't initialize a default pool config instance", factoryBean.getPolicy());
-            assertNotNull("The factory didn't initialize a default node selection policy instance", factoryBean.getNodeSelectionPolicy());
+            assertNotNull("The factory didn't initialize a default node selection policy instance", factoryBean.getNodeSelectionStrategy());
         } finally {
             factoryBean.destroy();
         }
@@ -54,7 +54,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
     @Test
     public void testAfterProperties() throws Exception {
         OperandPolicy operandPolicy = new OperandPolicy();
-        LeastLoadedNodeSelectionPolicy nodeSelectionPolicy = new LeastLoadedNodeSelectionPolicy();
+        LeastLoadedNodeSelectionStrategy nodeSelectionPolicy = new LeastLoadedNodeSelectionStrategy();
         CommonsBackedPool.Policy policy = new CommonsBackedPool.Policy();
 
         CommonsBackedPoolFactoryBean factoryBean = new CommonsBackedPoolFactoryBean();
@@ -62,7 +62,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
         factoryBean.setKeyspace(AbstractIntegrationTest.KEYSPACE);
         factoryBean.setPolicy(policy);
         factoryBean.setOperandPolicy(operandPolicy);
-        factoryBean.setNodeSelectionPolicy(nodeSelectionPolicy);
+        factoryBean.setNodeSelectionStrategy(nodeSelectionPolicy);
 
         assertNull("The factory should not have created the pool at this point", factoryBean.getObject());
 
@@ -72,7 +72,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
             assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
             assertTrue("The factory didn't use the provided operand policy instance", operandPolicy == factoryBean.getOperandPolicy());
             assertTrue("The factory didn't use the provided config instance", policy == factoryBean.getPolicy());
-            assertTrue("The factory didn't use the provided node selection instance", nodeSelectionPolicy == factoryBean.getNodeSelectionPolicy());
+            assertTrue("The factory didn't use the provided node selection instance", nodeSelectionPolicy == factoryBean.getNodeSelectionStrategy());
         } finally {
             factoryBean.destroy();
         }

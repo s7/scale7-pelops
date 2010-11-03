@@ -61,7 +61,8 @@ public class Operand {
                     e instanceof TTransportException ||
                     e instanceof UnavailableException) {
 
-                    logger.warn("Operation failed as result of network exception. Connection must be destroyed.  See cause for details...", e);
+                    logger.warn("Operation failed as result of network exception. Connection is being marked as corrupt " +
+                            "(and will probably be be destroyed).  See cause for details...", e);
 
                     // This connection is "broken" by network timeout or other problem.
                     conn.corrupted();

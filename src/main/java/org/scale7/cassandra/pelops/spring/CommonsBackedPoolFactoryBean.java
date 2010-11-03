@@ -3,7 +3,8 @@ package org.scale7.cassandra.pelops.spring;
 import org.scale7.cassandra.pelops.*;
 import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
-import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionPolicy;
+import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy;
+import org.scale7.cassandra.pelops.pool.NoOpNodeSuspensionStrategy;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.DisposableBean;
@@ -55,8 +56,9 @@ public class CommonsBackedPoolFactoryBean
     private Cluster cluster;
     private String keyspace;
     private CommonsBackedPool.Policy policy;
-    private CommonsBackedPool.INodeSelectionPolicy nodeSelectionPolicy;
     private OperandPolicy operandPolicy;
+    private CommonsBackedPool.INodeSelectionStrategy nodeSelectionStrategy;
+    private CommonsBackedPool.INodeSuspensionStrategy nodeSuspensionStrategy;
 
     private IThriftPool thriftPool;
 
@@ -99,20 +101,25 @@ public class CommonsBackedPoolFactoryBean
         logger.info("Initializing Pelops pool for nodes {}", Arrays.toString(getCluster().getNodes()));
 
         if (getPolicy() == null) {
-            logger.info("No configuration provided, using defaults");
+            logger.info("No configuration policy provided, using defaults");
             setPolicy(new CommonsBackedPool.Policy());
-        }
-        if (getNodeSelectionPolicy() == null) {
-            logger.info("No node selection policy specified, using {}", LeastLoadedNodeSelectionPolicy.class.getName());
-            setNodeSelectionPolicy(new LeastLoadedNodeSelectionPolicy());
         }
         if (getOperandPolicy() == null) {
             logger.info("No operand policy provided, using default");
             setOperandPolicy(new OperandPolicy());
         }
+        if (getNodeSelectionStrategy() == null) {
+            logger.info("No node selection strategy specified, using {}", LeastLoadedNodeSelectionStrategy.class.getName());
+            setNodeSelectionStrategy(new LeastLoadedNodeSelectionStrategy());
+        }
+        if (getNodeSuspensionStrategy() == null) {
+            logger.info("No node suspension strategy specified, using {}", NoOpNodeSuspensionStrategy.class.getName());
+            setNodeSuspensionStrategy(new NoOpNodeSuspensionStrategy());
+        }
 
         this.thriftPool = new CommonsBackedPool(
-                getCluster(), policy, nodeSelectionPolicy, getOperandPolicy(), getKeyspace()
+                getCluster(), getPolicy(), getOperandPolicy(), getKeyspace(), getNodeSelectionStrategy(),
+                getNodeSuspensionStrategy()
         );
     }
 
@@ -152,19 +159,27 @@ public class CommonsBackedPoolFactoryBean
         this.policy = policy;
     }
 
-    public CommonsBackedPool.INodeSelectionPolicy getNodeSelectionPolicy() {
-        return nodeSelectionPolicy;
-    }
-
-    public void setNodeSelectionPolicy(CommonsBackedPool.INodeSelectionPolicy nodeSelectionPolicy) {
-        this.nodeSelectionPolicy = nodeSelectionPolicy;
-    }
-
     public OperandPolicy getOperandPolicy() {
         return operandPolicy;
     }
 
     public void setOperandPolicy(OperandPolicy operandPolicy) {
         this.operandPolicy = operandPolicy;
+    }
+
+    public CommonsBackedPool.INodeSelectionStrategy getNodeSelectionStrategy() {
+        return nodeSelectionStrategy;
+    }
+
+    public void setNodeSelectionStrategy(CommonsBackedPool.INodeSelectionStrategy nodeSelectionStrategy) {
+        this.nodeSelectionStrategy = nodeSelectionStrategy;
+    }
+
+    public CommonsBackedPool.INodeSuspensionStrategy getNodeSuspensionStrategy() {
+        return nodeSuspensionStrategy;
+    }
+
+    public void setNodeSuspensionStrategy(CommonsBackedPool.INodeSuspensionStrategy nodeSuspensionStrategy) {
+        this.nodeSuspensionStrategy = nodeSuspensionStrategy;
     }
 }

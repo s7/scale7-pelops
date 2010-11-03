@@ -16,35 +16,41 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CommonsBackedPool extends ThriftPoolBase {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(CommonsBackedPool.class);
 
-    private static final int POOL_MAX_WAIT = 100;
+    private static final int DEFAULT_WAIT_PERIOD = 100;
 
     private final Cluster cluster;
 
-    private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
     private final Policy policy;
-    private final INodeSelectionPolicy nodeSelectionPolicy;
-
     private final String keyspace;
-
     private final OperandPolicy operandPolicy;
 
+    private final INodeSelectionStrategy nodeSelectionStrategy;
+    private final INodeSuspensionStrategy nodeSuspensionStrategy;
+
+    private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
     private GenericKeyedObjectPool pool;
 
     private ScheduledExecutorService executorService;
 
     /* running stats */
+    private AtomicInteger nodesActive;
+    private AtomicInteger nodesSuspended;
     private AtomicInteger connectionsCreated;
     private AtomicInteger connectionsDestroyed;
     private AtomicInteger connectionsCorrupted;
     private AtomicInteger connectionsActive;
 
-    public CommonsBackedPool(Cluster cluster, Policy policy, INodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
+    public CommonsBackedPool(Cluster cluster, Policy policy, OperandPolicy operandPolicy, String keyspace, INodeSelectionStrategy nodeSelectionStrategy, INodeSuspensionStrategy nodeSuspensionStrategy) {
         this.cluster = cluster;
         this.policy = policy;
-        this.nodeSelectionPolicy = nodeSelectionPolicy;
         this.operandPolicy = operandPolicy;
         this.keyspace = keyspace;
 
+        this.nodeSelectionStrategy = nodeSelectionStrategy;
+        this.nodeSuspensionStrategy = nodeSuspensionStrategy;
+
+        nodesActive = new AtomicInteger();
+        nodesSuspended = new AtomicInteger();
         connectionsCreated = new AtomicInteger();
         connectionsDestroyed = new AtomicInteger();
         connectionsCorrupted = new AtomicInteger();
@@ -52,13 +58,14 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         logger.info("Initialising pool with: {}", policy.toString());
 
-        configurePool();
+        configureBackingPool();
 
         Cluster.Node[] currentNodes = cluster.getNodes();
         logger.info("Pre-initialising connections for nodes: {}", Arrays.toString(currentNodes));
         for (Cluster.Node node : currentNodes) {
             addNode(node.getAddress());
         }
+        nodesActive.set(this.nodes.size());
 
         configureScheduledTasks();
     }
@@ -93,20 +100,43 @@ public class CommonsBackedPool extends ThriftPoolBase {
         }
     }
 
-    protected void configurePool() {
+    protected void configureBackingPool() {
         pool = new GenericKeyedObjectPool(new ConnectionFactory());
         pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
-        pool.setMaxWait(POOL_MAX_WAIT);
+        pool.setMaxWait(DEFAULT_WAIT_PERIOD);
         pool.setLifo(true);
         pool.setMaxActive(policy.getMaxActivePerNode());
         pool.setMinIdle(policy.getMinIdlePerNode());
         pool.setMaxIdle(policy.getMaxIdlePerNode());
         pool.setMaxTotal(policy.getMaxTotal());
         pool.setTimeBetweenEvictionRunsMillis(-1); // we don't want to eviction thread running
+        pool.setTestOnReturn(true); // in case the connection is corrupt
     }
 
     protected void scheduledTasks() {
+        // add/remove any new/dead nodes
         handleClusterRefresh();
+
+        // check which nodes should be suspended
+        logger.debug("Evaluating which nodes should be suspended");
+        int nodesSuspended = 0;
+        for (PooledNode node : nodes.values()) {
+            if (node.isSuspended()) {
+                nodesSuspended++;
+                logger.debug("Node {} is already suspended, skipping evaluation...", node.getAddress());
+            } else {
+                logger.debug("Evaluating if node {} should be suspended", node.getAddress());
+                if (nodeSuspensionStrategy.evaluate(this, node)) {
+                    nodesSuspended++;
+                    logger.info("Node {} was suspended from the pool, closing existing pooled connections", node.getAddress());
+                    // remove any existing connections
+                    pool.clear(node.getAddress());
+                    node.reportSuspension();
+                }
+            }
+        }
+        this.nodesActive.set(nodes.size() - nodesSuspended);
+        this.nodesSuspended.set(nodesSuspended);
 
         try {
             logger.debug("Evicting idle nodes based on configuration rules");
@@ -119,7 +149,6 @@ public class CommonsBackedPool extends ThriftPoolBase {
     protected void handleClusterRefresh() {
         cluster.refresh();
         Cluster.Node[] currentNodes = cluster.getNodes();
-        // to void the cluster refresh and scheduled tasks colliding 
         logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
         // figure out which of the nodes are new
         for (Cluster.Node node : currentNodes) {
@@ -173,6 +202,12 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     @Override
     public IPooledConnection getConnection() throws Exception {
+        return getConnectionExcept(null);
+    }
+
+    @Override
+    public IPooledConnection getConnectionExcept(String notNodeHint) throws Exception {
+        PooledNode node = null;
         IPooledConnection connection = null;
         long timeout = -1;
 
@@ -188,7 +223,17 @@ public class CommonsBackedPool extends ThriftPoolBase {
                 break;
             }
 
-            PooledNode node = nodeSelectionPolicy.select(this, nodes);
+            node = nodeSelectionStrategy.select(this, nodes.keySet(), notNodeHint);
+            // if the strategy was unable to choose a node (all suspended?) then sleep for a bit and loop
+            if (node == null) {
+                logger.debug("The node selection strategy was unable to choose a node, sleeping ");
+                try {
+                    Thread.sleep(DEFAULT_WAIT_PERIOD);
+                } catch (InterruptedException e) {
+                    // do nothing
+                }
+                continue;
+            }
 
             try {
                 logger.debug("Attempting to borrow free connection for node '{}'", node.getAddress());
@@ -198,11 +243,19 @@ public class CommonsBackedPool extends ThriftPoolBase {
             }
         }
 
+        if (node == null) {
+            logger.error(
+                    "Failed to get a connection within the configured wait time because there are no available nodes. " +
+                            "This possibly indicates that either the suspension strategy is too aggressive or that your " +
+                            "cluster is in a bad way."
+            );
+            throw new TimeoutException("Failed to get a connection within the configured wait time.");
+        }
+
         if (connection == null) {
-            logger.warn(
-                    "Failed to get a connection within the configured wait time.  " +
-                            "Try increasing the either the number of allowed connections (currently {}) or the max wait " +
-                            "time (currently {}).", getConfig().getMaxActivePerNode(), getConfig().getMaxWaitForConnection()
+            logger.error(
+                    "Failed to get a connection within the maximum allowed wait time.  " +
+                            "Try increasing the either the number of allowed connections or the max wait time."
             );
             throw new TimeoutException("Failed to get a connection within the configured wait time.");
         }
@@ -210,11 +263,6 @@ public class CommonsBackedPool extends ThriftPoolBase {
         logger.debug("Borrowing connection '{}'", connection);
         connectionsActive.incrementAndGet();
         return connection;
-    }
-
-    @Override
-    public IPooledConnection getConnectionExcept(String notNode) throws Exception {
-        return getConnection();
     }
 
     protected void releaseConnection(PooledConnection connection) {
@@ -256,7 +304,12 @@ public class CommonsBackedPool extends ThriftPoolBase {
         return policy;
     }
 
-    protected PooledNode getPooledNode(String nodeAddress) {
+    /**
+     * Returns the pooled node instance for the nodeAddress.
+     * @param nodeAddress the node address
+     * @return the pooled node instance or null if the nodeAddress doesn't match a pooled node
+     */
+    public PooledNode getPooledNode(String nodeAddress) {
         return nodes.get(nodeAddress);
     }
 
@@ -427,12 +480,15 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     public class PooledNode {
         private String address;
+        private INodeSuspensionState suspensionState;
+        private AtomicInteger suspensions;
         private AtomicInteger connectionsCorrupted;
         private AtomicInteger connectionsCreated;
         private AtomicInteger connectionsDestroyed;
 
         public PooledNode(String address) {
             this.address = address;
+            suspensions = new AtomicInteger();
             connectionsCorrupted = new AtomicInteger();
             connectionsCreated = new AtomicInteger();
             connectionsDestroyed = new AtomicInteger();
@@ -444,6 +500,22 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         public String getAddress() {
             return address;
+        }
+
+        public INodeSuspensionState getSuspensionState() {
+            return suspensionState;
+        }
+
+        public void setSuspensionState(INodeSuspensionState suspensionState) {
+            this.suspensionState = suspensionState;
+        }
+
+        void reportSuspension() {
+            suspensions.incrementAndGet();
+        }
+
+        public int getSuspensions() {
+            return suspensions.get();
         }
 
         public int getNumActive() {
@@ -476,6 +548,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         public int getConnectionsDestroyed() {
             return connectionsDestroyed.get();
+        }
+
+        public boolean isSuspended() {
+            return getSuspensionState() != null && getSuspensionState().isSuspended();
         }
     }
 
@@ -528,8 +604,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         @Override
         public boolean validateObject(Object key, Object obj) {
+            String nodeAddress = (String) key;
             PooledConnection connection = (PooledConnection) obj;
             if (connection.isCorrupt() || !connection.isOpen()) {
+                logger.debug("Connection to node '{}:{}' is corrupt or no longer open, invalidating...",
+                        nodeAddress, cluster.getConnectionConfig().getThriftPort());
                 return false;
             } else {
                 return true;
@@ -543,12 +622,59 @@ public class CommonsBackedPool extends ThriftPoolBase {
         @Override
         public void passivateObject(Object key, Object obj) throws Exception {
             String nodeAddress = (String) key;
+            PooledConnection connection = (PooledConnection) obj;
 
-            reportConnectionCorrupted(nodeAddress);
+            if (connection.isCorrupt())
+                reportConnectionCorrupted(nodeAddress);
         }
     }
 
-    public static interface INodeSelectionPolicy {
-        PooledNode select(CommonsBackedPool pool, Map<String, PooledNode> nodes);
+    /**
+     * Interface used to define how nodes should be selected.
+     */
+    public static interface INodeSelectionStrategy {
+        /**
+         * Called when a node need to be selected.
+         * @param pool the pool (just in case you need it)
+         * @param nodeAddresses the node addresses to select from
+         * @param notNodeHint a hint of the node address that the selection strategy should avoid (possible null)
+         * @return the selected node (null if none are available)
+         */
+        PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, String notNodeHint);
+    }
+
+    /**
+     * Interface used to define how nodes should be suspended for behaving badly.  For example, if a
+     * node is reporting lots of corrupt connections then maybe it should be avoided for a while.
+     *
+     * <p>Implementations should indicate if a node is suspended by ensuring that
+     * {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSuspensionState#isSuspended()} returns true
+     * until the node should no longer be considered suspended.
+     *
+     * <p>Any state required to determine if a node should be suspended should be stored in the nodes
+     * {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool.PooledNode#getSuspensionState()}.  Note that the
+     * suspension state may be null if the node has not been evaluated before.
+     */
+    public static interface INodeSuspensionStrategy {
+        /**
+         * Called for each node in the pool by the pools background thread.
+         * @param pool the pool (just in case you need it)
+         * @param node the node to evaluate
+         * @return true if the node was suspending, otherwise false
+         */
+        boolean evaluate(CommonsBackedPool pool, PooledNode node);
+    }
+
+    /**
+     * Interface used to define a pooled nodes suspension status.
+     * @see INodeSuspensionStrategy
+     */
+    public static interface INodeSuspensionState {
+        /**
+         * Used to indicate if a node is suspended.
+         * @return true if the node is suspended, otherwise false (this method should return true until the node is no
+         * longer considered suspended)
+         */
+        boolean isSuspended();
     }
 }
