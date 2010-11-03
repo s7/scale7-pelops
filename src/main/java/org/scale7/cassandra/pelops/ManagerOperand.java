@@ -3,11 +3,6 @@ package org.scale7.cassandra.pelops;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
@@ -22,7 +17,7 @@ public class ManagerOperand {
 
 	private Cluster cluster;
 	private String keyspace;
-	private Node[] nodesSnapshot;
+	private Cluster.Node[] nodesSnapshot;
     private int chosenNodeIdx = 0;
 	private long lastNodeWrite = 0;
 	private int safeNodeChangeDelay;
@@ -53,7 +48,7 @@ public class ManagerOperand {
 		int attempts = 0;
 		while (true) {
 			try {
-                Node chosenNode = nodesSnapshot[chosenNodeIdx];
+                Cluster.Node chosenNode = nodesSnapshot[chosenNodeIdx];
 
                 connection = new Connection(chosenNode, keyspace);
                 connection.open();

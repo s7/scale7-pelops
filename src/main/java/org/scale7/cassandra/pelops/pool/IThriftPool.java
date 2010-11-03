@@ -1,30 +1,31 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.scale7.cassandra.pelops.*;
 
 /**
  * The contract for connection pools used by pelops.
  */
 public interface IThriftPool {
     /**
-     * Create a {@link Selector selector} object.
+     * Create a {@link org.scale7.cassandra.pelops.Selector selector} object.
      *
-     * @return A new {@link Selector selector} object
+     * @return A new {@link org.scale7.cassandra.pelops.Selector selector} object
      */
     Selector createSelector();
 
     /**
-     * Create a {@link Mutator mutator} object using the current time as the operation time stamp.
-     * The {@link Mutator mutator} object must only be used to execute 1 mutation operation.
+     * Create a {@link org.scale7.cassandra.pelops.Mutator mutator} object using the current time as the operation time stamp.
+     * The {@link org.scale7.cassandra.pelops.Mutator mutator} object must only be used to execute 1 mutation operation.
      *
-     * @return A new {@link Mutator mutator} object
+     * @return A new {@link org.scale7.cassandra.pelops.Mutator mutator} object
      */
     Mutator createMutator();
 
     /**
      * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
      * must only be used to execute 1 mutation operation.
-     * <p>The created mutator will be created with the value of {@link OperandPolicy#isDeleteIfNull()}.
+     * <p>The created mutator will be created with the value of {@link org.scale7.cassandra.pelops.OperandPolicy#isDeleteIfNull()}.
      *
      * @param timestamp The default time stamp to use for operations
      * @return A new {@link Mutator mutator} object
@@ -34,10 +35,10 @@ public interface IThriftPool {
     /**
      * Create a {@link Mutator mutator} object with an arbitrary time stamp. The {@link Mutator mutator} object
      * must only be used to execute 1 mutation operation.
-     * <p>The created mutator will be created with the value of {@link OperandPolicy#isDeleteIfNull()}.
+     * <p>The created mutator will be created with the value of {@link org.scale7.cassandra.pelops.OperandPolicy#isDeleteIfNull()}.
      *
      * @param timestamp The default time stamp to use for operations
-     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(Bytes, Bytes)} will default to
+     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(org.scale7.cassandra.pelops.Bytes , org.scale7.cassandra.pelops.Bytes)} will default to
      * @return A new {@link Mutator mutator} object
      */
     Mutator createMutator(long timestamp, int ttl);
@@ -60,15 +61,15 @@ public interface IThriftPool {
      * @param timestamp The default time stamp to use for operations
      * @param deleteIfNull If true the mutator will default to issuing deletes when it detects null values on a column
      *                      passed to the various write methods.
-     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(Bytes, Bytes)} will default to
+     * @param ttl the ttl (in seconds) that columns created using the various {@link Mutator#newColumn(org.scale7.cassandra.pelops.Bytes , org.scale7.cassandra.pelops.Bytes)} will default to
      * @return A new {@link Mutator mutator} object
      */
     Mutator createMutator(long timestamp, boolean deleteIfNull, int ttl);
 
     /**
-     * Create a {@link RowDeletor key deletor} object using the current time as the operation time stamp.
+     * Create a {@link org.scale7.cassandra.pelops.RowDeletor key deletor} object using the current time as the operation time stamp.
      *
-     * @return A new {@link RowDeletor key deletor} object
+     * @return A new {@link org.scale7.cassandra.pelops.RowDeletor key deletor} object
      */
     RowDeletor createRowDeletor();
 

@@ -16,13 +16,13 @@ import java.net.SocketException;
 public class Connection implements IConnection {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(Connection.class);
 
-    private Node node;
+    private Cluster.Node node;
     private String keyspace;
 
     private TTransport transport;
     private final Cassandra.Client client;
 
-    public Connection(Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
+    public Connection(Cluster.Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
         this.node = node;
         this.keyspace = keyspace;
 
@@ -49,7 +49,7 @@ public class Connection implements IConnection {
      * @return					The IP or DNS address of the node
      */
     @Override
-    public Node getNode() {
+    public Cluster.Node getNode() {
         return node;
     }
 

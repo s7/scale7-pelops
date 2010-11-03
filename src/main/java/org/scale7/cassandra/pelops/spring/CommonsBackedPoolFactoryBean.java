@@ -1,6 +1,9 @@
 package org.scale7.cassandra.pelops.spring;
 
 import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
+import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionPolicy;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.DisposableBean;
@@ -31,7 +34,7 @@ import java.util.Arrays;
  * 
  * <p>NOTE: If you intend to use this class you'll need to bypass the static convenience methods on
  * {@link org.scale7.cassandra.pelops.Pelops}.</p>
- * <p>Inject the instance of {@link org.scale7.cassandra.pelops.IThriftPool} created by this factory bean into your
+ * <p>Inject the instance of {@link org.scale7.cassandra.pelops.pool.IThriftPool} created by this factory bean into your
  * application code and use it's method directly.</p>
  * For example:
  * <pre>
@@ -52,7 +55,7 @@ public class CommonsBackedPoolFactoryBean
     private Cluster cluster;
     private String keyspace;
     private CommonsBackedPool.Config config;
-    private CommonsBackedPool.NodeSelectionPolicy nodeSelectionPolicy;
+    private CommonsBackedPool.INodeSelectionPolicy nodeSelectionPolicy;
     private OperandPolicy operandPolicy;
 
     private IThriftPool thriftPool;
@@ -100,8 +103,8 @@ public class CommonsBackedPoolFactoryBean
             setConfig(new CommonsBackedPool.Config());
         }
         if (getNodeSelectionPolicy() == null) {
-            logger.info("No node selection policy specified, using {}", CommonsBackedPool.LeastLoadedNodeSelectionPolicy.class.getName());
-            setNodeSelectionPolicy(new CommonsBackedPool.LeastLoadedNodeSelectionPolicy());
+            logger.info("No node selection policy specified, using {}", LeastLoadedNodeSelectionPolicy.class.getName());
+            setNodeSelectionPolicy(new LeastLoadedNodeSelectionPolicy());
         }
         if (getOperandPolicy() == null) {
             logger.info("No operand policy provided, using default");
@@ -116,7 +119,7 @@ public class CommonsBackedPoolFactoryBean
     /**
      * Shuts down the Pelops pool.
      * @throws Exception if an error occurs
-     * @see {@link org.scale7.cassandra.pelops.IThriftPool#shutdown()}
+     * @see {@link org.scale7.cassandra.pelops.pool.IThriftPool#shutdown()}
      */
     @Override
     public void destroy() throws Exception {
@@ -149,11 +152,11 @@ public class CommonsBackedPoolFactoryBean
         this.config = config;
     }
 
-    public CommonsBackedPool.NodeSelectionPolicy getNodeSelectionPolicy() {
+    public CommonsBackedPool.INodeSelectionPolicy getNodeSelectionPolicy() {
         return nodeSelectionPolicy;
     }
 
-    public void setNodeSelectionPolicy(CommonsBackedPool.NodeSelectionPolicy nodeSelectionPolicy) {
+    public void setNodeSelectionPolicy(CommonsBackedPool.INodeSelectionPolicy nodeSelectionPolicy) {
         this.nodeSelectionPolicy = nodeSelectionPolicy;
     }
 

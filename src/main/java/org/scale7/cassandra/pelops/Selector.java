@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
-import org.scale7.cassandra.pelops.IThriftPool.IPooledConnection;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
+import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
 
@@ -1515,7 +1516,7 @@ public class Selector extends Operand {
     /**
      * Create a batch mutation operation.
      */
-    protected Selector(IThriftPool thrift) {
+    public Selector(IThriftPool thrift) {
         super(thrift);
     }
 

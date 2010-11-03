@@ -2,6 +2,8 @@ package org.scale7.cassandra.pelops;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.scale7.cassandra.pelops.pool.CachePerNodePool;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 

@@ -1,4 +1,4 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
 
 import java.util.concurrent.atomic.AtomicLong;
 

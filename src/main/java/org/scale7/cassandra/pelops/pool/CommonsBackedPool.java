@@ -1,9 +1,10 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
 
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
+import org.scale7.cassandra.pelops.*;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -21,7 +22,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
     private final Config config;
-    private final NodeSelectionPolicy nodeSelectionPolicy;
+    private final INodeSelectionPolicy nodeSelectionPolicy;
 
     private final String keyspace;
 
@@ -30,7 +31,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     private ScheduledExecutorService executorService;
 
-    public CommonsBackedPool(Cluster cluster, Config config, NodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
+    public CommonsBackedPool(Cluster cluster, Config config, INodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
         this.cluster = cluster;
         this.config = config;
         this.nodeSelectionPolicy = nodeSelectionPolicy;
@@ -41,9 +42,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         configurePool();
 
-        Node[] currentNodes = cluster.getNodes();
+        Cluster.Node[] currentNodes = cluster.getNodes();
         logger.info("Pre-initialising connections for nodes: {}", Arrays.toString(currentNodes));
-        for (Node node : currentNodes) {
+        for (Cluster.Node node : currentNodes) {
             addNode(node.getAddress());
         }
 
@@ -102,11 +103,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     protected void handleClusterRefresh() {
         cluster.refresh();
-        Node[] currentNodes = cluster.getNodes();
+        Cluster.Node[] currentNodes = cluster.getNodes();
         // to void the cluster refresh and scheduled tasks colliding 
         logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
         // figure out which of the nodes are new
-        for (Node node : currentNodes) {
+        for (Cluster.Node node : currentNodes) {
             if (!this.nodes.containsKey(node.getAddress())) {
                 addNode(node.getAddress());
             }
@@ -115,7 +116,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         // figure out which nodes need to be removed
         for (String nodeAddress : this.nodes.keySet()) {
             boolean isPresent = false;
-            for (Node node : currentNodes) {
+            for (Cluster.Node node : currentNodes) {
                 if (node.getAddress().equals(nodeAddress)) {
                     isPresent = true;
                 }
@@ -391,7 +392,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
     public class PooledConnection extends Connection implements IPooledConnection {
         private boolean corrupt = false;
 
-        public PooledConnection(Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
+        public PooledConnection(Cluster.Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
             super(node, keyspace);
         }
 
@@ -423,7 +424,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
             String nodeAddress = (String) key;
             logger.debug("Making new connection for node '{}:{}'", nodeAddress, cluster.getConnectionConfig().getThriftPort());
             PooledConnection connection = new PooledConnection(
-                    new Node(nodeAddress, cluster.getConnectionConfig()), getKeyspace()
+                    new Cluster.Node(nodeAddress, cluster.getConnectionConfig()), getKeyspace()
             );
             connection.open();
 
@@ -465,46 +466,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         }
     }
 
-    public static interface NodeSelectionPolicy {
+    public static interface INodeSelectionPolicy {
         PooledNode select(CommonsBackedPool pool, Map<String, PooledNode> nodes);
-    }
-
-    public static class LeastLoadedNodeSelectionPolicy implements NodeSelectionPolicy {
-        @Override
-        public PooledNode select(CommonsBackedPool pool, Map<String, PooledNode> nodes) {
-            if (nodes.isEmpty())
-                throw new IllegalStateException("There are no nodes to choose from");
-
-            if (nodes.size() == 1)
-                return nodes.values().iterator().next();
-
-            // create a candidate list (otherwise the numActive could change while sorting)
-            logger.debug("Determining which node is the least loaded");
-            List<Candidate> candidates = new ArrayList<Candidate>(nodes.size());
-            for (PooledNode pooledNode : nodes.values()) {
-                int active = pooledNode.getNumActive();
-                logger.debug("Node '{}' has {} active connections", pooledNode.getAddress(), active);
-                candidates.add(new Candidate(pooledNode.getAddress(), active));
-            }
-
-            Collections.sort(candidates);
-
-            return nodes.get(candidates.get(0).address);
-        }
-
-        public class Candidate implements Comparable<Candidate> {
-            public Candidate(String address, int numActive) {
-                this.address = address;
-                this.numActive = numActive;
-            }
-
-            String address;
-            int numActive;
-
-            @Override
-            public int compareTo(Candidate candidate) {
-                return numActive - candidate.numActive;
-            }
-        }
     }
 }

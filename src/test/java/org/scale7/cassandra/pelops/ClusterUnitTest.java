@@ -16,7 +16,7 @@ public class ClusterUnitTest {
         String[] nodes = new String[] {"node1", "node2", "node3"};
 
         Cluster cluster = new Cluster(nodes[0] + ", " + nodes[1] + ", " + nodes[2], 5555, false);
-        Node[] resultingNodes = cluster.getNodes();
+        Cluster.Node[] resultingNodes = cluster.getNodes();
         assertEquals("Incorrect wrong number of contact nodes", 3, resultingNodes.length);
         for (int i = 0; i < nodes.length; i++) {
             assertEquals("Node did not match", nodes[i], resultingNodes[i].getAddress());
@@ -30,7 +30,7 @@ public class ClusterUnitTest {
     public void testConstructorNodesSplitSingleNode() {
         String node = "node1";
         Cluster cluster = new Cluster(node, 5555, false);
-        Node[] resultingNodes = cluster.getNodes();
+        Cluster.Node[] resultingNodes = cluster.getNodes();
         assertEquals("Incorrect wrong number of contact nodes", 1, resultingNodes.length);
         assertEquals("Node did not match", node, resultingNodes[0].getAddress());
     }

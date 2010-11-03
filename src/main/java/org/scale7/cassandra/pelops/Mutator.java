@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -645,7 +646,7 @@ public class Mutator extends Operand {
     /**
      * Create a batch mutation operation.
      */
-    protected Mutator(IThriftPool thrift) {
+    public Mutator(IThriftPool thrift) {
         this(thrift, System.currentTimeMillis() * 1000, thrift.getOperandPolicy().isDeleteIfNull());
     }
 
@@ -653,7 +654,7 @@ public class Mutator extends Operand {
      * Create a batch mutation operation.
      * @param timestamp The time stamp to use for the operation.
      */
-    protected Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull) {
+    public Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull) {
         this(thrift, timestamp, deleteIfNull, NO_TTL);
     }
 
@@ -665,7 +666,7 @@ public class Mutator extends Operand {
      * @param ttl the ttl (in seconds) that columns created using the various {@link #newColumn(Bytes, Bytes)}
      * helper methods will default to (null to indicate no default)
      */
-    protected Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull, int ttl) {
+    public Mutator(IThriftPool thrift, long timestamp, boolean deleteIfNull, int ttl) {
         super(thrift);
         this.timestamp = timestamp;
         this.deleteIfNull = deleteIfNull;

@@ -4,10 +4,11 @@ import org.apache.cassandra.thrift.CfDef;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
+import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionPolicy;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static junit.framework.Assert.*;
 
@@ -53,7 +54,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
     @Test
     public void testAfterProperties() throws Exception {
         OperandPolicy operandPolicy = new OperandPolicy();
-        CommonsBackedPool.LeastLoadedNodeSelectionPolicy nodeSelectionPolicy = new CommonsBackedPool.LeastLoadedNodeSelectionPolicy();
+        LeastLoadedNodeSelectionPolicy nodeSelectionPolicy = new LeastLoadedNodeSelectionPolicy();
         CommonsBackedPool.Config config = new CommonsBackedPool.Config();
 
         CommonsBackedPoolFactoryBean factoryBean = new CommonsBackedPoolFactoryBean();

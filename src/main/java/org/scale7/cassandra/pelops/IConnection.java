@@ -16,7 +16,7 @@ public interface IConnection {
      * @return the node
      */
 
-    Node getNode();
+    Cluster.Node getNode();
 
     /**
      * Used to determine if the connection is open.

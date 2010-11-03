@@ -1,4 +1,4 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
 
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -14,15 +14,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import org.scale7.cassandra.pelops.*;
 import org.scale7.concurrency.AutoResetEvent;
 import org.scale7.networking.utility.NetworkAlgorithms;
 import org.scale7.portability.SystemProxy;
@@ -76,7 +70,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @return						A connection to Cassandra
 	 */
 	@Override
-    public IPooledConnection getConnection() throws Exception {
+    public IThriftPool.IPooledConnection getConnection() throws Exception {
 		return getConnectionExcept(null);
 	}
 
@@ -94,8 +88,8 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
         pool = new MultiNodePool();
         this.keyspace = keyspace;
         this.poolPolicy = poolPolicy;
-        Node[] nodesSnapshot = cluster.getNodes();
-        for (Node node : nodesSnapshot)
+        Cluster.Node[] nodesSnapshot = cluster.getNodes();
+        for (Cluster.Node node : nodesSnapshot)
 			touchNodeContext(node.getAddress());
         if (poolPolicy.getDynamicNodeDiscovery())
 			clusterWatcherExec.execute(clusterWatcher);
@@ -120,7 +114,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @throws Exception
 	 */
 	@Override
-    public IPooledConnection getConnectionExcept(String notNode) throws Exception {
+    public IThriftPool.IPooledConnection getConnectionExcept(String notNode) throws Exception {
 	    getConnCount.incrementAndGet();
 
 		// Create a list of nodes we have already tried, and therefore should avoid in preference
@@ -154,7 +148,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 					break;
 				}
 				// otherwise, try to return a connection from this least loaded untried node
-				IPooledConnection conn = leastLoaded.getConnection();
+				IThriftPool.IPooledConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 				// That node couldn't give us a connection, so loop to try and find another untried node
@@ -171,7 +165,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 				}
 			}
 			if (leastLoaded != null) {
-				IPooledConnection conn = leastLoaded.getConnection();
+				IThriftPool.IPooledConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 			}
@@ -262,8 +256,8 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 			while (true) {
 				try {
 					cluster.refresh();
-					Node[] clusterNodes = cluster.getNodes();
-					for (Node node : clusterNodes)
+					Cluster.Node[] clusterNodes = cluster.getNodes();
+					for (Cluster.Node node : clusterNodes)
 						touchNodeContext(node.getAddress());
 				} catch (Exception e) {
 					logger.warn("Cluster watcher process encountered error while refreshing snapshot", e.getMessage());
@@ -287,12 +281,12 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @author dominicwilliams
 	 *
 	 */
-	public class PooledConnection extends Connection implements IPooledConnection {
+	public class PooledConnection extends Connection implements IThriftPool.IPooledConnection {
 		private int nodeSessionId = 0;
         private NodeContext nodeContext;
         private boolean corrupt = false;
 
-        public PooledConnection(Node node, String keyspace, NodeContext nodeContext, int nodeSessionId) throws SocketException, TException, InvalidRequestException {
+        public PooledConnection(Cluster.Node node, String keyspace, NodeContext nodeContext, int nodeSessionId) throws SocketException, TException, InvalidRequestException {
             super(node, keyspace);
             this.nodeContext = nodeContext;
             this.nodeSessionId = nodeSessionId;
@@ -366,10 +360,10 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 
 		private Integer connCacheLock = new Integer(-1);
 
-		IPooledConnection getConnection() {
+		IThriftPool.IPooledConnection getConnection() {
 			// Try to retrieve cached connection...
 			try {
-				IPooledConnection conn;
+				IThriftPool.IPooledConnection conn;
 				while (true) {
 					synchronized (connCacheLock) {
 						conn = connCache.poll();
@@ -433,7 +427,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 		private PooledConnection createConnection() {
 			PooledConnection conn;
 			try {
-				conn = new PooledConnection(new Node(this.node, cluster.getConnectionConfig()), keyspace, NodeContext.this, sessionId.get());
+				conn = new PooledConnection(new Cluster.Node(this.node, cluster.getConnectionConfig()), keyspace, NodeContext.this, sessionId.get());
 			} catch (Exception e) {
 			    connCreateExceptionCount.incrementAndGet();
                 logger.error(e.getMessage(), e);
@@ -491,7 +485,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 
 					// Remove dead connections from waiting pool
 					int foundDead = 0;
-					for (IPooledConnection conn : connCache)
+					for (IThriftPool.IPooledConnection conn : connCache)
 						if (!conn.isOpen()) {
 						    deadConnCount.incrementAndGet();
 							countCached.decrementAndGet();

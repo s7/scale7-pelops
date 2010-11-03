@@ -1,19 +1,12 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
 
-import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import org.scale7.cassandra.pelops.*;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.Random;
 
 import static java.lang.String.format;
@@ -42,7 +35,7 @@ public class DebuggingPool extends ThriftPoolBase {
 
     @Override
     public IPooledConnection getConnection() throws Exception {
-        Node[] nodes = cluster.getNodes();
+        Cluster.Node[] nodes = cluster.getNodes();
         int index = nodes.length == 1 ? 0 : random.nextInt(nodes.length);
 
         logger.debug("Using node '{}'", nodes[index]);
@@ -77,7 +70,7 @@ public class DebuggingPool extends ThriftPoolBase {
     }
 
     public class PooledConnection extends Connection implements IPooledConnection {
-        public PooledConnection(Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
+        public PooledConnection(Cluster.Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
             super(node, keyspace);
         }
 

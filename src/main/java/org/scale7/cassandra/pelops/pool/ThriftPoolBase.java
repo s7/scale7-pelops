@@ -1,8 +1,13 @@
-package org.scale7.cassandra.pelops;
+package org.scale7.cassandra.pelops.pool;
+
+import org.scale7.cassandra.pelops.Mutator;
+import org.scale7.cassandra.pelops.RowDeletor;
+import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 
 
 /**
- * Abstract impl of {@link IThriftPool}.
+ * Abstract impl of {@link org.scale7.cassandra.pelops.pool.IThriftPool}.
  */
 public abstract class ThriftPoolBase implements IThriftPool {
     /**

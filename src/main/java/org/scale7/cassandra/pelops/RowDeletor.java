@@ -2,7 +2,8 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.scale7.cassandra.pelops.IThriftPool.IPooledConnection;
+import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
@@ -50,11 +51,11 @@ public class RowDeletor extends Operand {
 		tryOperation(operation);
 	}
 
-	protected RowDeletor(IThriftPool thrift) {
+	public RowDeletor(IThriftPool thrift) {
 		this(thrift, System.currentTimeMillis() * 1000);
 	}
 
-	protected RowDeletor(IThriftPool thrift, long timestamp) {
+	public RowDeletor(IThriftPool thrift, long timestamp) {
 		super(thrift);
         this.timestamp = timestamp;
 	}

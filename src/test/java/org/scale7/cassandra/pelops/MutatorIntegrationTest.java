@@ -21,6 +21,8 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.scale7.cassandra.pelops.pool.DebuggingPool;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 /**

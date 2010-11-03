@@ -8,7 +8,8 @@ import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransportException;
-import org.scale7.cassandra.pelops.IThriftPool.IPooledConnection;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
+import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 

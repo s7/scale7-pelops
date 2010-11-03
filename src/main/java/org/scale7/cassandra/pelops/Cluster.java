@@ -2,6 +2,7 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
+import org.scale7.cassandra.pelops.pool.DebuggingPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -18,7 +19,7 @@ public class Cluster {
 
 	private String[] nodes;
     private final IConnection.Config connectionConfig;
-    private final NodeFilter nodeFilter;
+    private final INodeFilter nodeFilter;
 
     private boolean dynamicNodeDiscovery = false;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -41,7 +42,7 @@ public class Cluster {
         this(nodes, connectionConfig, dynamicNodeDiscovery, new AcceptAllNodeFilter());
 	}
 
-    public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, NodeFilter nodeFilter) {
+    public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, INodeFilter nodeFilter) {
         this.connectionConfig = connectionConfig;
         this.nodeFilter = nodeFilter;
         this.dynamicNodeDiscovery = dynamicNodeDiscovery;
@@ -55,7 +56,7 @@ public class Cluster {
         }
 	}
 
-    public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, NodeFilter nodeFilter) {
+    public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, INodeFilter nodeFilter) {
         this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery, nodeFilter);
 	}
 
@@ -171,17 +172,60 @@ public class Cluster {
      * A filter used to determine which nodes should be used when {@link org.scale7.cassandra.pelops.Cluster#refresh()
      * refreshing}.  Implementations could potentially filter nodes that are in other data centers etc.
      */
-    public static interface NodeFilter {
+    public static interface INodeFilter {
         boolean accept(String node);
     }
 
     /**
      * Default implementation that accepts all nodes.
      */
-    public static class AcceptAllNodeFilter implements NodeFilter {
+    public static class AcceptAllNodeFilter implements INodeFilter {
         @Override
         public boolean accept(String node) {
             return true;
+        }
+    }
+
+    /**
+     * Represents a node in the cluster.
+     */
+    public static class Node {
+        private final String address;
+        private final IConnection.Config config;
+
+        public Node(String address, IConnection.Config config) {
+            this.address = address;
+            this.config = config;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public IConnection.Config getConfig() {
+            return config;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Node node = (Node) o;
+
+            if (!address.equals(node.address)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return address.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return address + ":" + config.getThriftPort();
         }
     }
 }
