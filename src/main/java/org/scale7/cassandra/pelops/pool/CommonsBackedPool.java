@@ -232,7 +232,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
             node = nodeSelectionStrategy.select(this, nodes.keySet(), notNodeHint);
             // if the strategy was unable to choose a node (all suspended?) then sleep for a bit and loop
             if (node == null) {
-                logger.debug("The node selection strategy was unable to choose a node, sleeping ");
+                logger.debug("The node selection strategy was unable to choose a node, sleeping before trying again...");
                 try {
                     Thread.sleep(DEFAULT_WAIT_PERIOD);
                 } catch (InterruptedException e) {
@@ -243,6 +243,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
             try {
                 logger.debug("Attempting to borrow free connection for node '{}'", node.getAddress());
+                // note that if no connections are currently available for this node then the pool will sleep for
+                // DEFAULT_WAIT_PERIOD milliseconds
                 connection = (IPooledConnection) pool.borrowObject(node.getAddress());
             } catch (NoSuchElementException e) {
                 logger.debug("No free connections available for node '{}', trying another node...", node.getAddress());
@@ -255,7 +257,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
                             "This possibly indicates that either the suspension strategy is too aggressive or that your " +
                             "cluster is in a bad way."
             );
-            throw new TimeoutException("Failed to get a connection within the configured wait time.");
+            throw new TimeoutException("Failed to get a connection within the configured max wait time.");
         }
 
         if (connection == null) {
@@ -263,7 +265,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
                     "Failed to get a connection within the maximum allowed wait time.  " +
                             "Try increasing the either the number of allowed connections or the max wait time."
             );
-            throw new TimeoutException("Failed to get a connection within the configured wait time.");
+            throw new TimeoutException("Failed to get a connection within the configured max wait time.");
         }
 
         logger.debug("Borrowing connection '{}'", connection);
