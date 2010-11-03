@@ -29,10 +29,10 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
         }
 
         // make sure there's at least one node to choose from after filtering out suspended nodes etc
-        if (nodeAddresses.isEmpty())
+        if (candidates.isEmpty())
             return null;
-        if (nodeAddresses.size() == 1)
-            return pool.getPooledNode(nodeAddresses.iterator().next());
+        if (candidates.size() == 1)
+            return pool.getPooledNode(candidates.iterator().next().address);
 
         // sort to find the node with the least active connections
         Collections.sort(candidates);
@@ -44,7 +44,7 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
             if (!candidate.address.equals(notNodeHint)) {
                 break;
             } else {
-                logger.debug("Attempting to honor the notNodeHint '{}', skipping node '{}'", notNodeHint, candidate.address);
+                logger.debug("Attempting to honor the notNodeHint '{}', skipping node", notNodeHint, candidate.address);
                 continue;
             }
         }

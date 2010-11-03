@@ -2,6 +2,7 @@ package org.scale7.cassandra.pelops.pool;
 
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
+import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
@@ -185,7 +186,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         pool.preparePool(nodeAddress, true);
 
         // initialise (JMX etc)
-        PooledNode node = new PooledNode(nodeAddress);
+        PooledNode node = new PooledNode(pool, nodeAddress);
 
         // add it as a candidate
         nodes.put(nodeAddress, node);
@@ -506,7 +507,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
         }
     }
 
-    public class PooledNode {
+    public static class PooledNode {
+        private KeyedObjectPool pool;
         private String address;
         private INodeSuspensionState suspensionState;
         private AtomicInteger suspensions;
@@ -516,7 +518,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
         private AtomicInteger connectionsBorrowedTotal;
         private AtomicInteger connectionsReleasedTotal;
 
-        public PooledNode(String address) {
+        public PooledNode(KeyedObjectPool pool, String address) {
+            this.pool = pool;
             this.address = address;
             suspensions = new AtomicInteger();
             connectionsCorrupted = new AtomicInteger();
