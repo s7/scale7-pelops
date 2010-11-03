@@ -21,7 +21,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
     private final Cluster cluster;
 
     private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
-    private final Config config;
+    private final Policy policy;
     private final INodeSelectionPolicy nodeSelectionPolicy;
 
     private final String keyspace;
@@ -38,9 +38,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
     private AtomicInteger connectionsCorrupted;
     private AtomicInteger connectionsActive;
 
-    public CommonsBackedPool(Cluster cluster, Config config, INodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
+    public CommonsBackedPool(Cluster cluster, Policy policy, INodeSelectionPolicy nodeSelectionPolicy, OperandPolicy operandPolicy, String keyspace) {
         this.cluster = cluster;
-        this.config = config;
+        this.policy = policy;
         this.nodeSelectionPolicy = nodeSelectionPolicy;
         this.operandPolicy = operandPolicy;
         this.keyspace = keyspace;
@@ -50,7 +50,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         connectionsCorrupted = new AtomicInteger();
         connectionsActive = new AtomicInteger();
 
-        logger.info("Initialising pool with: {}", config.toString());
+        logger.info("Initialising pool with: {}", policy.toString());
 
         configurePool();
 
@@ -64,8 +64,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     protected void configureScheduledTasks() {
-        if (config.getTimeBetweenScheduledTaskRunsMillis() > 0) {
-            logger.debug("Configuring scheduled tasks to run every {} milliseconds", config.getTimeBetweenScheduledTaskRunsMillis());
+        if (policy.getTimeBetweenScheduledTaskRunsMillis() > 0) {
+            logger.debug("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable runnable) {
@@ -84,8 +84,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
                             scheduledTasks();
                         }
                     },
-                    config.getTimeBetweenScheduledTaskRunsMillis(),
-                    config.getTimeBetweenScheduledTaskRunsMillis(),
+                    policy.getTimeBetweenScheduledTaskRunsMillis(),
+                    policy.getTimeBetweenScheduledTaskRunsMillis(),
                     TimeUnit.MILLISECONDS
             );
         } else {
@@ -98,10 +98,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
         pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
         pool.setMaxWait(POOL_MAX_WAIT);
         pool.setLifo(true);
-        pool.setMaxActive(config.getMaxActivePerNode());
-        pool.setMinIdle(config.getMinIdlePerNode());
-        pool.setMaxIdle(config.getMaxIdlePerNode());
-        pool.setMaxTotal(config.getMaxTotal());
+        pool.setMaxActive(policy.getMaxActivePerNode());
+        pool.setMinIdle(policy.getMinIdlePerNode());
+        pool.setMaxIdle(policy.getMaxIdlePerNode());
+        pool.setMaxTotal(policy.getMaxTotal());
         pool.setTimeBetweenEvictionRunsMillis(-1); // we don't want to eviction thread running
     }
 
@@ -252,8 +252,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
         return keyspace;
     }
 
-    public Config getConfig() {
-        return config;
+    public Policy getConfig() {
+        return policy;
     }
 
     protected PooledNode getPooledNode(String nodeAddress) {
@@ -303,7 +303,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         return connectionsActive.get();
     }
 
-    public static class Config {
+    public static class Policy {
         private int maxActivePerNode = 20;
         private int maxTotal = -1;
         private int maxIdlePerNode = 10;
@@ -311,7 +311,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         private int maxWaitForConnection = 1000;
         private int timeBetweenScheduledTaskRunsMillis = 1000 * 60;
 
-        public Config() {
+        public Policy() {
         }
 
         /**

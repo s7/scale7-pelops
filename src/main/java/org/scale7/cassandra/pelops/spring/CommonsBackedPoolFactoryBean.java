@@ -54,7 +54,7 @@ public class CommonsBackedPoolFactoryBean
 
     private Cluster cluster;
     private String keyspace;
-    private CommonsBackedPool.Config config;
+    private CommonsBackedPool.Policy policy;
     private CommonsBackedPool.INodeSelectionPolicy nodeSelectionPolicy;
     private OperandPolicy operandPolicy;
 
@@ -98,9 +98,9 @@ public class CommonsBackedPoolFactoryBean
 
         logger.info("Initializing Pelops pool for nodes {}", Arrays.toString(getCluster().getNodes()));
 
-        if (getConfig() == null) {
+        if (getPolicy() == null) {
             logger.info("No configuration provided, using defaults");
-            setConfig(new CommonsBackedPool.Config());
+            setPolicy(new CommonsBackedPool.Policy());
         }
         if (getNodeSelectionPolicy() == null) {
             logger.info("No node selection policy specified, using {}", LeastLoadedNodeSelectionPolicy.class.getName());
@@ -112,7 +112,7 @@ public class CommonsBackedPoolFactoryBean
         }
 
         this.thriftPool = new CommonsBackedPool(
-                getCluster(), config, nodeSelectionPolicy, getOperandPolicy(), getKeyspace()
+                getCluster(), policy, nodeSelectionPolicy, getOperandPolicy(), getKeyspace()
         );
     }
 
@@ -144,12 +144,12 @@ public class CommonsBackedPoolFactoryBean
         this.keyspace = keyspace;
     }
 
-    public CommonsBackedPool.Config getConfig() {
-        return config;
+    public CommonsBackedPool.Policy getPolicy() {
+        return policy;
     }
 
-    public void setConfig(CommonsBackedPool.Config config) {
-        this.config = config;
+    public void setPolicy(CommonsBackedPool.Policy policy) {
+        this.policy = policy;
     }
 
     public CommonsBackedPool.INodeSelectionPolicy getNodeSelectionPolicy() {

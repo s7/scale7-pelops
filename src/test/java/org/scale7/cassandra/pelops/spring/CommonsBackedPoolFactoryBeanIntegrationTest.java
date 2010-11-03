@@ -40,7 +40,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
 
             assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
             assertNotNull("The factory didn't initialize a default operand policy instance", factoryBean.getOperandPolicy());
-            assertNotNull("The factory didn't initialize a default pool config instance", factoryBean.getConfig());
+            assertNotNull("The factory didn't initialize a default pool config instance", factoryBean.getPolicy());
             assertNotNull("The factory didn't initialize a default node selection policy instance", factoryBean.getNodeSelectionPolicy());
         } finally {
             factoryBean.destroy();
@@ -55,12 +55,12 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
     public void testAfterProperties() throws Exception {
         OperandPolicy operandPolicy = new OperandPolicy();
         LeastLoadedNodeSelectionPolicy nodeSelectionPolicy = new LeastLoadedNodeSelectionPolicy();
-        CommonsBackedPool.Config config = new CommonsBackedPool.Config();
+        CommonsBackedPool.Policy policy = new CommonsBackedPool.Policy();
 
         CommonsBackedPoolFactoryBean factoryBean = new CommonsBackedPoolFactoryBean();
         factoryBean.setCluster(AbstractIntegrationTest.cluster);
         factoryBean.setKeyspace(AbstractIntegrationTest.KEYSPACE);
-        factoryBean.setConfig(config);
+        factoryBean.setPolicy(policy);
         factoryBean.setOperandPolicy(operandPolicy);
         factoryBean.setNodeSelectionPolicy(nodeSelectionPolicy);
 
@@ -71,7 +71,7 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
 
             assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
             assertTrue("The factory didn't use the provided operand policy instance", operandPolicy == factoryBean.getOperandPolicy());
-            assertTrue("The factory didn't use the provided config instance", config == factoryBean.getConfig());
+            assertTrue("The factory didn't use the provided config instance", policy == factoryBean.getPolicy());
             assertTrue("The factory didn't use the provided node selection instance", nodeSelectionPolicy == factoryBean.getNodeSelectionPolicy());
         } finally {
             factoryBean.destroy();
