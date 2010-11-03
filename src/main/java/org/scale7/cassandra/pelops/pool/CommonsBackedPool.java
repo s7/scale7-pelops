@@ -32,6 +32,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
     private GenericKeyedObjectPool pool;
 
     private ScheduledExecutorService executorService;
+    private final Object scheduledTasksLock = new Object();
 
     /* running stats */
     private RunningStatistics statistics;
@@ -61,7 +62,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         configureScheduledTasks();
     }
 
-    protected void configureScheduledTasks() {
+    private void configureScheduledTasks() {
         if (policy.getTimeBetweenScheduledTaskRunsMillis() > 0) {
             logger.debug("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
@@ -104,42 +105,45 @@ public class CommonsBackedPool extends ThriftPoolBase {
         pool.setTestOnReturn(true); // in case the connection is corrupt
     }
 
-    protected void scheduledTasks() {
-        logger.debug("Starting scheduled tasks");
-        // add/remove any new/dead nodes
-        handleClusterRefresh();
+    private void scheduledTasks() {
+        logger.debug("Attempting to acquire lock for scheduled tasks");
+        synchronized (scheduledTasksLock) {
+            logger.debug("Starting scheduled tasks");
+            // add/remove any new/dead nodes
+            handleClusterRefresh();
 
-        // check which nodes should be suspended
-        logger.debug("Evaluating which nodes should be suspended");
-        int nodesSuspended = 0;
-        for (PooledNode node : nodes.values()) {
-            if (node.isSuspended()) {
-                nodesSuspended++;
-                logger.debug("Node {} is already suspended, skipping evaluation...", node.getAddress());
-            } else {
-                logger.debug("Evaluating if node {} should be suspended", node.getAddress());
-                if (nodeSuspensionStrategy.evaluate(this, node)) {
+            // check which nodes should be suspended
+            logger.debug("Evaluating which nodes should be suspended");
+            int nodesSuspended = 0;
+            for (PooledNode node : nodes.values()) {
+                if (node.isSuspended()) {
                     nodesSuspended++;
-                    logger.info("Node {} was suspended from the pool, closing existing pooled connections", node.getAddress());
-                    // remove any existing connections
-                    pool.clear(node.getAddress());
-                    node.reportSuspension();
+                    logger.debug("Node {} is already suspended, skipping evaluation...", node.getAddress());
+                } else {
+                    logger.debug("Evaluating if node {} should be suspended", node.getAddress());
+                    if (nodeSuspensionStrategy.evaluate(this, node)) {
+                        nodesSuspended++;
+                        logger.info("Node {} was suspended from the pool, closing existing pooled connections", node.getAddress());
+                        // remove any existing connections
+                        pool.clear(node.getAddress());
+                        node.reportSuspension();
+                    }
                 }
             }
-        }
-        statistics.nodesActive.set(nodes.size() - nodesSuspended);
-        statistics.nodesSuspended.set(nodesSuspended);
+            statistics.nodesActive.set(nodes.size() - nodesSuspended);
+            statistics.nodesSuspended.set(nodesSuspended);
 
-        try {
-            logger.debug("Evicting idle nodes based on configuration rules");
-            pool.evict();
-        } catch (Exception e) {
-            // do nothing
+            try {
+                logger.debug("Evicting idle nodes based on configuration rules");
+                pool.evict();
+            } catch (Exception e) {
+                // do nothing
+            }
+            logger.debug("Finished scheduled tasks");
         }
-        logger.debug("Finished scheduled tasks");
     }
 
-    protected void handleClusterRefresh() {
+    private void handleClusterRefresh() {
         cluster.refresh();
         Cluster.Node[] currentNodes = cluster.getNodes();
         logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
@@ -165,7 +169,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         }
     }
 
-    protected void addNode(String nodeAddress) {
+    private void addNode(String nodeAddress) {
         logger.info("Preparing connections for node '{}'", nodeAddress);
 
         // prepare min idle connetions etc...
@@ -178,7 +182,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         nodes.put(nodeAddress, node);
     }
 
-    protected void removeNode(String nodeAddress) {
+    private void removeNode(String nodeAddress) {
         logger.info("Removing connections for node '{}'", nodeAddress);
 
         // remove from the the nodes list so it's no longer considered a candidate
