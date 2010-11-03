@@ -475,6 +475,36 @@ public class Bytes {
      * @param defaultIfNull the value to return is the backing array is null
      * @return the deserialized instance
      */
+    public byte[] toByteArray(byte[] defaultIfNull) {
+        if (isNull())
+            return defaultIfNull;
+        else
+            return toByteArray();
+    }
+
+    /**
+     * Converts the backing array to the appropriate primitive.
+     *
+     * @return the deserialized primitive
+     * @throws IllegalStateException if the underlying array does not contain the appropriate data
+     */
+    public byte[] toByteArray() throws IllegalStateException {
+        try {
+            this.bytes.position(position);
+            return Arrays.copyOfRange(this.bytes.array(), this.bytes.position(), this.bytes.limit());
+        } catch (BufferUnderflowException e) {
+            throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
+        } finally {
+            this.bytes.position(position);
+        }
+    }
+    
+    /**
+     * Converts the backing array to the appropriate object instance handling nulls.
+     *
+     * @param defaultIfNull the value to return is the backing array is null
+     * @return the deserialized instance
+     */
     public Byte toByte(Byte defaultIfNull) {
         if (isNull())
             return defaultIfNull;

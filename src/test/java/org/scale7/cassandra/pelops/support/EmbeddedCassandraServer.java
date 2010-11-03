@@ -239,6 +239,7 @@ public class EmbeddedCassandraServer {
 		Config config = loadConfig("/cassandra.yaml");
 
 		config.commitlog_directory = baseDirectory + "/commitlog";
+		config.saved_caches_directory  = baseDirectory + "/saved_caches";
 		config.listen_address = listenAddress;
 		config.rpc_port = rpcPort;
 		config.storage_port = storagePort;
