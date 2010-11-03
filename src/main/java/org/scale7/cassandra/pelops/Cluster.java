@@ -1,25 +1,62 @@
 package org.scale7.cassandra.pelops;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
+import org.scale7.portability.SystemProxy;
+import org.slf4j.Logger;
 
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * A heavy thread safe object that maintains a list of nodes in the cluster.  It's intended that
+ * one instance of the class be available in the JVM per cluster.
+ */
 public class Cluster {
-	final int thriftPort;
-	final String[] contactNodes;
-	String[] currentNodes;
+    private final Logger logger = SystemProxy.getLoggerFromFactory(DebuggingPool.class);
 
-    public Cluster(String contactNodes, int thriftPort) {
-        this(splitAndTrim(contactNodes), thriftPort);
+	private String[] nodes;
+    private final IConnection.Config connectionConfig;
+    private final NodeFilter nodeFilter;
+
+    private boolean dynamicNodeDiscovery = false;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Lock lockRead = lock.readLock();
+    private final Lock lockWrite = lock.writeLock();
+
+    public Cluster(String nodes, int thriftPort) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, -1), false);
     }
 
-    public Cluster(String[] contactNodes, int thriftPort) {
-		this.thriftPort = thriftPort;
-		this.contactNodes = contactNodes;
-		this.currentNodes = contactNodes;
+    public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, -1), dynamicNodeDiscovery);
+    }
+
+    public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery) {
+        this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery);
+    }
+
+    public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery) {
+        this(nodes, connectionConfig, dynamicNodeDiscovery, new AcceptAllNodeFilter());
+	}
+
+    public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, NodeFilter nodeFilter) {
+        this.connectionConfig = connectionConfig;
+        this.nodeFilter = nodeFilter;
+        this.dynamicNodeDiscovery = dynamicNodeDiscovery;
+        this.nodes = nodes;
+
+        if (!dynamicNodeDiscovery) {
+            logger.debug("Dynamic node discovery is disabled, using {} as a static list of nodes", Arrays.toString(nodes));
+        } else {
+            logger.debug("Dynamic node discovery is enabled, detecting initial list of nodes from {}", Arrays.toString(nodes));
+            this.nodes = refreshInternal();
+        }
+	}
+
+    public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, NodeFilter nodeFilter) {
+        this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery, nodeFilter);
 	}
 
     /**
@@ -35,69 +72,116 @@ public class Cluster {
         return splitContactNodes;
     }
 
-	/**
-	 * The thrift port on which the cluster listens
-	 * @return
-	 */
-	public int getThriftPort() {
-		return thriftPort;
-	}
-
-	/**
-	 * Get a snapshot of the list of nodes currently believed to exist in the Cassandra cluster. You must
-	 * iterate snapshot that is returned, rather than iterating the property directly, since the list may
-	 * change at any time.
-	 * @return			A snapshot of the nodes in the cluster, as are currently believed to exist
-	 */
-	public String[] getCurrentNodesSnapshot() {
-		return currentNodes;
-	}
-
-	/**
-	 * Refresh the snapshot of the list of nodes currently believed to exist in the Cassandra cluster.
-	 * @throws Exception
-	 */
-	public void refreshNodesSnapshot() throws Exception {
-		KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
-		List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
-		Iterator<KsDef> k = keyspaces.iterator();
-		KsDef appKeyspace = null;
-		while (k.hasNext()) {
-			KsDef keyspace = k.next();
-			if (!keyspace.getName().equals("system")) {
-				appKeyspace = keyspace;
-				break;
-			}
-		}
-		if (appKeyspace == null)
-			throw new Exception("Cannot obtain a node list from a ring mapping. No keyspaces are defined for this cluster.");
-		List<TokenRange> mappings = kspcMngr.getKeyspaceRingMappings(appKeyspace.getName());
-		HashSet<String> clusterNodes = new HashSet<String>();
-		for (TokenRange tokenRange : mappings) {
-			List<String> endPointList = tokenRange.getEndpoints();
-			clusterNodes.addAll(endPointList);
-		}
-		currentNodes = clusterNodes.toArray(new String[] {});
-	}
-
-
-    private boolean isFramedTransportRequired = true;
-
     /**
-     * Used to determine if the thrift transport should be framed or not.  This is dicated by the 'thrift_framed_transport_size_in_mb'
-     * property in cassandra.yaml.
-     * @return true if framed transport should be used, otherwise false.
+     * Configuration used to open new connections.
+     * @return the connection config
      */
-    public boolean isFramedTransportRequired() {
-        return isFramedTransportRequired;
+    public IConnection.Config getConnectionConfig() {
+        return connectionConfig;
     }
 
     /**
-     * Used to determine if the thrift transport should be framed or not.  This is dicated by the 'thrift_framed_transport_size_in_mb'
-     * property in cassandra.yaml.
-     * @param  framedTransportRequired true if framed transport should be used, otherwise false.
+     * The current list of available nodes.
+     * <p><b>Note</b>: avoid calling this method is a tight loop.
+     * @return a copy of the current nodes
      */
-    public void setFramedTransportRequired(boolean framedTransportRequired) {
-        isFramedTransportRequired = framedTransportRequired;
+    public Node[] getNodes() {
+        try {
+            lockRead.lock();
+            Node[] nodes = new Node[this.nodes.length];
+            for (int i = 0; i < this.nodes.length; i++) {
+                String hostAddress = this.nodes[i];
+                nodes[i] = new Node(hostAddress, getConnectionConfig());
+            }
+
+            return Arrays.copyOf(nodes, nodes.length);
+        } finally {
+            lockRead.unlock();
+        }
+    }
+
+    /**
+     * Refresh the current list of nodes.
+     */
+    public void refresh() {
+        if (!dynamicNodeDiscovery)
+            return;
+
+        String[] latestNodes = refreshInternal();
+
+        try {
+            lockWrite.lock();
+            nodes = latestNodes;
+        } finally {
+            lockWrite.unlock();
+        }
+    }
+
+    /**
+	 * Refresh the snapshot of the list of nodes currently believed to exist in the Cassandra cluster.
+     * @return the list of nodes
+	 */
+	private String[] refreshInternal() {
+		KeyspaceManager manager = Pelops.createKeyspaceManager(this);
+
+        try {
+            KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
+            List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
+            Iterator<KsDef> k = keyspaces.iterator();
+            KsDef appKeyspace = null;
+            while (k.hasNext()) {
+                KsDef keyspace = k.next();
+                if (!keyspace.getName().equals("system")) {
+                    appKeyspace = keyspace;
+                    break;
+                }
+            }
+            if (appKeyspace == null)
+                throw new Exception("Cannot obtain a node list from a ring mapping. No keyspaces are defined for this cluster.");
+
+            logger.debug("Fetching nodes using keyspace '{}'", appKeyspace.getName());
+            List<TokenRange> mappings = manager.getKeyspaceRingMappings(appKeyspace.getName());
+            Set<String> clusterNodes = new HashSet<String>();
+            for (TokenRange tokenRange : mappings) {
+                List<String> endPointList = tokenRange.getEndpoints();
+                clusterNodes.addAll(endPointList);
+            }
+
+            Iterator<String> iterator = clusterNodes.iterator();
+            while (iterator.hasNext()) {
+                String node = iterator.next();
+                logger.debug("Checking node '{}' against node filter", node);
+                if (!nodeFilter.accept(node)) {
+                    logger.debug("Removing node '{}' as directed by node filter", node);
+                    iterator.remove();
+                }
+            }
+
+            String[] nodes = clusterNodes.toArray(new String[clusterNodes.size()]);
+            logger.debug("Final set of refreshed nodes: {}", Arrays.toString(nodes));
+
+            return nodes;
+        } catch (Exception e) {
+            logger.error("Failed to discover nodes dynamically.  See cause for details...", e);
+            return null;
+        }
+    }
+
+    /**
+     * A filter used to determine which nodes should be used when {@link org.scale7.cassandra.pelops.Cluster#refresh()
+     * refreshing}.  Implementations could potentially filter nodes that are in other data centers etc.
+     */
+    public static interface NodeFilter {
+        boolean accept(String node);
+    }
+
+    /**
+     * Default implementation that accepts all nodes.
+     */
+    public static class AcceptAllNodeFilter implements NodeFilter {
+        @Override
+        public boolean accept(String node) {
+            return true;
+        }
     }
 }

@@ -35,7 +35,7 @@ public abstract class AbstractIntegrationTest {
 
 	private static EmbeddedCassandraServer cassandraServer;
 
-	private static Cluster cluster = new Cluster(RPC_LISTEN_ADDRESS, RPC_PORT);
+	public static Cluster cluster = new Cluster(RPC_LISTEN_ADDRESS, RPC_PORT);
 
 	private static KeyspaceManager keyspaceManager;
 

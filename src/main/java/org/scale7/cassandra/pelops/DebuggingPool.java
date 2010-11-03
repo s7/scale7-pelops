@@ -1,6 +1,8 @@
 package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.InvalidRequestException;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -11,6 +13,8 @@ import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
 import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Random;
 
 import static java.lang.String.format;
 
@@ -23,25 +27,37 @@ import static java.lang.String.format;
 public class DebuggingPool extends ThriftPoolBase {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(DebuggingPool.class);
 
-    Cluster cluster;
+    private Cluster cluster;
     private String keyspace;
     private OperandPolicy generalPolicy;
+    private Random random;
 
     public DebuggingPool(Cluster cluster, String keyspace, OperandPolicy generalPolicy) {
         this.cluster = cluster;
         this.keyspace = keyspace;
         this.generalPolicy = generalPolicy;
+
+        this.random = new Random();
     }
 
     @Override
-    public IConnection getConnection() throws Exception {
-        Connection connection = new Connection(cluster.getCurrentNodesSnapshot()[0], cluster.getThriftPort(), keyspace);
-        connection.open(-1);
+    public IPooledConnection getConnection() throws Exception {
+        Node[] nodes = cluster.getNodes();
+        int index = nodes.length == 1 ? 0 : random.nextInt(nodes.length);
+
+        logger.debug("Using node '{}'", nodes[index]);
+
+        PooledConnection connection = new PooledConnection(
+                nodes[index], keyspace
+        );
+
+        connection.open();
+
         return connection;
     }
 
     @Override
-    public IConnection getConnectionExcept(String notNode) throws Exception {
+    public IPooledConnection getConnectionExcept(String notNode) throws Exception {
         return getConnection();
     }
 
@@ -60,73 +76,19 @@ public class DebuggingPool extends ThriftPoolBase {
         return keyspace;
     }
 
-    public class Connection implements IConnection {
-        private TTransport transport;
-        private TProtocol protocol;
-        private Cassandra.Client client;
-        private String node;
-        private int port;
-        private String keyspace;
-
-        public Connection(String node, int port, String keyspace) throws SocketException {
-            this.node = node;
-            this.port = port;
-            this.keyspace = keyspace;
+    public class PooledConnection extends Connection implements IPooledConnection {
+        public PooledConnection(Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
+            super(node, keyspace);
         }
 
         @Override
-        public Cassandra.Client getAPI() {
-            return client;
-        }
-
-        @Override
-        public String getNode() {
-            return node;
-        }
-
-        @Override
-        public void release(boolean afterException) {
+        public void release() {
             close();
         }
 
         @Override
-        public boolean isOpen() {
-            return transport.isOpen();
+        public void corrupted() {
+            // do nothing (closing anyway)
         }
-
-        @Override
-        public boolean open(int nodeSessionId) {
-            try {
-                TSocket socket = new TSocket(node, port);
-                transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
-                protocol = new TBinaryProtocol(transport);
-                client = new Cassandra.Client(protocol);
-
-                transport.open();
-
-                if (keyspace != null) {
-                    try {
-                        client.set_keyspace(keyspace);
-                    } catch (Exception e) {
-                        throw new IllegalStateException(format("Failed to set keyspace '%s' on client.  See cause for details...", keyspace), e);
-                    }
-                }
-                return true;
-            } catch (TTransportException e) {
-                logger.error(format("Failed to open transport to %s:%d.  See cause for details...", node, port), e);
-                return false;
-            }
-        }
-
-        @Override
-        public void close() {
-            transport.close();
-        }
-
-		@Override
-		public int getSessionId() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
     }
 }

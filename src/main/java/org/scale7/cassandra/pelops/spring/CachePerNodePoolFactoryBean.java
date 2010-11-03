@@ -17,7 +17,7 @@ import java.util.Arrays;
  *
  * To use it add the following to your context file:
  * <pre>
- * &lt;bean id="pelopsPool" class="org.scale7.cassandra.pelops.spring.PoolFactoryBean"&gt;
+ * &lt;bean id="pelopsPool" class="org.scale7.cassandra.pelops.spring.CachePerNodePoolFactoryBean"&gt;
  *      &lt;property name="cluster"&gt;
  *          &lt;bean class="org.scale7.cassandra.pelops.Cluster"&gt;
  *              &lt;constructor-arg index="0" type="java.lang.String" value="${digitalpigeon.cassandra.host}" /&gt;
@@ -28,7 +28,7 @@ import java.util.Arrays;
  * &lt;/bean&gt;
  * </pre>
  * <br/>
- * 
+ *
  * <p>NOTE: If you intend to use this class you'll need to bypass the static convenience methods on
  * {@link org.scale7.cassandra.pelops.Pelops}.</p>
  * <p>Inject the instance of {@link org.scale7.cassandra.pelops.IThriftPool} created by this factory bean into your
@@ -45,15 +45,14 @@ import java.util.Arrays;
  * </pre>
  * <br/>
  */
-public class PoolFactoryBean
+public class CachePerNodePoolFactoryBean
         implements FactoryBean<IThriftPool>, InitializingBean, DisposableBean {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(PoolFactoryBean.class);
+    private static final Logger logger = SystemProxy.getLoggerFromFactory(CachePerNodePoolFactoryBean.class);
 
     private Cluster cluster;
     private String keyspace;
     private CachePerNodePool.Policy poolPolicy;
     private OperandPolicy operandPolicy;
-    private boolean debugPoolRequired = false;
 
     private IThriftPool thriftPool;
 
@@ -96,14 +95,9 @@ public class PoolFactoryBean
         if (getPoolPolicy() == null) setPoolPolicy(new CachePerNodePool.Policy());
         if (getOperandPolicy() == null) setOperandPolicy(new OperandPolicy());
 
-        logger.info("Initializing Pelops pool for nodes {} on port {}",
-                Arrays.toString(getCluster().getCurrentNodesSnapshot()), getCluster().getThriftPort());
-        if (!isDebugPoolRequired())
-            this.thriftPool = new CachePerNodePool(getCluster(), getKeyspace(), getOperandPolicy(), getPoolPolicy());
-        else {
-            logger.warn("Using debugging pool.  This pool is NOT intended for production use!");
-            this.thriftPool = new DebuggingPool(getCluster(), getKeyspace(), getOperandPolicy());
-        }
+        logger.info("Initializing Pelops pool for nodes {}",
+                Arrays.toString(getCluster().getNodes()));
+        this.thriftPool = new CachePerNodePool(getCluster(), getKeyspace(), getOperandPolicy(), getPoolPolicy());
     }
 
     /**
@@ -148,23 +142,5 @@ public class PoolFactoryBean
 
     public void setOperandPolicy(OperandPolicy operandPolicy) {
         this.operandPolicy = operandPolicy;
-    }
-
-    /**
-     * Indicates if the {@link org.scale7.cassandra.pelops.DebuggingPool} should be used or not.
-     * Default to false.
-     * @return true if the debugging pool should be used otherwise false.
-     */
-    public boolean isDebugPoolRequired() {
-        return debugPoolRequired;
-    }
-
-    /**
-     * Indicates if the {@link org.scale7.cassandra.pelops.DebuggingPool} should be used or not.
-     * Default to false.
-     * @param debugPoolRequired true if the debugging pool should be used otherwise false.
-     */
-    public void setDebugPoolRequired(boolean debugPoolRequired) {
-        this.debugPoolRequired = debugPoolRequired;
     }
 }

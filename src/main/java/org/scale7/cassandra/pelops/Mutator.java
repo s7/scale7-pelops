@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
-import org.scale7.cassandra.pelops.IThriftPool.IConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -40,7 +39,7 @@ public class Mutator extends Operand {
 
         IOperation<Void> operation = new IOperation<Void>() {
             @Override
-            public Void execute(IConnection conn) throws Exception {
+            public Void execute(IThriftPool.IPooledConnection conn) throws Exception {
                 // Send batch mutation job to Thrift connection
                 conn.getAPI().batch_mutate(convertedBatch, cLevel);
                 // Nothing to return

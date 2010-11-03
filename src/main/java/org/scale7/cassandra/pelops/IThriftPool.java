@@ -86,7 +86,7 @@ public interface IThriftPool {
      * @return the connection
      * @throws Exception if an error occurs
      */
-    IConnection getConnection() throws Exception;
+    IPooledConnection getConnection() throws Exception;
 
     /**
      * Get a connection from the pool trying to avoid the node specified by the notNode param.
@@ -95,7 +95,7 @@ public interface IThriftPool {
      * @return the connection
      * @throws Exception if an error occurs
      */
-    IConnection getConnectionExcept(String notNode) throws Exception;
+    IPooledConnection getConnectionExcept(String notNode) throws Exception;
 
     /**
      * Shuts down the pool.
@@ -124,57 +124,18 @@ public interface IThriftPool {
      * @author dominicwilliams
      * @author danwashusen
      */
-    interface IConnection {
+    interface IPooledConnection extends IConnection {
         /**
-         * Get a reference to the Cassandra Thrift API
-         *
-         * @return The raw Thrift interface
+         * Release a <code>Connection</code> that has previously been taken from the pool.
          */
-        Cassandra.Client getAPI();
+        void release();
 
         /**
-         * Get a string identifying the node
-         *
-         * @return The IP or DNS address of the node
-         */
-
-        String getNode();
-
-        /**
-         * Release a <code>Connection</code> that has previously been taken from the pool. Specify whether
-         * an exception has been thrown during usage of the connection. If an exception has been thrown, the
+         * Specify whether an exception has been thrown during usage of the connection. If an exception has been thrown, the
          * connection will not re-used since it may be corrupted (for example, it may contain partially written
          * data that disrupts the serialization of the Thrift protocol) however it is remains essential that all
          * connection objects are released.
-         *
-         * @param afterException Whether a connection was thrown during usage
          */
-        void release(boolean afterException);
-
-        /**
-         * Used to determine if the connection is open.
-         *
-         * @return true if the connection is open, otherwise false
-         */
-        boolean isOpen();
-
-        /**
-         * Opens a connection.
-         *
-         * @param nodeSessionId the node session Id
-         * @return true if the connection was opened, otherwise false
-         */
-        boolean open(int nodeSessionId);
-
-        /**
-         * Returns the id of the session during which this node was connected
-         * @return
-         */
-        int getSessionId();
-
-        /**
-         * Close the connection.
-         */
-        void close();
+        void corrupted();
     }
 }

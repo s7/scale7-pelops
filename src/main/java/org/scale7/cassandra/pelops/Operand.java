@@ -8,7 +8,7 @@ import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransportException;
-import org.scale7.cassandra.pelops.IThriftPool.IConnection;
+import org.scale7.cassandra.pelops.IThriftPool.IPooledConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -29,7 +29,7 @@ public class Operand {
 	}
 
 	protected interface IOperation<ReturnType> {
-		ReturnType execute(IConnection conn) throws Exception;
+		ReturnType execute(IPooledConnection conn) throws Exception;
 	}
 
 	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws Exception {
@@ -38,15 +38,12 @@ public class Operand {
 		int retries = 0;
 		do {
 			// Get a connection to a Cassandra node
-            IConnection conn = thrift.getConnectionExcept(lastNode);
-            lastNode = conn.getNode();
+            IPooledConnection conn = thrift.getConnectionExcept(lastNode);
+            lastNode = conn.getNode().getAddress();
 			try {
 				// Execute operation
-				ReturnType result = operation.execute(conn);
-				// Release unbroken connection
-                conn.release(false);
                 // Return result!
-				return result;
+				return operation.execute(conn);
 			} catch (Exception e) {
 				// Is this a logic/application error?
 				if (e instanceof NotFoundException ||
@@ -54,23 +51,30 @@ public class Operand {
 					e instanceof TApplicationException ||
 					e instanceof AuthenticationException ||
 					e instanceof AuthorizationException) {
-					// Logic/application error so we can release unbroken connection
-                    conn.release(false);
+
                     // Re-throw application-level exceptions immediately.
 					throw e;
 				}
-				logger.warn("Operation failed as result of network exception. Connection must be destroyed.  See cause for details...", e);
-				// This connection is "broken" by network timeout or other problem.
-                conn.release(true);
-				// Should we try again?
-				if (e instanceof TimedOutException ||
+                // Should we try again?
+                else if (e instanceof TimedOutException ||
                     e instanceof TTransportException ||
                     e instanceof UnavailableException) {
+
+                    logger.warn("Operation failed as result of network exception. Connection must be destroyed.  See cause for details...", e);
+
+                    // This connection is "broken" by network timeout or other problem.
+                    conn.corrupted();
+
 					retries++;
 					lastException = e;
-				} else // nope, throw
+				}
+                // nope, throw
+                else {
 					throw e;
-			}
+                }
+			} finally {
+                conn.release();
+            }
 		} while (retries < thrift.getOperandPolicy().getMaxOpRetries());
 
 		throw lastException;

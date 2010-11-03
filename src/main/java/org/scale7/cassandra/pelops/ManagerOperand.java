@@ -22,20 +22,17 @@ public class ManagerOperand {
 
 	private Cluster cluster;
 	private String keyspace;
-	private String[] nodesSnapshot;
-	private String chosenNode = "";
-	private int chosenNodeIdx = 0;
+	private Node[] nodesSnapshot;
+    private int chosenNodeIdx = 0;
 	private long lastNodeWrite = 0;
 	private int safeNodeChangeDelay;
-	private TTransport transport;
-	private TProtocol protocol;
-	private Cassandra.Client client;
+    private IConnection connection;
 
 	ManagerOperand(Cluster cluster, String keyspace, int safeNodeChangeDelay) {
     	this.cluster = cluster;
     	this.keyspace = keyspace;
     	this.safeNodeChangeDelay = safeNodeChangeDelay;
-    	nodesSnapshot = cluster.getCurrentNodesSnapshot();
+    	nodesSnapshot = cluster.getNodes();
 	}
 
 	ManagerOperand(Cluster cluster, String keyspace) {
@@ -56,14 +53,11 @@ public class ManagerOperand {
 		int attempts = 0;
 		while (true) {
 			try {
-				chosenNode = nodesSnapshot[chosenNodeIdx];
-	            TSocket socket = new TSocket(chosenNode, cluster.getThriftPort());
-	            transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
-	            protocol = new TBinaryProtocol(transport);
-	            client = new Cassandra.Client(protocol);
-	            transport.open();
-	            if (keyspace != null)
-	            	client.set_keyspace(keyspace);
+                Node chosenNode = nodesSnapshot[chosenNodeIdx];
+
+                connection = new Connection(chosenNode, keyspace);
+                connection.open();
+
 	            lastNodeWrite = System.currentTimeMillis();
 	            return;
 			} catch (Exception e) {
@@ -80,7 +74,7 @@ public class ManagerOperand {
 						chosenNodeIdx++;
 						if (chosenNodeIdx == nodesSnapshot.length) {
 							chosenNodeIdx = 0;
-							nodesSnapshot = cluster.getCurrentNodesSnapshot();
+							nodesSnapshot = cluster.getNodes();
 						}
 						Thread.sleep(CHANGE_NODE_DELAY);
 					}
@@ -93,10 +87,7 @@ public class ManagerOperand {
 	}
 
 	private void closeClient() {
-		try {
-			transport.close();
-		} catch (Exception ex) {
-		}
+        connection.close();
 	}
 
 	protected interface IManagerOperation<ReturnType> {
@@ -108,7 +99,7 @@ public class ManagerOperand {
 		openClient();
 		try {
 			// Execute operation
-			ReturnType result = operation.execute(client);
+			ReturnType result = operation.execute(connection.getAPI());
 			// Close client
 			closeClient();
             // Return result!

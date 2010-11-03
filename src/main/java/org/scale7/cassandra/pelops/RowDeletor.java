@@ -2,7 +2,7 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.scale7.cassandra.pelops.IThriftPool.IConnection;
+import org.scale7.cassandra.pelops.IThriftPool.IPooledConnection;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
@@ -40,7 +40,7 @@ public class RowDeletor extends Operand {
 	public void deleteRow(final String columnFamily, final Bytes rowKey, final ConsistencyLevel cLevel) throws Exception {
 		IOperation<Void> operation = new IOperation<Void>() {
 			@Override
-			public Void execute(IConnection conn) throws Exception {
+			public Void execute(IPooledConnection conn) throws Exception {
 
 				ColumnPath path = new ColumnPath(columnFamily);
 				conn.getAPI().remove(nullSafeGet(rowKey), path, timestamp, cLevel);

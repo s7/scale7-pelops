@@ -76,7 +76,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @return						A connection to Cassandra
 	 */
 	@Override
-    public IConnection getConnection() throws Exception {
+    public IPooledConnection getConnection() throws Exception {
 		return getConnectionExcept(null);
 	}
 
@@ -94,9 +94,9 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
         pool = new MultiNodePool();
         this.keyspace = keyspace;
         this.poolPolicy = poolPolicy;
-        String[] nodesSnapshot = cluster.getCurrentNodesSnapshot();
-        for (String node : nodesSnapshot)
-			touchNodeContext(node);
+        Node[] nodesSnapshot = cluster.getNodes();
+        for (Node node : nodesSnapshot)
+			touchNodeContext(node.getAddress());
         if (poolPolicy.getDynamicNodeDiscovery())
 			clusterWatcherExec.execute(clusterWatcher);
 		else
@@ -120,7 +120,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @throws Exception
 	 */
 	@Override
-    public IConnection getConnectionExcept(String notNode) throws Exception {
+    public IPooledConnection getConnectionExcept(String notNode) throws Exception {
 	    getConnCount.incrementAndGet();
 
 		// Create a list of nodes we have already tried, and therefore should avoid in preference
@@ -154,7 +154,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 					break;
 				}
 				// otherwise, try to return a connection from this least loaded untried node
-				IConnection conn = leastLoaded.getConnection();
+				IPooledConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 				// That node couldn't give us a connection, so loop to try and find another untried node
@@ -171,7 +171,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 				}
 			}
 			if (leastLoaded != null) {
-				IConnection conn = leastLoaded.getConnection();
+				IPooledConnection conn = leastLoaded.getConnection();
 				if (conn != null)
 					return conn;
 			}
@@ -261,10 +261,10 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 		public void run() {
 			while (true) {
 				try {
-					cluster.refreshNodesSnapshot();
-					String[] clusterNodes = cluster.getCurrentNodesSnapshot();
-					for (String node : clusterNodes)
-						touchNodeContext(node);
+					cluster.refresh();
+					Node[] clusterNodes = cluster.getNodes();
+					for (Node node : clusterNodes)
+						touchNodeContext(node.getAddress());
 				} catch (Exception e) {
 					logger.warn("Cluster watcher process encountered error while refreshing snapshot", e.getMessage());
 					e.printStackTrace();
@@ -287,98 +287,20 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @author dominicwilliams
 	 *
 	 */
-	public class Connection implements IConnection {
-        private String node;
-        private String keyspace;
-        private ConnectionReleaseHandler releaseHandler;
-        private final TTransport transport;
-		private final TProtocol protocol;
-		private final Client client;
-		int nodeSessionId = 0;
+	public class PooledConnection extends Connection implements IPooledConnection {
+		private int nodeSessionId = 0;
+        private NodeContext nodeContext;
+        private boolean corrupt = false;
 
-		Connection(String node, int port, String keyspace, ConnectionReleaseHandler releaseHandler) throws SocketException, TException, InvalidRequestException {
-            connCreatedCount.incrementAndGet();
-            
-		    this.node = node;
-            this.keyspace = keyspace;
-            this.releaseHandler = releaseHandler;
-            TSocket socket =  new TSocket(node, port);
+        public PooledConnection(Node node, String keyspace, NodeContext nodeContext, int nodeSessionId) throws SocketException, TException, InvalidRequestException {
+            super(node, keyspace);
+            this.nodeContext = nodeContext;
+            this.nodeSessionId = nodeSessionId;
+        }
 
-            if (getPoolPolicy().getConnectionTimeout() != null)
-                socket.setTimeout(getPoolPolicy().getConnectionTimeout());
-
-            transport = cluster.isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
-			protocol = new TBinaryProtocol(transport);
-			//socket.getSocket().setKeepAlive(true);
-			client = new Client(protocol);
-		}
-
-		/**
-		 * Get a reference to the Cassandra Thrift API
-		 * @return					The raw Thrift interface
-		 */
-		@Override
-        public Client getAPI() {
-			return client;
-		}
-
-		/**
-		 * Get a string identifying the node
-		 * @return					The IP or DNS address of the node
-		 */
-		@Override
-        public String getNode() {
-			return node;
-		}
-
-		/**
-		 * Release a <code>Connection</code> that has previously been taken from the pool. Specify whether
-		 * an exception has been thrown during usage of the connection. If an exception has been thrown, the
-		 * connection will not re-used since it may be corrupted (for example, it may contain partially written
-		 * data that disrupts the serialization of the Thrift protocol) however it is remains essential that all
-		 * connection objects are released.
-		 * @param afterException		Whether a connection was thrown during usage
-		 */
-		@Override
-        public void release(boolean afterException) {
-            releaseHandler.release(this, afterException);
-		}
-
-		@Override
-        public boolean isOpen() {
-			return transport.isOpen();
-		}
-
-        /**
-         * Opens a connection.
-         * @param nodeSessionId the node session Id
-         * @return true if the connection was opened, otherwise false
-         */
-		@Override
-        public boolean open(int nodeSessionId) {
-			try {
-				transport.open();
-				this.nodeSessionId = nodeSessionId;
-
-                if (keyspace != null) {
-                    try {
-                        client.set_keyspace(keyspace);
-                    } catch (Exception e) {
-                        logger.warn("Failed to set keyspace on client.  See cause for details...", e);
-                        return false;
-                    }
-                }
-			} catch (TTransportException e) {
-                logger.error("Failed to open transport.  See cause for details...", e);
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public int getSessionId() {
-			return nodeSessionId;
-		}
+        public int getNodeSessionId() {
+            return nodeSessionId;
+        }
 
         /**
          * Close the connection.
@@ -386,16 +308,22 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 		@Override
         public void close() {
 		    connClosedCount.incrementAndGet();
-			transport.close();
+			super.close();
 		}
-    }
 
-    public interface ConnectionReleaseHandler {
-        void release(Connection connection, boolean afterException);
+        @Override
+        public void corrupted() {
+            corrupt = true;
+        }
+
+        @Override
+        public void release() {
+            nodeContext.onConnectionRelease(this, corrupt);
+        }
     }
 
 	@SuppressWarnings("serial")
-	class ConnectionList extends ConcurrentLinkedQueue<IConnection> {}
+	class ConnectionList extends ConcurrentLinkedQueue<PooledConnection> {}
 
 	class NodeContext {
 		private final int MIN_CREATE_CONNECTION_BACK_OFF = 125;
@@ -438,10 +366,10 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 
 		private Integer connCacheLock = new Integer(-1);
 
-		IConnection getConnection() {
+		IPooledConnection getConnection() {
 			// Try to retrieve cached connection...
 			try {
-				IConnection conn;
+				IPooledConnection conn;
 				while (true) {
 					synchronized (connCacheLock) {
 						conn = connCache.poll();
@@ -470,7 +398,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 			}
 		}
 
-		void onConnectionRelease(Connection conn, boolean networkException) {
+		void onConnectionRelease(PooledConnection conn, boolean networkException) {
 		    connReleaseCalledCount.incrementAndGet();
 			// Is this connection still open/reusable?
 			if (!networkException) {
@@ -502,22 +430,17 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 			}
 		}
 
-		private IConnection createConnection() {
-			IConnection conn;
+		private PooledConnection createConnection() {
+			PooledConnection conn;
 			try {
-				conn = new Connection(this.node, cluster.getThriftPort(), keyspace, new ConnectionReleaseHandler() {
-                    @Override
-                    public void release(Connection connection, boolean afterException) {
-			            onConnectionRelease(connection, afterException);
-                    }
-                });
+				conn = new PooledConnection(new Node(this.node, cluster.getConnectionConfig()), keyspace, NodeContext.this, sessionId.get());
 			} catch (Exception e) {
 			    connCreateExceptionCount.incrementAndGet();
                 logger.error(e.getMessage(), e);
 				return null;
 			}
 
-			if (conn.open(sessionId.get())) {
+			if (conn.open()) {
 			    connOpenedCount.incrementAndGet();;
 				return conn;
 			}
@@ -532,10 +455,10 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 			logger.warn("{} NodeContext killing all pooled connections for session {}", node, nodeSessionId);
 			int killedCount = 0;
 			synchronized (connCacheLock) {
-				Iterator<IConnection> i = connCache.iterator();
+				Iterator<PooledConnection> i = connCache.iterator();
 				while (i.hasNext()) {
-					IConnection c = i.next();
-					if (c.getSessionId() <= nodeSessionId) {
+					PooledConnection c = i.next();
+					if (c.getNodeSessionId() <= nodeSessionId) {
 						i.remove();
 						countCached.decrementAndGet();
 						c.close();
@@ -568,7 +491,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 
 					// Remove dead connections from waiting pool
 					int foundDead = 0;
-					for (IConnection conn : connCache)
+					for (IPooledConnection conn : connCache)
 						if (!conn.isOpen()) {
 						    deadConnCount.incrementAndGet();
 							countCached.decrementAndGet();
@@ -586,7 +509,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 								(countInUse.get() + countCached.get()) < poolPolicy.getTargetConnectionsPerNode()) {
 						    refillNeedConnCount.incrementAndGet();
 							// Yup create new connection for cache
-							IConnection conn = createConnection();
+							PooledConnection conn = createConnection();
 							if (conn == null) {
 							    refillBackoffCount.incrementAndGet();
 								// Connection error occurred. Calculate back off delay
