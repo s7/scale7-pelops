@@ -39,6 +39,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
     private AtomicInteger connectionsDestroyed;
     private AtomicInteger connectionsCorrupted;
     private AtomicInteger connectionsActive;
+    private AtomicInteger connectionsBorrowedTotal;
+    private AtomicInteger connectionsReleasedTotal;
 
     public CommonsBackedPool(Cluster cluster, Policy policy, OperandPolicy operandPolicy, String keyspace, INodeSelectionStrategy nodeSelectionStrategy, INodeSuspensionStrategy nodeSuspensionStrategy) {
         this.cluster = cluster;
@@ -55,8 +57,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
         connectionsDestroyed = new AtomicInteger();
         connectionsCorrupted = new AtomicInteger();
         connectionsActive = new AtomicInteger();
+        connectionsBorrowedTotal = new AtomicInteger();
+        connectionsReleasedTotal = new AtomicInteger();
 
-        logger.info("Initialising pool with: {}", policy.toString());
+        logger.info("Initialising pool configuration policy: {}", policy.toString());
 
         configureBackingPool();
 
@@ -114,6 +118,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     protected void scheduledTasks() {
+        logger.debug("Starting scheduled tasks");
         // add/remove any new/dead nodes
         handleClusterRefresh();
 
@@ -144,6 +149,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         } catch (Exception e) {
             // do nothing
         }
+        logger.debug("Finished scheduled tasks");
     }
 
     protected void handleClusterRefresh() {
@@ -262,6 +268,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         logger.debug("Borrowing connection '{}'", connection);
         connectionsActive.incrementAndGet();
+        reportConnectionBorrowed(connection.getNode().getAddress());
         return connection;
     }
 
@@ -270,6 +277,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         try {
             pool.returnObject(connection.getNode().getAddress(), connection);
             connectionsActive.decrementAndGet();
+            reportConnectionReleased(connection.getNode().getAddress());
         } catch (Exception e) {
             // do nothing
         }
@@ -338,6 +346,24 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         if (pooledNode != null)  // it's possible that the pooled node has been removed
             pooledNode.reportConnectionCorrupted();
+    }
+
+    protected void reportConnectionBorrowed(String nodeAddress) {
+        connectionsBorrowedTotal.incrementAndGet();
+
+        PooledNode pooledNode = getPooledNode(nodeAddress);
+
+        if (pooledNode != null)  // it's possible that the pooled node has been removed
+            pooledNode.reportConnectionBorrowed();
+    }
+
+    protected void reportConnectionReleased(String nodeAddress) {
+        connectionsReleasedTotal.incrementAndGet();
+
+        PooledNode pooledNode = getPooledNode(nodeAddress);
+
+        if (pooledNode != null)  // it's possible that the pooled node has been removed
+            pooledNode.reportConnectionReleased();
     }
 
     public int getConnectionsCreated() {
@@ -485,6 +511,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
         private AtomicInteger connectionsCorrupted;
         private AtomicInteger connectionsCreated;
         private AtomicInteger connectionsDestroyed;
+        private AtomicInteger connectionsBorrowedTotal;
+        private AtomicInteger connectionsReleasedTotal;
 
         public PooledNode(String address) {
             this.address = address;
@@ -492,6 +520,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
             connectionsCorrupted = new AtomicInteger();
             connectionsCreated = new AtomicInteger();
             connectionsDestroyed = new AtomicInteger();
+            connectionsBorrowedTotal = new AtomicInteger();
+            connectionsReleasedTotal = new AtomicInteger();
         }
 
         public void decommission() {
@@ -548,6 +578,22 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         public int getConnectionsDestroyed() {
             return connectionsDestroyed.get();
+        }
+
+        void reportConnectionBorrowed() {
+            connectionsBorrowedTotal.incrementAndGet();
+        }
+
+        public int getConnectionsBorrowedTotal() {
+            return connectionsBorrowedTotal.get();
+        }
+
+        void reportConnectionReleased() {
+            connectionsReleasedTotal.incrementAndGet();
+        }
+
+        public int getConnectionsReleasedTotal() {
+            return connectionsReleasedTotal.get();
         }
 
         public boolean isSuspended() {
