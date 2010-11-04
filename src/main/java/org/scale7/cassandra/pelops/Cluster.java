@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * one instance of the class be available in the JVM per cluster.
  */
 public class Cluster {
-    private final Logger logger = SystemProxy.getLoggerFromFactory(DebuggingPool.class);
+    private final Logger logger = SystemProxy.getLoggerFromFactory(Cluster.class);
 
 	private String[] nodes;
     private final IConnection.Config connectionConfig;
@@ -46,7 +46,8 @@ public class Cluster {
         this.connectionConfig = connectionConfig;
         this.nodeFilter = nodeFilter;
         this.dynamicNodeDiscovery = dynamicNodeDiscovery;
-        this.nodes = nodes;
+        // make sure there are no duplicates
+        this.nodes = new HashSet<String>(Arrays.asList(nodes)).toArray(new String[nodes.length]);
 
         if (!dynamicNodeDiscovery) {
             logger.debug("Dynamic node discovery is disabled, using {} as a static list of nodes", Arrays.toString(nodes));

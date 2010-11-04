@@ -64,7 +64,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     private void configureScheduledTasks() {
         if (policy.getTimeBetweenScheduledTaskRunsMillis() > 0) {
-            logger.debug("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
+            logger.info("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable runnable) {
@@ -80,7 +80,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
                         @Override
                         public void run() {
                             logger.debug("Running scheduled tasks");
-                            scheduledTasks();
+                            try {
+                                runScheduledTasks();
+                            } catch (Exception e) {
+                                logger.warn("An exception was thrown while running the scheduled tasks", e);
+                            }
                         }
                     },
                     policy.getTimeBetweenScheduledTaskRunsMillis(),
@@ -88,7 +92,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
                     TimeUnit.MILLISECONDS
             );
         } else {
-            logger.debug("Disabling scheduled tasks");
+            logger.warn("Disabling scheduled tasks; dynamic node discovery, node suspension, idle connection " +
+                    "termination and some running statistics will not be available to this pool.");
         }
     }
 
@@ -105,7 +110,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         pool.setTestOnReturn(true); // in case the connection is corrupt
     }
 
-    private void scheduledTasks() {
+    protected void runScheduledTasks() {
         logger.debug("Attempting to acquire lock for scheduled tasks");
         synchronized (scheduledTasksLock) {
             logger.debug("Starting scheduled tasks");
@@ -116,18 +121,13 @@ public class CommonsBackedPool extends ThriftPoolBase {
             logger.debug("Evaluating which nodes should be suspended");
             int nodesSuspended = 0;
             for (PooledNode node : nodes.values()) {
-                if (node.isSuspended()) {
+                logger.debug("Evaluating if node {} should be suspended", node.getAddress());
+                if (nodeSuspensionStrategy.evaluate(this, node)) {
                     nodesSuspended++;
-                    logger.debug("Node {} is already suspended, skipping evaluation...", node.getAddress());
-                } else {
-                    logger.debug("Evaluating if node {} should be suspended", node.getAddress());
-                    if (nodeSuspensionStrategy.evaluate(this, node)) {
-                        nodesSuspended++;
-                        logger.info("Node {} was suspended from the pool, closing existing pooled connections", node.getAddress());
-                        // remove any existing connections
-                        pool.clear(node.getAddress());
-                        node.reportSuspension();
-                    }
+                    logger.info("Node {} was suspended from the pool, closing existing pooled connections", node.getAddress());
+                    // remove any existing connections
+                    pool.clear(node.getAddress());
+                    node.reportSuspension();
                 }
             }
             statistics.nodesActive.set(nodes.size() - nodesSuspended);
@@ -170,20 +170,22 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     private void addNode(String nodeAddress) {
-        logger.info("Preparing connections for node '{}'", nodeAddress);
-
-        // prepare min idle connetions etc...
-        pool.preparePool(nodeAddress, true);
+        logger.info("Adding node '{}' to the pool...", nodeAddress);
 
         // initialise (JMX etc)
         PooledNode node = new PooledNode(pool, nodeAddress);
 
         // add it as a candidate
         nodes.put(nodeAddress, node);
+
+        // prepare min idle connetions etc...
+        // NOTE: there's a potential for the node to be selected as a candidate before it's been prepared
+        //       but preparing before adding means the stats don't get updated
+        pool.preparePool(nodeAddress, true);
     }
 
     private void removeNode(String nodeAddress) {
-        logger.info("Removing connections for node '{}'", nodeAddress);
+        logger.info("Removing node '{}' from the pool", nodeAddress);
 
         // remove from the the nodes list so it's no longer considered a candidate
         PooledNode node = nodes.remove(nodeAddress);
@@ -612,16 +614,21 @@ public class CommonsBackedPool extends ThriftPoolBase {
         public boolean isCorrupt() {
             return corrupt;
         }
+
+        @Override
+        public String toString() {
+            return String.format("Connection[%s][%s:%s][%s]", getKeyspace(), getNode().getAddress(), cluster.getConnectionConfig().getThriftPort(), super.hashCode());
+        }
     }
 
     private class ConnectionFactory extends BaseKeyedPoolableObjectFactory {
         @Override
         public Object makeObject(Object key) throws Exception {
             String nodeAddress = (String) key;
-            logger.debug("Making new connection for node '{}:{}'", nodeAddress, cluster.getConnectionConfig().getThriftPort());
             PooledConnection connection = new PooledConnection(
                     new Cluster.Node(nodeAddress, cluster.getConnectionConfig()), getKeyspace()
             );
+            logger.debug("Made new connection '{}'", connection);
             connection.open();
 
             reportConnectionCreated(nodeAddress);
@@ -632,9 +639,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
         @Override
         public void destroyObject(Object key, Object obj) throws Exception {
             String nodeAddress = (String) key;
-            logger.debug("Destroying connection for node '{}:{}'", nodeAddress, cluster.getConnectionConfig().getThriftPort());
+            PooledConnection connection = (PooledConnection) obj;
 
-            ((PooledConnection) obj).close();
+            logger.debug("Destroying connection '{}'", connection);
+
+            connection.close();
 
             reportConnectionDestroyed(nodeAddress);
         }
@@ -644,8 +653,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
             String nodeAddress = (String) key;
             PooledConnection connection = (PooledConnection) obj;
             if (connection.isCorrupt() || !connection.isOpen()) {
-                logger.debug("Connection to node '{}:{}' is corrupt or no longer open, invalidating...",
-                        nodeAddress, cluster.getConnectionConfig().getThriftPort());
+                logger.debug("Connection '{}' is corrupt or no longer open, invalidating...", connection);
                 return false;
             } else {
                 return true;
@@ -746,6 +754,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
      * <p>Any state required to determine if a node should be suspended should be stored in the nodes
      * {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool.PooledNode#getSuspensionState()}.  Note that the
      * suspension state may be null if the node has not been evaluated before.
+     * <p>Also note that the {@link #evaluate(CommonsBackedPool, org.scale7.cassandra.pelops.pool.CommonsBackedPool.PooledNode)}
+     * will be called by the scheduled tasks thread even when the node is currently suspended.
      */
     public static interface INodeSuspensionStrategy {
         /**
