@@ -2,6 +2,7 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 
@@ -24,9 +25,9 @@ public class RowDeletor extends Operand {
 	 * @param columnFamily				The column family from which to delete the row
 	 * @param rowKey					The key of the row
 	 * @param cLevel					The Cassandra consistency level to be used
-	 * @throws Exception
+	 * @throws PelopsException
 	 */
-	public void deleteRow(final String columnFamily, final String rowKey, final ConsistencyLevel cLevel) throws Exception {
+	public void deleteRow(final String columnFamily, final String rowKey, final ConsistencyLevel cLevel) throws PelopsException {
 		deleteRow(columnFamily, fromUTF8(rowKey), cLevel);
 	}
 
@@ -36,9 +37,9 @@ public class RowDeletor extends Operand {
 	 * @param columnFamily				The column family from which to delete the row
 	 * @param rowKey					The key of the row
 	 * @param cLevel					The Cassandra consistency level to be used
-	 * @throws Exception
+	 * @throws PelopsException
 	 */
-	public void deleteRow(final String columnFamily, final Bytes rowKey, final ConsistencyLevel cLevel) throws Exception {
+	public void deleteRow(final String columnFamily, final Bytes rowKey, final ConsistencyLevel cLevel) throws PelopsException {
 		IOperation<Void> operation = new IOperation<Void>() {
 			@Override
 			public Void execute(IPooledConnection conn) throws Exception {

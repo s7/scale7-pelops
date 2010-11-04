@@ -7,7 +7,9 @@ import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransportException;
+import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.portability.SystemProxy;
@@ -33,13 +35,20 @@ public class Operand {
 		ReturnType execute(IPooledConnection conn) throws Exception;
 	}
 
-	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws Exception {
+	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws PelopsException {
 		String lastNode = null;
 		Exception lastException = null;
 		int retries = 0;
 		do {
 			// Get a connection to a Cassandra node
-            IPooledConnection conn = thrift.getConnectionExcept(lastNode);
+            IPooledConnection conn = null;
+            try {
+                conn = thrift.getConnectionExcept(lastNode);
+            } catch (Exception e) {
+                // the pool is responsible for blocking and waiting for a connection, so don't retry
+                throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
+            }
+
             lastNode = conn.getNode().getAddress();
 			try {
 				// Execute operation
@@ -54,11 +63,12 @@ public class Operand {
 					e instanceof AuthorizationException) {
 
                     // Re-throw application-level exceptions immediately.
-					throw e;
+					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
 				}
                 // Should we try again?
                 else if (e instanceof TimedOutException ||
                     e instanceof TTransportException ||
+					e instanceof TProtocolException || // maybe this should exit immediately
                     e instanceof UnavailableException) {
 
                     logger.warn("Operation failed as result of network exception. Connection is being marked as corrupt " +
@@ -72,13 +82,13 @@ public class Operand {
 				}
                 // nope, throw
                 else {
-					throw e;
+                    throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
                 }
 			} finally {
                 conn.release();
             }
 		} while (retries < thrift.getOperandPolicy().getMaxOpRetries());
 
-		throw lastException;
+		throw thrift.getOperandPolicy().getExceptionTranslator().translate(lastException);
 	}
 }

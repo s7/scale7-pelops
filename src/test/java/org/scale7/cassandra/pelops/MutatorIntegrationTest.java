@@ -17,10 +17,10 @@ import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.Mutation;
-import org.apache.thrift.protocol.TProtocolException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.scale7.cassandra.pelops.exceptions.ProtocolException;
 import org.scale7.cassandra.pelops.pool.DebuggingPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
@@ -200,7 +200,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         try {
             mutator.execute(ConsistencyLevel.ONE);
             fail("Should not reach here...");
-        } catch (TProtocolException e) {
+        } catch (ProtocolException e) {
             assertTrue("Wrong exception thrown", e.getMessage().contains("Required field 'value' was not present!"));
         }
     }
@@ -268,7 +268,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         try {
             mutator.execute(ConsistencyLevel.ONE);
             fail("Should not reach here...");
-        } catch (TProtocolException e) {
+        } catch (ProtocolException e) {
             assertTrue("Wrong exception thrown", e.getMessage().contains("Required field 'value' was not present!"));
         }
     }

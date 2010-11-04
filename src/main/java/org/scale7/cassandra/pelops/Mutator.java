@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
+import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
@@ -30,9 +31,9 @@ public class Mutator extends Operand {
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
      * @param cLevel                    The Cassandra consistency level to be used
-     * @throws Exception
+     * @throws PelopsException
      */
-    public void execute(final ConsistencyLevel cLevel) throws Exception {
+    public void execute(final ConsistencyLevel cLevel) throws PelopsException {
         final HashMap<ByteBuffer, Map<String, List<Mutation>>> convertedBatch = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(batch.size());
         for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
             convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());

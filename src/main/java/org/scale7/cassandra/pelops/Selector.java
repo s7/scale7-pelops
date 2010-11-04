@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
+import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 
@@ -28,9 +29,9 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
+    public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -41,9 +42,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), rowKey, predicate, cLevel);
     }
 
@@ -53,9 +54,9 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
+    public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -66,9 +67,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), predicate, cLevel);
     }
 
@@ -79,9 +80,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -93,9 +94,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), predicate, cLevel);
     }
 
@@ -106,9 +107,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -120,9 +121,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, predicate, cLevel);
     }
 
@@ -133,9 +134,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -147,9 +148,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, String rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), predicate, cLevel);
     }
 
@@ -160,9 +161,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -174,9 +175,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the sub columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, predicate, cLevel);
     }
 
@@ -186,9 +187,9 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws Exception {
+    public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -199,9 +200,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the super columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSuperColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSuperColumnCount(String columnFamily, Bytes rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), rowKey, predicate, cLevel);
     }
 
@@ -211,9 +212,9 @@ public class Selector extends Operand {
      * @param rowKey                        The key of the row
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws Exception {
+    public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false, Integer.MAX_VALUE), cLevel);
     }
 
@@ -224,9 +225,9 @@ public class Selector extends Operand {
      * @param predicate						A predicate selecting the super columns to be counted
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The count of the super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public int getSuperColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws Exception {
+    public int getSuperColumnCount(String columnFamily, String rowKey, SlicePredicate predicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), predicate, cLevel);
     }
 
@@ -237,9 +238,9 @@ public class Selector extends Operand {
      * @param predicate						The slice predicate selecting the columns to be counted
      * @param cLevel						The Cassandra consistency level with which to perform the operation
      * @return								The number of matching columns
-     * @throws Exception					The error
+     * @throws PelopsException					The error
      */
-    private int getColumnCount(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws Exception {
+    private int getColumnCount(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate predicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Integer> operation = new IOperation<Integer>() {
             @Override
             public Integer execute(IPooledConnection conn) throws Exception {
@@ -256,9 +257,9 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final String rowKey, final String colName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final String colName, final ConsistencyLevel cLevel) throws PelopsException {
         return getColumnFromRow(columnFamily, rowKey, fromUTF8(colName), cLevel);
     }
 
@@ -269,9 +270,9 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final String rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws PelopsException {
         return getColumnFromRow(columnFamily, fromUTF8(rowKey), colName, cLevel);
     }
 
@@ -282,9 +283,9 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -304,9 +305,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final ConsistencyLevel cLevel) throws Exception {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnFromRow(columnFamily, rowKey, fromUTF8(superColName), cLevel);
     }
 
@@ -317,9 +318,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, cLevel);
     }
 
@@ -330,9 +331,9 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws Exception {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
             public SuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -353,9 +354,9 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, fromUTF8(subColName), cLevel);
     }
 
@@ -367,9 +368,9 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), fromUTF8(subColName), cLevel);
     }
 
@@ -381,9 +382,9 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), subColName, cLevel);
     }
 
@@ -395,9 +396,9 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, subColName, cLevel);
     }
 
@@ -409,9 +410,9 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws Exception {
+    public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -432,9 +433,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getColumnsFromRow(String columnFamily, String rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getColumnsFromRow(String columnFamily, String rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
     }
 
@@ -445,9 +446,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getColumnsFromRow(String columnFamily, Bytes rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getColumnsFromRow(String columnFamily, Bytes rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
     }
 
@@ -459,9 +460,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String columnFamily, Bytes rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
@@ -473,9 +474,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
@@ -487,17 +488,17 @@ public class Selector extends Operand {
      * @param colPredicate                  The sub-column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
     }
 
-    private List<Column> getColumnsFromRow(final ColumnParent colParent, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private List<Column> getColumnsFromRow(final ColumnParent colParent, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(colParent, fromUTF8(rowKey), colPredicate, cLevel);
     }
 
-    private List<Column> getColumnsFromRow(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private List<Column> getColumnsFromRow(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<List<Column>> operation = new IOperation<List<Column>>() {
             @Override
             public List<Column> execute(IPooledConnection conn) throws Exception {
@@ -518,9 +519,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The super column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final String rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), colPredicate, cLevel);
     }
 
@@ -531,9 +532,9 @@ public class Selector extends Operand {
      * @param colPredicate                  The super column selector predicate
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A list of matching columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<List<SuperColumn>> operation = new IOperation<List<SuperColumn>>() {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
@@ -566,9 +567,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
     }
 
@@ -581,9 +582,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
     }
 
@@ -596,9 +597,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
     }
 
@@ -611,9 +612,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<Column> getPageOfColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws PelopsException {
         SlicePredicate predicate;
         if (Bytes.nullSafeGet(startBeyondName) == null) {
             predicate = Selector.newColumnsPredicateAll(reversed, count);
@@ -642,9 +643,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, Bytes startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), startBeyondName, reversed, count, cLevel);
     }
 
@@ -657,9 +658,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, String rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(startBeyondName), reversed, count, cLevel);
     }
 
@@ -672,9 +673,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, Bytes rowKey, String startBeyondName, boolean reversed, int count, ConsistencyLevel cLevel) throws PelopsException {
     	return getPageOfSuperColumnsFromRow(columnFamily, rowKey, fromUTF8(startBeyondName), reversed, count, cLevel);
     }
 
@@ -687,9 +688,9 @@ public class Selector extends Operand {
      * @param count                         The maximum number of super columns that can be retrieved by the scan
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              A page of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws Exception {
+    public List<SuperColumn> getPageOfSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws PelopsException {
         if (Bytes.nullSafeGet(startBeyondName) == null) {
             SlicePredicate predicate = Selector.newColumnsPredicateAll(reversed, count);
             return getSuperColumnsFromRow(columnFamily, rowKey, predicate, cLevel);
@@ -715,9 +716,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -728,9 +729,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
@@ -743,9 +744,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -758,9 +759,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
     	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -773,9 +774,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -788,9 +789,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -802,9 +803,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The super column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
@@ -832,9 +833,9 @@ public class Selector extends Operand {
      * @param colPredicate                   The super column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
      * @return                               A map from row keys to the matching lists of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
@@ -853,7 +854,7 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -874,7 +875,7 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
@@ -903,9 +904,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
     }
@@ -920,9 +921,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
     }
@@ -938,9 +939,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -956,9 +957,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -974,9 +975,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -992,9 +993,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The sub-column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of sub-columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -1009,9 +1010,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The super column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
@@ -1040,9 +1041,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The super column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of super columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -1061,7 +1062,7 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IPooledConnection conn) throws Exception {
@@ -1080,7 +1081,7 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
@@ -1109,9 +1110,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
     	return getIndexedColumns(newColumnParent(colParent), indexClause, colPredicate, cLevel);
     }
     
@@ -1125,9 +1126,9 @@ public class Selector extends Operand {
      * @param colPredicate                    The column selector predicate
      * @param cLevel                          The Cassandra consistency level with which to perform the operation
      * @return                                A map from row keys to the matching lists of columns
-     * @throws Exception if an error occurs
+     * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws Exception {
+    public Map<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {

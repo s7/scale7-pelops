@@ -24,10 +24,10 @@ import org.apache.cassandra.thrift.ColumnDef;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.IndexOperator;
 import org.apache.cassandra.thrift.IndexType;
-import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.SuperColumn;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.scale7.cassandra.pelops.exceptions.InvalidRequestException;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 /**
