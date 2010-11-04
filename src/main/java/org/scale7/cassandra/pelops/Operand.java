@@ -60,6 +60,7 @@ public class Operand {
 					e instanceof InvalidRequestException ||
 					e instanceof TApplicationException ||
 					e instanceof AuthenticationException ||
+                    e instanceof TProtocolException ||
 					e instanceof AuthorizationException) {
 
                     // Re-throw application-level exceptions immediately.
@@ -68,7 +69,6 @@ public class Operand {
                 // Should we try again?
                 else if (e instanceof TimedOutException ||
                     e instanceof TTransportException ||
-					e instanceof TProtocolException || // maybe this should exit immediately
                     e instanceof UnavailableException) {
 
                     logger.warn("Operation failed as result of network exception. Connection is being marked as corrupt " +
