@@ -3,6 +3,7 @@ package org.scale7.cassandra.pelops.pool;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -34,15 +35,18 @@ public class DebuggingPool extends ThriftPoolBase {
     }
 
     @Override
-    public IPooledConnection getConnection() throws Exception {
+    public IPooledConnection getConnection() throws NoConnectionsAvailableException {
         Cluster.Node[] nodes = cluster.getNodes();
         int index = nodes.length == 1 ? 0 : random.nextInt(nodes.length);
 
         logger.debug("Using node '{}'", nodes[index]);
 
-        PooledConnection connection = new PooledConnection(
-                nodes[index], keyspace
-        );
+        PooledConnection connection = null;
+        try {
+            connection = new PooledConnection(nodes[index], keyspace);
+        } catch (Exception e) {
+            throw new NoConnectionsAvailableException();
+        }
 
         connection.open();
 
@@ -50,7 +54,7 @@ public class DebuggingPool extends ThriftPoolBase {
     }
 
     @Override
-    public IPooledConnection getConnectionExcept(String notNode) throws Exception {
+    public IPooledConnection getConnectionExcept(String notNode) throws NoConnectionsAvailableException {
         return getConnection();
     }
 

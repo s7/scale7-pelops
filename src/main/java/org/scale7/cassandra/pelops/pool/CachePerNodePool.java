@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.concurrency.AutoResetEvent;
 import org.scale7.networking.utility.NetworkAlgorithms;
 import org.scale7.portability.SystemProxy;
@@ -70,7 +71,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @return						A connection to Cassandra
 	 */
 	@Override
-    public IThriftPool.IPooledConnection getConnection() throws Exception {
+    public IThriftPool.IPooledConnection getConnection() throws NoConnectionsAvailableException {
 		return getConnectionExcept(null);
 	}
 
@@ -114,7 +115,7 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 	 * @throws Exception
 	 */
 	@Override
-    public IThriftPool.IPooledConnection getConnectionExcept(String notNode) throws Exception {
+    public IThriftPool.IPooledConnection getConnectionExcept(String notNode) throws NoConnectionsAvailableException {
 	    getConnCount.incrementAndGet();
 
 		// Create a list of nodes we have already tried, and therefore should avoid in preference
@@ -179,11 +180,15 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
 			totalTimeWaiting += retryPause;
 			if (totalTimeWaiting > poolPolicy.getMaxGetConnectionRetryWait()) {
 				logger.error("Failed to return a Cassandra connection. If another back off then max waiting time exceeded {} > {}", totalTimeWaiting, poolPolicy.getMaxGetConnectionRetryWait());
-				throw new Exception("No Cassandra nodes are available");
+				throw new NoConnectionsAvailableException("No Cassandra nodes are available");
 			}
 			// Sleep awhile
-			Thread.sleep(retryPause);
-		}
+            try {
+                Thread.sleep(retryPause);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+        }
 	}
 
     /**

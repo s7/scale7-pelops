@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 import java.lang.management.ManagementFactory;
@@ -145,7 +146,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
             try {
                 pool.getConnection();
                 fail("A connection was acquired when it shouldn't have been");
-            } catch (TimeoutException e) {
+            } catch (NoConnectionsAvailableException e) {
                 // expected
             }
 
@@ -232,7 +233,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
             try {
                 pool.getConnection();
                 fail("No nodes should be available");
-            } catch (TimeoutException e) {
+            } catch (NoConnectionsAvailableException e) {
                 // expected
             }
 

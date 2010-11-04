@@ -6,6 +6,8 @@ import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
+import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -200,12 +202,12 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     @Override
-    public IPooledConnection getConnection() throws Exception {
+    public IPooledConnection getConnection() throws NoConnectionsAvailableException {
         return getConnectionExcept(null);
     }
 
     @Override
-    public IPooledConnection getConnectionExcept(String notNodeHint) throws Exception {
+    public IPooledConnection getConnectionExcept(String notNodeHint) throws NoConnectionsAvailableException {
         PooledNode node = null;
         IPooledConnection connection = null;
         long timeout = -1;
@@ -241,6 +243,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
                 connection = (IPooledConnection) pool.borrowObject(node.getAddress());
             } catch (NoSuchElementException e) {
                 logger.debug("No free connections available for node '{}', trying another node...", node.getAddress());
+            } catch (IllegalStateException e) {
+                throw new PelopsException("The pool has been shutdown", e);
+            } catch (Exception e) {
+                logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s', " +
+                        "trying another node...", node.getAddress()), e);
             }
         }
 
@@ -250,7 +257,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
                             "This possibly indicates that either the suspension strategy is too aggressive or that your " +
                             "cluster is in a bad way."
             );
-            throw new TimeoutException("Failed to get a connection within the configured max wait time.");
+            throw new NoConnectionsAvailableException("Failed to get a connection within the configured max wait time.");
         }
 
         if (connection == null) {
@@ -258,7 +265,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
                     "Failed to get a connection within the maximum allowed wait time.  " +
                             "Try increasing the either the number of allowed connections or the max wait time."
             );
-            throw new TimeoutException("Failed to get a connection within the configured max wait time.");
+            throw new NoConnectionsAvailableException("Failed to get a connection within the configured max wait time.");
         }
 
         logger.debug("Borrowing connection '{}'", connection);
