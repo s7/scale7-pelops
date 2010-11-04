@@ -186,7 +186,9 @@ public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePool
             try {
                 Thread.sleep(retryPause);
             } catch (InterruptedException e) {
-                // do nothing
+                // http://www.ibm.com/developerworks/java/library/j-jtp05236.html
+                Thread.currentThread().interrupt();
+                throw new NoConnectionsAvailableException("Interrupted while waiting for a connection.");
             }
         }
 	}
