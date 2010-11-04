@@ -33,8 +33,6 @@ To use Pelops with Cassandra 0.7.x use the following:
 
 2. Add the Pelops dependency to your project (currently depends on Cassandra 0.7.0-beta3):
 
-    If you're using Cassandra 0.7.0-beta2 then add the following dep to your project:
-
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
