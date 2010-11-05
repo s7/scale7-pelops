@@ -13,11 +13,15 @@ import org.apache.cassandra.thrift.*;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
+import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
 
 /**
- * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.
+ * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.<p/>
+ *
+ * <p><b>Note</b>:The methods that are marked as throwing {@link org.scale7.cassandra.pelops.exceptions.NotFoundException}
+ * are the only methods in Pelops that throw exceptions under non-failure conditions.
  *
  * @author dominicwilliams
  *
@@ -257,9 +261,10 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final String rowKey, final String colName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final String colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getColumnFromRow(columnFamily, rowKey, fromUTF8(colName), cLevel);
     }
 
@@ -270,9 +275,10 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final String rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getColumnFromRow(final String columnFamily, final String rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getColumnFromRow(columnFamily, fromUTF8(rowKey), colName, cLevel);
     }
 
@@ -283,9 +289,10 @@ public class Selector extends Operand {
      * @param colName                       The name of the column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -305,9 +312,10 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSuperColumnFromRow(columnFamily, rowKey, fromUTF8(superColName), cLevel);
     }
 
@@ -318,9 +326,10 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSuperColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, cLevel);
     }
 
@@ -331,9 +340,10 @@ public class Selector extends Operand {
      * @param superColName                  The name of the super column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>SuperColumn</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
             public SuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -354,9 +364,10 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final String subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, fromUTF8(subColName), cLevel);
     }
 
@@ -368,9 +379,10 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final String subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), fromUTF8(subColName), cLevel);
     }
 
@@ -382,9 +394,10 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final String superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(superColName), subColName, cLevel);
     }
 
@@ -396,9 +409,10 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getSubColumnFromRow(final String columnFamily, final String rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getSubColumnFromRow(columnFamily, fromUTF8(rowKey), superColName, subColName, cLevel);
     }
 
@@ -410,9 +424,10 @@ public class Selector extends Operand {
      * @param subColName                    The name of the sub column to retrieve
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
      * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
      * @throws PelopsException if an error occurs
      */
-    public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws PelopsException {
+    public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
