@@ -13,12 +13,12 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
     private static final Logger logger = SystemProxy.getLoggerFromFactory(LeastLoadedNodeSelectionStrategy.class);
 
     @Override
-    public CommonsBackedPool.PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, String notNodeHint) {
+    public PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, String notNodeHint) {
         // create a candidate list (otherwise the numActive could change while sorting)
         logger.debug("Determining which node is the least loaded");
         List<Candidate> candidates = new ArrayList<Candidate>(nodeAddresses.size());
         for (String nodeAddress : nodeAddresses) {
-            CommonsBackedPool.PooledNode pooledNode = pool.getPooledNode(nodeAddress);
+            PooledNode pooledNode = pool.getPooledNode(nodeAddress);
             if (pooledNode == null || pooledNode.isSuspended()) {
                 logger.debug("Excluding node '{}' because it's either been removed from the pool or has been suspended", nodeAddress);
                 continue;
@@ -38,7 +38,7 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
         Collections.sort(candidates);
 
         // pick a node (trying to honor the notNodeHint)
-        CommonsBackedPool.PooledNode node = null;
+        PooledNode node = null;
         for (Candidate candidate : candidates) {
             node = pool.getPooledNode(candidate.address);
             if (!candidate.address.equals(notNodeHint)) {

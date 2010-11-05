@@ -5,7 +5,7 @@ package org.scale7.cassandra.pelops.pool;
  */
 public class NoOpNodeSuspensionStrategy implements CommonsBackedPool.INodeSuspensionStrategy {
     @Override
-    public boolean evaluate(CommonsBackedPool pool, CommonsBackedPool.PooledNode node) {
+    public boolean evaluate(CommonsBackedPool pool, PooledNode node) {
         return false;
     }
 }

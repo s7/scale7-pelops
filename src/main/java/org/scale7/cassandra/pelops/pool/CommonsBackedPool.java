@@ -3,6 +3,7 @@ package org.scale7.cassandra.pelops.pool;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedObjectPool;
+import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
@@ -14,9 +15,10 @@ import org.slf4j.Logger;
 import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CommonsBackedPool extends ThriftPoolBase {
+public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPoolMBean {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(CommonsBackedPool.class);
 
     private static final int DEFAULT_WAIT_PERIOD = 100;
@@ -104,15 +106,25 @@ public class CommonsBackedPool extends ThriftPoolBase {
         statistics.nodesActive.set(this.nodes.size());
 
         configureScheduledTasks();
+
+        // JMX registration
+        String beanName = getMBeanName();
+        if (JmxMBeanManager.getInstance().isRegistered(beanName)) {
+            logger.warn("MBean '{}' is already registered, removing...", beanName);
+            JmxMBeanManager.getInstance().unregisterMBean(beanName);
+        }
+
+        logger.warn("Registering MBean '{}'...", beanName);
+        JmxMBeanManager.getInstance().registerMBean(this, beanName);
     }
 
     private void configureScheduledTasks() {
-        if (policy.getTimeBetweenScheduledTaskRunsMillis() > 0) {
-            if (Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS >= policy.getTimeBetweenScheduledTaskRunsMillis()) {
+        if (policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis() > 0) {
+            if (Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS >= policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis()) {
                 logger.warn("Setting the scheduled tasks to run less than every {} milliseconds is not a good idea...", Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS);
             }
 
-            logger.info("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
+            logger.info("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable runnable) {
@@ -127,41 +139,37 @@ public class CommonsBackedPool extends ThriftPoolBase {
                     new Runnable() {
                         @Override
                         public void run() {
-                            logger.debug("Running scheduled tasks");
+                            logger.debug("Background thread running maintenance tasks");
                             try {
-                                runScheduledTasks();
+                                runMaintenanceTasks();
                             } catch (Exception e) {
-                                logger.warn("An exception was thrown while running the scheduled tasks", e);
+                                logger.warn("An exception was thrown while running the maintenance tasks", e);
                             }
                         }
                     },
-                    policy.getTimeBetweenScheduledTaskRunsMillis(),
-                    policy.getTimeBetweenScheduledTaskRunsMillis(),
+                    policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis(),
+                    policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis(),
                     TimeUnit.MILLISECONDS
             );
         } else {
-            logger.warn("Disabling scheduled tasks; dynamic node discovery, node suspension, idle connection " +
+            logger.warn("Disabling maintenance tasks; dynamic node discovery, node suspension, idle connection " +
                     "termination and some running statistics will not be available to this pool.");
         }
     }
 
-    protected void configureBackingPool() {
-        pool = new GenericKeyedObjectPool(new ConnectionFactory());
-        pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
-        pool.setMaxWait(DEFAULT_WAIT_PERIOD);
-        pool.setLifo(true);
-        pool.setMaxActive(policy.getMaxActivePerNode());
-        pool.setMinIdle(policy.getMinIdlePerNode());
-        pool.setMaxIdle(policy.getMaxIdlePerNode());
-        pool.setMaxTotal(policy.getMaxTotal());
-        pool.setTimeBetweenEvictionRunsMillis(-1); // we don't want to eviction thread running
-        pool.setTestWhileIdle(policy.isTestConnectionsWhileIdle());
-    }
-
-    protected void runScheduledTasks() {
-        logger.debug("Attempting to acquire lock for scheduled tasks");
+    @Override
+    public void runMaintenanceTasks() {
+        logger.debug("Attempting to acquire lock for maintenance tasks");
         synchronized (scheduledTasksLock) {
-            logger.debug("Starting scheduled tasks");
+            logger.debug("Starting maintenance tasks");
+            // the policy properties could have been changed by JMX, propagate them to the underlying pool
+            logger.debug("Updating pool configuration properties based on policy: {}", policy);
+            pool.setTestWhileIdle(policy.isTestConnectionsWhileIdle());
+            pool.setMaxIdle(policy.getMaxIdlePerNode());
+            pool.setMinIdle(policy.getMinIdlePerNode());
+            pool.setMaxActive(policy.getMaxActivePerNode());
+            pool.setMaxTotal(policy.getMaxTotal());
+
             // add/remove any new/dead nodes
             handleClusterRefresh();
 
@@ -187,63 +195,37 @@ public class CommonsBackedPool extends ThriftPoolBase {
             } catch (Exception e) {
                 // do nothing
             }
-            logger.debug("Finished scheduled tasks");
+            logger.debug("Finished maintenance tasks");
         }
     }
 
-    private void handleClusterRefresh() {
-        cluster.refresh(getKeyspace());
-        Cluster.Node[] currentNodes = cluster.getNodes();
-        logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
-        // figure out which of the nodes are new
-        for (Cluster.Node node : currentNodes) {
-            if (!this.nodes.containsKey(node.getAddress())) {
-                addNode(node.getAddress());
-            }
-        }
+    @Override
+    public void shutdown() {
+        // unregister the JMX bean
+        String beanName = getMBeanName();
+        logger.info("Removing MBean '{}'...", beanName);
+        if (JmxMBeanManager.getInstance().isRegistered(beanName))
+            JmxMBeanManager.getInstance().unregisterMBean(beanName);
 
-        // figure out which nodes need to be removed
-        for (String nodeAddress : this.nodes.keySet()) {
-            boolean isPresent = false;
-            for (Cluster.Node node : currentNodes) {
-                if (node.getAddress().equals(nodeAddress)) {
-                    isPresent = true;
+        if (executorService != null) {
+            logger.info("Terminating background thread...");
+            executorService.shutdownNow();
+            while (executorService.isTerminated()) {
+                try {
+                    if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+                        logger.info("Still waiting for background thread to terminate...");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
-
-            if (!isPresent) {
-                removeNode(nodeAddress);
-            }
         }
-    }
 
-    private void addNode(String nodeAddress) {
-        logger.info("Adding node '{}' to the pool...", nodeAddress);
-
-        // initialise (JMX etc)
-        PooledNode node = new PooledNode(pool, nodeAddress);
-
-        // add it as a candidate
-        nodes.put(nodeAddress, node);
-
-        // prepare min idle connetions etc...
-        // NOTE: there's a potential for the node to be selected as a candidate before it's been prepared
-        //       but preparing before adding means the stats don't get updated
-        pool.preparePool(nodeAddress, true);
-    }
-
-    private void removeNode(String nodeAddress) {
-        logger.info("Removing node '{}' from the pool", nodeAddress);
-
-        // remove from the the nodes list so it's no longer considered a candidate
-        PooledNode node = nodes.remove(nodeAddress);
-
-        // shutdown all the connections and clear it from the backing pool
-        pool.clear(nodeAddress);
-
-        // decommission (JMX etc)
-        if (node != null) {
-            node.decommission();
+        try {
+            logger.info("Closing pooled connections...");
+            pool.close();
+        } catch (Exception e) {
+            logger.error("Failed to close pool", e);
         }
     }
 
@@ -262,8 +244,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
             if (timeout == -1) {
                 // first run through calc the timeout for the next loop
                 // (this makes debugging easier)
-                timeout = getPolicy().getMaxWaitForConnection() > 0 ?
-                        System.currentTimeMillis() + getPolicy().getMaxWaitForConnection() :
+                int maxWait = getPolicy().getMaxWaitForConnection();
+                timeout = maxWait > 0 ?
+                        System.currentTimeMillis() + maxWait :
                         Long.MAX_VALUE;
             } else if (timeout < System.currentTimeMillis()) {
                 logger.debug("Max wait time for connection exceeded");
@@ -320,6 +303,85 @@ public class CommonsBackedPool extends ThriftPoolBase {
         return connection;
     }
 
+    /**
+     * Returns the pooled node instance for the nodeAddress.
+     *
+     * @param nodeAddress the node address
+     * @return the pooled node instance or null if the nodeAddress doesn't match a pooled node
+     */
+    public PooledNode getPooledNode(String nodeAddress) {
+        return nodes.get(nodeAddress);
+    }
+
+    protected void configureBackingPool() {
+        pool = new GenericKeyedObjectPool(new ConnectionFactory());
+        pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
+        pool.setMaxWait(DEFAULT_WAIT_PERIOD);
+        pool.setLifo(true);
+        pool.setMaxActive(policy.getMaxActivePerNode());
+        pool.setMinIdle(policy.getMinIdlePerNode());
+        pool.setMaxIdle(policy.getMaxIdlePerNode());
+        pool.setMaxTotal(policy.getMaxTotal());
+        pool.setTimeBetweenEvictionRunsMillis(-1); // we don't want to eviction thread running
+        pool.setTestWhileIdle(policy.isTestConnectionsWhileIdle());
+    }
+
+    private void handleClusterRefresh() {
+        cluster.refresh(getKeyspace());
+        Cluster.Node[] currentNodes = cluster.getNodes();
+        logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
+        // figure out which of the nodes are new
+        for (Cluster.Node node : currentNodes) {
+            if (!this.nodes.containsKey(node.getAddress())) {
+                addNode(node.getAddress());
+            }
+        }
+
+        // figure out which nodes need to be removed
+        for (String nodeAddress : this.nodes.keySet()) {
+            boolean isPresent = false;
+            for (Cluster.Node node : currentNodes) {
+                if (node.getAddress().equals(nodeAddress)) {
+                    isPresent = true;
+                }
+            }
+
+            if (!isPresent) {
+                removeNode(nodeAddress);
+            }
+        }
+    }
+
+    private void addNode(String nodeAddress) {
+        logger.info("Adding node '{}' to the pool...", nodeAddress);
+
+        // initialise (JMX etc)
+        PooledNode node = new PooledNode(this, nodeAddress);
+
+        // add it as a candidate
+        nodes.put(nodeAddress, node);
+
+        // prepare min idle connetions etc...
+        // NOTE: there's a potential for the node to be selected as a candidate before it's been prepared
+        //       but preparing before adding means the stats don't get updated
+        pool.preparePool(nodeAddress, true);
+    }
+
+    private void removeNode(String nodeAddress) {
+        logger.info("Removing node '{}' from the pool", nodeAddress);
+
+        // remove from the the nodes list so it's no longer considered a candidate
+        PooledNode node = nodes.remove(nodeAddress);
+
+        // shutdown all the connections and clear it from the backing pool
+        pool.clear(nodeAddress);
+
+        // decommission (JMX etc)
+        if (node != null) {
+            node.decommission();
+        }
+    }
+
     protected void releaseConnection(PooledConnection connection) {
         try {
             statistics.connectionsActive.decrementAndGet();
@@ -336,70 +398,6 @@ public class CommonsBackedPool extends ThriftPoolBase {
         } catch (Exception e) {
             // do nothing
         }
-    }
-
-    @Override
-    public void shutdown() {
-        if (executorService != null) {
-            logger.info("Terminating background thread...");
-            executorService.shutdownNow();
-            while (executorService.isTerminated()) {
-                try {
-                    if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
-                        logger.info("Still waiting for background thread to terminate...");
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-
-        try {
-            logger.info("Closing pooled connections...");
-            pool.close();
-        } catch (Exception e) {
-            logger.error("Failed to close pool", e);
-        }
-    }
-
-    @Override
-    public OperandPolicy getOperandPolicy() {
-        return operandPolicy;
-    }
-
-    @Override
-    public String getKeyspace() {
-        return keyspace;
-    }
-
-    public Policy getPolicy() {
-        return policy;
-    }
-
-    public Cluster getCluster() {
-        return cluster;
-    }
-
-    public INodeSelectionStrategy getNodeSelectionStrategy() {
-        return nodeSelectionStrategy;
-    }
-
-    public INodeSuspensionStrategy getNodeSuspensionStrategy() {
-        return nodeSuspensionStrategy;
-    }
-
-    public IConnectionValidator getConnectionValidator() {
-        return connectionValidator;
-    }
-
-    /**
-     * Returns the pooled node instance for the nodeAddress.
-     *
-     * @param nodeAddress the node address
-     * @return the pooled node instance or null if the nodeAddress doesn't match a pooled node
-     */
-    public PooledNode getPooledNode(String nodeAddress) {
-        return nodes.get(nodeAddress);
     }
 
     protected void reportConnectionCreated(String nodeAddress) {
@@ -447,21 +445,159 @@ public class CommonsBackedPool extends ThriftPoolBase {
             pooledNode.reportConnectionReleased();
     }
 
+    @Override
+    public OperandPolicy getOperandPolicy() {
+        return operandPolicy;
+    }
+
+    @Override
+    public String getKeyspace() {
+        return keyspace;
+    }
+
+    public Policy getPolicy() {
+        return policy;
+    }
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public INodeSelectionStrategy getNodeSelectionStrategy() {
+        return nodeSelectionStrategy;
+    }
+
+    public INodeSuspensionStrategy getNodeSuspensionStrategy() {
+        return nodeSuspensionStrategy;
+    }
+
+    public IConnectionValidator getConnectionValidator() {
+        return connectionValidator;
+    }
+
     public RunningStatistics getStatistics() {
         return statistics;
+    }
+
+    @Override
+    public int getConnectionsCreated() {
+        return getStatistics().getConnectionsCreated();
+    }
+
+    @Override
+    public int getConnectionsDestroyed() {
+        return getStatistics().getConnectionsCreated();
+    }
+
+    @Override
+    public int getConnectionsCorrupted() {
+        return getStatistics().getConnectionsCorrupted();
+    }
+
+    @Override
+    public int getConnectionsActive() {
+        return getStatistics().getConnectionsActive();
+    }
+
+    @Override
+    public int getNodesActive() {
+        return getStatistics().getNodesActive();
+    }
+
+    @Override
+    public int getNodesSuspended() {
+        return getStatistics().getNodesSuspended();
+    }
+
+    @Override
+    public int getConnectionsBorrowedTotal() {
+        return getStatistics().getConnectionsBorrowedTotal();
+    }
+
+    @Override
+    public int getConnectionsReleasedTotal() {
+        return getStatistics().getConnectionsReleasedTotal();
+    }
+
+    @Override
+    public int getMaxActivePerNode() {
+        return getPolicy().getMaxActivePerNode();
+    }
+
+    @Override
+    public void setMaxActivePerNode(int maxActivePerNode) {
+        getPolicy().setMaxActivePerNode(maxActivePerNode);
+    }
+
+    @Override
+    public int getMaxIdlePerNode() {
+        return getPolicy().getMaxIdlePerNode();
+    }
+
+    @Override
+    public void setMaxIdlePerNode(int maxIdlePerNode) {
+        getPolicy().setMaxIdlePerNode(maxIdlePerNode);
+    }
+
+    @Override
+    public int getMaxTotal() {
+        return getPolicy().getMaxTotal();
+    }
+
+    @Override
+    public void setMaxTotal(int maxTotal) {
+        getPolicy().setMaxTotal(maxTotal);
+    }
+
+    @Override
+    public int getMinIdlePerNode() {
+        return getPolicy().getMinIdlePerNode();
+    }
+
+    @Override
+    public void setMinIdlePerNode(int minIdlePerNode) {
+        getPolicy().setMinIdlePerNode(minIdlePerNode);
+    }
+
+    @Override
+    public int getMaxWaitForConnection() {
+        return getPolicy().getMaxWaitForConnection();
+    }
+
+    @Override
+    public void setMaxWaitForConnection(int maxWaitForConnection) {
+        getPolicy().setMaxWaitForConnection(maxWaitForConnection);
+    }
+
+    @Override
+    public boolean isTestConnectionsWhileIdle() {
+        return getPolicy().isTestConnectionsWhileIdle();
+    }
+
+    @Override
+    public void setTestConnectionsWhileIdle(boolean testConnectionsWhileIdle) {
+        getPolicy().setTestConnectionsWhileIdle(testConnectionsWhileIdle);
+    }
+
+    private String getMBeanName() {
+        return JMX_MBEAN_OBJ_NAME + "-" + keyspace;
+    }
+
+    KeyedObjectPool getUnderlyingPool() {
+        return pool;
     }
 
     public static class Policy {
         private static final int DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 60;
         private static final int MIN_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 10;
 
-        private int maxActivePerNode = 20;
-        private int maxTotal = -1;
-        private int maxIdlePerNode = 10;
-        private int minIdlePerNode = 10;
-        private int maxWaitForConnection = 1000;
-        private int timeBetweenScheduledTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
-        private boolean testConnectionsWhileIdle = true;
+        private AtomicInteger maxActivePerNode = new AtomicInteger(20);
+        private AtomicInteger maxTotal = new AtomicInteger(-1);
+        private AtomicInteger maxIdlePerNode = new AtomicInteger(10);
+        private AtomicInteger minIdlePerNode = new AtomicInteger(10);
+        private AtomicInteger maxWaitForConnection = new AtomicInteger(1000);
+        private int timeBetweenScheduledMaintenanceTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
+        private AtomicBoolean testConnectionsWhileIdle = new AtomicBoolean(true);
 
         public Policy() {
         }
@@ -470,7 +606,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @see #setMaxActivePerNode(int)
          */
         public int getMaxActivePerNode() {
-            return maxActivePerNode;
+            return maxActivePerNode.get();
         }
 
         /**
@@ -479,14 +615,14 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @param maxActivePerNode The cap on the number of object instances per node. Use a negative value for no limit.
          */
         public void setMaxActivePerNode(int maxActivePerNode) {
-            this.maxActivePerNode = maxActivePerNode;
+            this.maxActivePerNode.set(maxActivePerNode);
         }
 
         /**
          * @see #setMaxActivePerNode(int)
          */
         public int getMaxIdlePerNode() {
-            return maxIdlePerNode;
+            return maxIdlePerNode.get();
         }
 
         /**
@@ -499,14 +635,14 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @param maxIdlePerNode
          */
         public void setMaxIdlePerNode(int maxIdlePerNode) {
-            this.maxIdlePerNode = maxIdlePerNode;
+            this.maxIdlePerNode.set(maxIdlePerNode);
         }
 
         /**
          * @see #setMaxTotal(int)
          */
         public int getMaxTotal() {
-            return maxTotal;
+            return maxTotal.get();
         }
 
         /**
@@ -517,14 +653,14 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @param maxTotal The cap on the number of object instances per node. Use a negative value for no limit.
          */
         public void setMaxTotal(int maxTotal) {
-            this.maxTotal = maxTotal;
+            this.maxTotal.set(maxTotal);
         }
 
         /**
          * @see #setMinIdlePerNode(int)
          */
         public int getMinIdlePerNode() {
-            return minIdlePerNode;
+            return minIdlePerNode.get();
         }
 
         /**
@@ -533,14 +669,14 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @param minIdlePerNode The minimum size of the each nodes pool
          */
         public void setMinIdlePerNode(int minIdlePerNode) {
-            this.minIdlePerNode = minIdlePerNode;
+            this.minIdlePerNode.set(minIdlePerNode);
         }
 
         /**
          * @see #setMaxWaitForConnection(int)
          */
         public int getMaxWaitForConnection() {
-            return maxWaitForConnection;
+            return maxWaitForConnection.get();
         }
 
         /**
@@ -552,32 +688,32 @@ public class CommonsBackedPool extends ThriftPoolBase {
          *                             will block or negative for indefinitely.
          */
         public void setMaxWaitForConnection(int maxWaitForConnection) {
-            this.maxWaitForConnection = maxWaitForConnection;
+            this.maxWaitForConnection.set(maxWaitForConnection);
         }
 
         /**
-         * @see #setTimeBetweenScheduledTaskRunsMillis(int)
+         * @see #setTimeBetweenScheduledMaintenanceTaskRunsMillis(int)
          */
-        public int getTimeBetweenScheduledTaskRunsMillis() {
-            return timeBetweenScheduledTaskRunsMillis;
+        public int getTimeBetweenScheduledMaintenanceTaskRunsMillis() {
+            return timeBetweenScheduledMaintenanceTaskRunsMillis;
         }
 
         /**
          * Sets the number of milliseconds to sleep between runs of the idle object tasks thread. When non-positive,
          * no idle object evictor thread will be run.
          *
-         * @param timeBetweenScheduledTaskRunsMillis
+         * @param timeBetweenScheduledMaintenanceTaskRunsMillis
          *         milliseconds to sleep between evictor runs.
          */
-        public void setTimeBetweenScheduledTaskRunsMillis(int timeBetweenScheduledTaskRunsMillis) {
-            this.timeBetweenScheduledTaskRunsMillis = timeBetweenScheduledTaskRunsMillis;
+        public void setTimeBetweenScheduledMaintenanceTaskRunsMillis(int timeBetweenScheduledMaintenanceTaskRunsMillis) {
+            this.timeBetweenScheduledMaintenanceTaskRunsMillis = timeBetweenScheduledMaintenanceTaskRunsMillis;
         }
 
         /**
          * @see #setTestConnectionsWhileIdle(boolean) 
          */
         public boolean isTestConnectionsWhileIdle() {
-            return testConnectionsWhileIdle;
+            return testConnectionsWhileIdle.get();
         }
 
         /**
@@ -586,7 +722,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
          * @param testConnectionsWhileIdle true if enabled, otherwise false
          */
         public void setTestConnectionsWhileIdle(boolean testConnectionsWhileIdle) {
-            this.testConnectionsWhileIdle = testConnectionsWhileIdle;
+            this.testConnectionsWhileIdle.set(testConnectionsWhileIdle);
         }
 
         @Override
@@ -599,108 +735,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
             sb.append(", minIdlePerNode=").append(minIdlePerNode);
             sb.append(", maxWaitForConnection=").append(maxWaitForConnection);
             sb.append(", testConnectionsWhileIdle=").append(testConnectionsWhileIdle);
-            sb.append(", timeBetweenScheduledTaskRunsMillis=").append(timeBetweenScheduledTaskRunsMillis);
+            sb.append(", timeBetweenScheduledMaintenanceTaskRunsMillis=").append(timeBetweenScheduledMaintenanceTaskRunsMillis);
             sb.append('}');
             return sb.toString();
-        }
-    }
-
-    public static class PooledNode {
-        private KeyedObjectPool pool;
-        private String address;
-        private INodeSuspensionState suspensionState;
-        private AtomicInteger suspensions;
-        private AtomicInteger connectionsCorrupted;
-        private AtomicInteger connectionsCreated;
-        private AtomicInteger connectionsDestroyed;
-        private AtomicInteger connectionsBorrowedTotal;
-        private AtomicInteger connectionsReleasedTotal;
-
-        public PooledNode(KeyedObjectPool pool, String address) {
-            this.pool = pool;
-            this.address = address;
-            suspensions = new AtomicInteger();
-            connectionsCorrupted = new AtomicInteger();
-            connectionsCreated = new AtomicInteger();
-            connectionsDestroyed = new AtomicInteger();
-            connectionsBorrowedTotal = new AtomicInteger();
-            connectionsReleasedTotal = new AtomicInteger();
-        }
-
-        public void decommission() {
-
-        }
-
-        public String getAddress() {
-            return address;
-        }
-
-        public INodeSuspensionState getSuspensionState() {
-            return suspensionState;
-        }
-
-        public void setSuspensionState(INodeSuspensionState suspensionState) {
-            this.suspensionState = suspensionState;
-        }
-
-        void reportSuspension() {
-            suspensions.incrementAndGet();
-        }
-
-        public int getSuspensions() {
-            return suspensions.get();
-        }
-
-        public int getNumActive() {
-            return pool.getNumActive(address);
-        }
-
-        public int getNumIdle() {
-            return pool.getNumIdle(address);
-        }
-
-        void reportConnectionCorrupted() {
-            connectionsCorrupted.incrementAndGet();
-        }
-
-        public int getConnectionsCorrupted() {
-            return connectionsCorrupted.get();
-        }
-
-        void reportConnectionCreated() {
-            connectionsCreated.incrementAndGet();
-        }
-
-        public int getConnectionsCreated() {
-            return connectionsCreated.get();
-        }
-
-        void reportConnectionDestroyed() {
-            connectionsDestroyed.incrementAndGet();
-        }
-
-        public int getConnectionsDestroyed() {
-            return connectionsDestroyed.get();
-        }
-
-        void reportConnectionBorrowed() {
-            connectionsBorrowedTotal.incrementAndGet();
-        }
-
-        public int getConnectionsBorrowedTotal() {
-            return connectionsBorrowedTotal.get();
-        }
-
-        void reportConnectionReleased() {
-            connectionsReleasedTotal.incrementAndGet();
-        }
-
-        public int getConnectionsReleasedTotal() {
-            return connectionsReleasedTotal.get();
-        }
-
-        public boolean isSuspended() {
-            return getSuspensionState() != null && getSuspensionState().isSuspended();
         }
     }
 
@@ -855,9 +892,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
      * until the node should no longer be considered suspended.
      * <p/>
      * <p>Any state required to determine if a node should be suspended should be stored in the nodes
-     * {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool.PooledNode#getSuspensionState()}.  Note that the
+     * {@link PooledNode#getSuspensionState()}.  Note that the
      * suspension state may be null if the node has not been evaluated before.
-     * <p>Also note that the {@link #evaluate(CommonsBackedPool, org.scale7.cassandra.pelops.pool.CommonsBackedPool.PooledNode)}
+     * <p>Also note that the {@link #evaluate(CommonsBackedPool, PooledNode)}
      * will be called by the scheduled tasks thread even when the node is currently suspended.
      */
     public static interface INodeSuspensionStrategy {
@@ -879,6 +916,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
     public static interface INodeSuspensionState {
         /**
          * Used to indicate if a node is suspended.
+         *
+         * <p><b>Note</b>: Implementations needs to ensure that invokations to this method are thread safe.
          *
          * @return true if the node is suspended, otherwise false (this method should return true until the node is no
          *         longer considered suspended)

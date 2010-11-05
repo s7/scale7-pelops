@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.sun.tools.internal.ws.wsdl.parser.Util.fail;
@@ -44,7 +43,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testScheduledTasksThreadDisable() {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
 
         CommonsBackedPool pool = null;
         try {
@@ -66,7 +65,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testScheduledTasksThread() {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(100);
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(100);
 
         CommonsBackedPool pool = null;
         try {
@@ -90,7 +89,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testGetConnectionMultiThreaded() {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(4); // one less than the number of worker threads
 
         final CommonsBackedPool pool = configurePool(config);
@@ -118,7 +117,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
                 fail("Failed to run all submitted tasks within a minute");
             }
 
-            CommonsBackedPool.PooledNode node = pool.getPooledNode("localhost");
+            PooledNode node = pool.getPooledNode("localhost");
 
             assertEquals("Task count did not match connections borrowed", taskCount, pool.getStatistics().getConnectionsBorrowedTotal());
             assertEquals("Task count did not match connections borrowed on node", taskCount, node.getConnectionsBorrowedTotal());
@@ -137,7 +136,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testTimeoutExceptionWhileWaitingOnConnection() throws Exception {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(1);
         config.setMaxWaitForConnection(200); // 200 millis
 
@@ -163,7 +162,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testConnectionTerminatedWhenCorrupt() throws Exception {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(1);
 
         final CommonsBackedPool pool = configurePool(config);
@@ -186,7 +185,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testsScheduledTaskNodeSuspension() throws Exception {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(1);
 
         final AtomicBoolean suspended = new AtomicBoolean(true);
@@ -198,7 +197,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
                 new LeastLoadedNodeSelectionStrategy(),
                 new CommonsBackedPool.INodeSuspensionStrategy() {
                     @Override
-                    public boolean evaluate(CommonsBackedPool pool, CommonsBackedPool.PooledNode node) {
+                    public boolean evaluate(CommonsBackedPool pool, PooledNode node) {
                         if (suspended.get()) {
                             // first run through we want to suspend the node
                             suspended.set(false);
@@ -230,7 +229,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
             connection.release();
 
             // suspend the node
-            pool.runScheduledTasks();
+            pool.runMaintenanceTasks();
 
             try {
                 pool.getConnection();
@@ -240,7 +239,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
             }
 
             // activate the node
-            pool.runScheduledTasks();
+            pool.runMaintenanceTasks();
 
             // node is now active
             connection = pool.getConnection();
@@ -257,7 +256,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testsScheduledTaskConnectionValidation() throws Exception {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
-        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(1);
 
         final AtomicBoolean invoked = new AtomicBoolean(false);
@@ -278,7 +277,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
         );
 
         try {
-            pool.runScheduledTasks();
+            pool.runMaintenanceTasks();
 
             assertTrue("Connection validation was not invoked", invoked.get());
         } finally {

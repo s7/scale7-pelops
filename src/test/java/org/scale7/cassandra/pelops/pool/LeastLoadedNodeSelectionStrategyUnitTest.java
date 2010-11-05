@@ -25,7 +25,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         // setup each pooled node to report that it's suspended
         for (String nodeAddress : nodeAddresses) {
-            prepGetPoolNode(pool, nodeAddress, new CommonsBackedPool.PooledNode(null, nodeAddress) {
+            prepGetPoolNode(pool, nodeAddress, new PooledNode(null, nodeAddress) {
                 @Override
                 public boolean isSuspended() {
                     return true;
@@ -35,7 +35,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
 
-        CommonsBackedPool.PooledNode node = strategy.select(pool, nodeAddresses, null);
+        PooledNode node = strategy.select(pool, nodeAddresses, null);
 
         assertNull("No nodes should have been returned", node);
     }
@@ -50,7 +50,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         // setup each pooled node to report that it's suspended
         for (String nodeAddress : nodeAddresses) {
-            prepGetPoolNode(pool, nodeAddress, new CommonsBackedPool.PooledNode(null, nodeAddress) {
+            prepGetPoolNode(pool, nodeAddress, new PooledNode(null, nodeAddress) {
                 @Override
                 public boolean isSuspended() {
                     return true;
@@ -61,7 +61,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup one node to be good
         final String goodNodeAddress = "node4";
         nodeAddresses.add(goodNodeAddress);
-        prepGetPoolNode(pool, goodNodeAddress, new CommonsBackedPool.PooledNode(null, goodNodeAddress) {
+        prepGetPoolNode(pool, goodNodeAddress, new PooledNode(null, goodNodeAddress) {
             @Override
             public boolean isSuspended() {
                 return false;
@@ -75,7 +75,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
 
-        CommonsBackedPool.PooledNode node = strategy.select(pool, nodeAddresses, null);
+        PooledNode node = strategy.select(pool, nodeAddresses, null);
 
         assertNotNull("No nodes were returned from the pool", node);
         assertEquals("Wrong node returned from the pool", goodNodeAddress, node.getAddress());
@@ -93,7 +93,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup each pooled node to report it's number of active connections
         for (int i = 0; i < nodeAddresses.size(); i++) {
             final int numActive = i;
-            prepGetPoolNode(pool, nodeAddresses.get(i), new CommonsBackedPool.PooledNode(null, nodeAddresses.get(i)) {
+            prepGetPoolNode(pool, nodeAddresses.get(i), new PooledNode(null, nodeAddresses.get(i)) {
                 @Override
                 public boolean isSuspended() {
                     return false;
@@ -108,7 +108,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
 
-        CommonsBackedPool.PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), null);
+        PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), null);
 
         assertNotNull("No nodes were returned from the pool", node);
         assertEquals("Wrong node returned from the pool", leastLoadedNodeAddress, node.getAddress());
@@ -127,7 +127,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup each pooled node to report it's number of active connections
         for (int i = 0; i < nodeAddresses.size(); i++) {
             final int numActive = i;
-            prepGetPoolNode(pool, nodeAddresses.get(i), new CommonsBackedPool.PooledNode(null, nodeAddresses.get(i)) {
+            prepGetPoolNode(pool, nodeAddresses.get(i), new PooledNode(null, nodeAddresses.get(i)) {
                 @Override
                 public boolean isSuspended() {
                     return false;
@@ -142,16 +142,16 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
 
-        CommonsBackedPool.PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), leastLoadedNodeAddress);
+        PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), leastLoadedNodeAddress);
 
         assertNotNull("No nodes were returned from the pool", node);
         assertEquals("Wrong node returned from the pool", selectedNodeAddress, node.getAddress());
     }
 
-    private void prepGetPoolNode(CommonsBackedPool pool, final String nodeAddress, final CommonsBackedPool.PooledNode pooledNode) {
-        Mockito.when(pool.getPooledNode(nodeAddress)).thenAnswer(new Answer<CommonsBackedPool.PooledNode>() {
+    private void prepGetPoolNode(CommonsBackedPool pool, final String nodeAddress, final PooledNode pooledNode) {
+        Mockito.when(pool.getPooledNode(nodeAddress)).thenAnswer(new Answer<PooledNode>() {
             @Override
-            public CommonsBackedPool.PooledNode answer(InvocationOnMock invocation) throws Throwable {
+            public PooledNode answer(InvocationOnMock invocation) throws Throwable {
                 return pooledNode;
             }
         });
