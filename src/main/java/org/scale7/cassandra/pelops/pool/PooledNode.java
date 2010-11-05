@@ -32,6 +32,11 @@ class PooledNode implements PooledNodeMBean {
         connectionsReleasedTotal = new AtomicInteger();
 
         String beanName = getMBeanName();
+        if (JmxMBeanManager.getInstance().isRegistered(beanName)) {
+            logger.warn("MBean '{}' is already registered, removing...", beanName);
+            JmxMBeanManager.getInstance().unregisterMBean(beanName);
+        }
+
         logger.warn("Registering MBean '{}'...", beanName);
         JmxMBeanManager.getInstance().registerMBean(this, beanName);
     }
@@ -39,7 +44,8 @@ class PooledNode implements PooledNodeMBean {
     public void decommission() {
         String beanName = getMBeanName();
         logger.info("Removing MBean '{}'...", beanName);
-        JmxMBeanManager.getInstance().unregisterMBean(beanName);
+        if (JmxMBeanManager.getInstance().isRegistered(beanName))
+            JmxMBeanManager.getInstance().unregisterMBean(beanName);
     }
 
     @Override

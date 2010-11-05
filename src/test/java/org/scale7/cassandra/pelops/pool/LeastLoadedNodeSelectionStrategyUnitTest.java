@@ -25,7 +25,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         // setup each pooled node to report that it's suspended
         for (String nodeAddress : nodeAddresses) {
-            prepGetPoolNode(pool, nodeAddress, new PooledNode(null, nodeAddress) {
+            mockPoolMethods(pool, nodeAddress, new PooledNode(pool, nodeAddress) {
                 @Override
                 public boolean isSuspended() {
                     return true;
@@ -50,7 +50,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         // setup each pooled node to report that it's suspended
         for (String nodeAddress : nodeAddresses) {
-            prepGetPoolNode(pool, nodeAddress, new PooledNode(null, nodeAddress) {
+            mockPoolMethods(pool, nodeAddress, new PooledNode(pool, nodeAddress) {
                 @Override
                 public boolean isSuspended() {
                     return true;
@@ -61,7 +61,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup one node to be good
         final String goodNodeAddress = "node4";
         nodeAddresses.add(goodNodeAddress);
-        prepGetPoolNode(pool, goodNodeAddress, new PooledNode(null, goodNodeAddress) {
+        mockPoolMethods(pool, goodNodeAddress, new PooledNode(pool, goodNodeAddress) {
             @Override
             public boolean isSuspended() {
                 return false;
@@ -93,7 +93,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup each pooled node to report it's number of active connections
         for (int i = 0; i < nodeAddresses.size(); i++) {
             final int numActive = i;
-            prepGetPoolNode(pool, nodeAddresses.get(i), new PooledNode(null, nodeAddresses.get(i)) {
+            mockPoolMethods(pool, nodeAddresses.get(i), new PooledNode(pool, nodeAddresses.get(i)) {
                 @Override
                 public boolean isSuspended() {
                     return false;
@@ -127,7 +127,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         // setup each pooled node to report it's number of active connections
         for (int i = 0; i < nodeAddresses.size(); i++) {
             final int numActive = i;
-            prepGetPoolNode(pool, nodeAddresses.get(i), new PooledNode(null, nodeAddresses.get(i)) {
+            mockPoolMethods(pool, nodeAddresses.get(i), new PooledNode(pool, nodeAddresses.get(i)) {
                 @Override
                 public boolean isSuspended() {
                     return false;
@@ -148,7 +148,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
         assertEquals("Wrong node returned from the pool", selectedNodeAddress, node.getAddress());
     }
 
-    private void prepGetPoolNode(CommonsBackedPool pool, final String nodeAddress, final PooledNode pooledNode) {
+    private void mockPoolMethods(CommonsBackedPool pool, final String nodeAddress, final PooledNode pooledNode) {
         Mockito.when(pool.getPooledNode(nodeAddress)).thenAnswer(new Answer<PooledNode>() {
             @Override
             public PooledNode answer(InvocationOnMock invocation) throws Throwable {

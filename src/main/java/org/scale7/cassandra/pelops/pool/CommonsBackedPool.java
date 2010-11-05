@@ -227,6 +227,12 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         } catch (Exception e) {
             logger.error("Failed to close pool", e);
         }
+
+        // decommission the pooled nodes
+        for (PooledNode pooledNode : nodes.values()) {
+            logger.info("Decommissioning node '{}'", pooledNode.getAddress());
+            pooledNode.decommission();
+        }
     }
 
     @Override
