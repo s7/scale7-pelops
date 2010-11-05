@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.sun.tools.internal.ws.wsdl.parser.Util.fail;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 
@@ -183,7 +184,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
      * returning connections again.
      */
     @Test
-    public void testsNodeSuspension() throws Exception {
+    public void testsScheduledTaskNodeSuspension() throws Exception {
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
         config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
         config.setMaxActivePerNode(1);
@@ -191,9 +192,9 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
         final AtomicBoolean suspended = new AtomicBoolean(true);
         CommonsBackedPool pool = new CommonsBackedPool(
                 AbstractIntegrationTest.cluster,
+                AbstractIntegrationTest.KEYSPACE,
                 config,
                 new OperandPolicy(),
-                AbstractIntegrationTest.KEYSPACE,
                 new LeastLoadedNodeSelectionStrategy(),
                 new CommonsBackedPool.INodeSuspensionStrategy() {
                     @Override
@@ -219,7 +220,8 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
                             return false;
                         }
                     }
-                }
+                },
+                new NoOpConnectionValidator()
         );
 
         try {
@@ -248,14 +250,51 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    /**
+     * Test that when a node is suspended all it's connections are terminated and that when it comes good it starts
+     * returning connections again.
+     */
+    @Test
+    public void testsScheduledTaskConnectionValidation() throws Exception {
+        CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
+        config.setTimeBetweenScheduledTaskRunsMillis(-1); // disable the background thread
+        config.setMaxActivePerNode(1);
+
+        final AtomicBoolean invoked = new AtomicBoolean(false);
+        CommonsBackedPool pool = new CommonsBackedPool(
+                AbstractIntegrationTest.cluster,
+                AbstractIntegrationTest.KEYSPACE,
+                config,
+                new OperandPolicy(),
+                new LeastLoadedNodeSelectionStrategy(),
+                new NoOpNodeSuspensionStrategy(),
+                new CommonsBackedPool.IConnectionValidator() {
+                    @Override
+                    public boolean validate(CommonsBackedPool.PooledConnection connection) {
+                        invoked.set(true);
+                        return true;
+                    }
+                }
+        );
+
+        try {
+            pool.runScheduledTasks();
+
+            assertTrue("Connection validation was not invoked", invoked.get());
+        } finally {
+            pool.shutdown();
+        }
+    }
+
     private CommonsBackedPool configurePool(CommonsBackedPool.Policy config) {
         return new CommonsBackedPool(
                 AbstractIntegrationTest.cluster,
+                AbstractIntegrationTest.KEYSPACE,
                 config,
                 new OperandPolicy(),
-                AbstractIntegrationTest.KEYSPACE,
                 new LeastLoadedNodeSelectionStrategy(),
-                new NoOpNodeSuspensionStrategy()
+                new NoOpNodeSuspensionStrategy(),
+                new NoOpConnectionValidator()
         );
     }
 

@@ -4,8 +4,7 @@ import org.apache.cassandra.thrift.CfDef;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.*;
-import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
-import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy;
+import org.scale7.cassandra.pelops.pool.*;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 import java.util.ArrayList;
@@ -38,10 +37,13 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
         try {
             factoryBean.afterPropertiesSet();
 
-            assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
-            assertNotNull("The factory didn't initialize a default operand policy instance", factoryBean.getOperandPolicy());
-            assertNotNull("The factory didn't initialize a default pool config instance", factoryBean.getPolicy());
-            assertNotNull("The factory didn't initialize a default node selection policy instance", factoryBean.getNodeSelectionStrategy());
+            CommonsBackedPool pool = (CommonsBackedPool) factoryBean.getObject();
+            assertNotNull("The factory didn't initialize the pool", pool);
+            assertNotNull("The factory didn't initialize a default operand policy instance", pool.getOperandPolicy());
+            assertNotNull("The factory didn't initialize a default pool config instance", pool.getPolicy());
+            assertNotNull("The factory didn't initialize a default node selection policy instance", pool.getNodeSelectionStrategy());
+            assertNotNull("The factory didn't initialize a default node suspension policy instance", pool.getNodeSuspensionStrategy());
+            assertNotNull("The factory didn't initialize a default connection validator policy instance", pool.getConnectionValidator());
         } finally {
             factoryBean.destroy();
         }
@@ -54,25 +56,33 @@ public class CommonsBackedPoolFactoryBeanIntegrationTest extends AbstractIntegra
     @Test
     public void testAfterProperties() throws Exception {
         OperandPolicy operandPolicy = new OperandPolicy();
-        LeastLoadedNodeSelectionStrategy nodeSelectionPolicy = new LeastLoadedNodeSelectionStrategy();
         CommonsBackedPool.Policy policy = new CommonsBackedPool.Policy();
+        LeastLoadedNodeSelectionStrategy nodeSelectionStrategy = new LeastLoadedNodeSelectionStrategy();
+        NoOpNodeSuspensionStrategy nodeSuspensionStrategy = new NoOpNodeSuspensionStrategy();
+        NoOpConnectionValidator connectionValidator = new NoOpConnectionValidator();
 
         CommonsBackedPoolFactoryBean factoryBean = new CommonsBackedPoolFactoryBean();
         factoryBean.setCluster(AbstractIntegrationTest.cluster);
         factoryBean.setKeyspace(AbstractIntegrationTest.KEYSPACE);
         factoryBean.setPolicy(policy);
         factoryBean.setOperandPolicy(operandPolicy);
-        factoryBean.setNodeSelectionStrategy(nodeSelectionPolicy);
+        factoryBean.setNodeSelectionStrategy(nodeSelectionStrategy);
+        factoryBean.setNodeSuspensionStrategy(nodeSuspensionStrategy);
+        factoryBean.setConnectionValidator(connectionValidator);
 
         assertNull("The factory should not have created the pool at this point", factoryBean.getObject());
 
         try {
             factoryBean.afterPropertiesSet();
 
-            assertNotNull("The factory didn't initialize the pool", factoryBean.getObject());
-            assertTrue("The factory didn't use the provided operand policy instance", operandPolicy == factoryBean.getOperandPolicy());
-            assertTrue("The factory didn't use the provided config instance", policy == factoryBean.getPolicy());
-            assertTrue("The factory didn't use the provided node selection instance", nodeSelectionPolicy == factoryBean.getNodeSelectionStrategy());
+            CommonsBackedPool pool = (CommonsBackedPool) factoryBean.getObject();
+            assertNotNull("The factory didn't initialize the pool", pool);
+            assertTrue("The factory didn't use the provided operand policy instance", operandPolicy == pool.getOperandPolicy());
+            assertTrue("The factory didn't use the provided config instance", policy == pool.getPolicy());
+            assertTrue("The factory didn't use the provided config instance", cluster == pool.getCluster());
+            assertTrue("The factory didn't use the provided node selection instance", nodeSelectionStrategy == pool.getNodeSelectionStrategy());
+            assertTrue("The factory didn't use the provided node suspension instance", nodeSuspensionStrategy == pool.getNodeSuspensionStrategy());
+            assertTrue("The factory didn't use the provided connection validator instance", connectionValidator == pool.getConnectionValidator());
         } finally {
             factoryBean.destroy();
         }

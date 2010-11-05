@@ -53,7 +53,7 @@ public class Cluster {
             logger.debug("Dynamic node discovery is disabled, using {} as a static list of nodes", Arrays.toString(nodes));
         } else {
             logger.debug("Dynamic node discovery is enabled, detecting initial list of nodes from {}", Arrays.toString(nodes));
-            this.nodes = refreshInternal();
+            refresh();
         }
 	}
 
@@ -96,7 +96,7 @@ public class Cluster {
                 nodes[i] = new Node(hostAddress, getConnectionConfig());
             }
 
-            return Arrays.copyOf(nodes, nodes.length);
+            return nodes;
         } finally {
             lockRead.unlock();
         }
@@ -104,12 +104,22 @@ public class Cluster {
 
     /**
      * Refresh the current list of nodes.
+     * @param keyspace optional keyspace name used to obtain the node ring
      */
-    public void refresh() {
+    public void refresh(String keyspace) {
         if (!dynamicNodeDiscovery)
             return;
 
-        String[] latestNodes = refreshInternal();
+        String[] latestNodes;
+        try {
+            if (keyspace != null)
+                latestNodes = refreshInternal(keyspace);
+            else
+                latestNodes = refreshInternal();
+        } catch (Exception e) {
+            logger.error("Failed to discover nodes dynamically, using existing list of nodes.  See cause for details...", e);
+            return;
+        }
 
         try {
             lockWrite.lock();
@@ -120,53 +130,58 @@ public class Cluster {
     }
 
     /**
+     * Refresh the current list of nodes.
+     */
+    public void refresh() {
+        refresh(null);
+    }
+
+    /**
 	 * Refresh the snapshot of the list of nodes currently believed to exist in the Cassandra cluster.
      * @return the list of nodes
 	 */
-	private String[] refreshInternal() {
-		KeyspaceManager manager = Pelops.createKeyspaceManager(this);
-
-        try {
-            KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
-            List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
-            Iterator<KsDef> k = keyspaces.iterator();
-            KsDef appKeyspace = null;
-            while (k.hasNext()) {
-                KsDef keyspace = k.next();
-                if (!keyspace.getName().equals("system")) {
-                    appKeyspace = keyspace;
-                    break;
-                }
+	private String[] refreshInternal() throws Exception {
+        KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
+        List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
+        Iterator<KsDef> k = keyspaces.iterator();
+        KsDef appKeyspace = null;
+        while (k.hasNext()) {
+            KsDef keyspace = k.next();
+            if (!keyspace.getName().equals("system")) {
+                appKeyspace = keyspace;
+                break;
             }
-            if (appKeyspace == null)
-                throw new Exception("Cannot obtain a node list from a ring mapping. No keyspaces are defined for this cluster.");
-
-            logger.debug("Fetching nodes using keyspace '{}'", appKeyspace.getName());
-            List<TokenRange> mappings = manager.getKeyspaceRingMappings(appKeyspace.getName());
-            Set<String> clusterNodes = new HashSet<String>();
-            for (TokenRange tokenRange : mappings) {
-                List<String> endPointList = tokenRange.getEndpoints();
-                clusterNodes.addAll(endPointList);
-            }
-
-            Iterator<String> iterator = clusterNodes.iterator();
-            while (iterator.hasNext()) {
-                String node = iterator.next();
-                logger.debug("Checking node '{}' against node filter", node);
-                if (!nodeFilter.accept(node)) {
-                    logger.debug("Removing node '{}' as directed by node filter", node);
-                    iterator.remove();
-                }
-            }
-
-            String[] nodes = clusterNodes.toArray(new String[clusterNodes.size()]);
-            logger.debug("Final set of refreshed nodes: {}", Arrays.toString(nodes));
-
-            return nodes;
-        } catch (Exception e) {
-            logger.error("Failed to discover nodes dynamically.  See cause for details...", e);
-            return null;
         }
+        if (appKeyspace == null)
+            throw new Exception("Cannot obtain a node list from a ring mapping. No keyspaces are defined for this cluster.");
+
+        return refreshInternal(appKeyspace.getName());
+    }
+
+    private String[] refreshInternal(String keyspace) throws Exception {
+        KeyspaceManager manager = Pelops.createKeyspaceManager(this);
+        logger.debug("Fetching nodes using keyspace '{}'", keyspace);
+        List<TokenRange> mappings = manager.getKeyspaceRingMappings(keyspace);
+        Set<String> clusterNodes = new HashSet<String>();
+        for (TokenRange tokenRange : mappings) {
+            List<String> endPointList = tokenRange.getEndpoints();
+            clusterNodes.addAll(endPointList);
+        }
+
+        Iterator<String> iterator = clusterNodes.iterator();
+        while (iterator.hasNext()) {
+            String node = iterator.next();
+            logger.debug("Checking node '{}' against node filter", node);
+            if (!nodeFilter.accept(node)) {
+                logger.debug("Removing node '{}' as directed by node filter", node);
+                iterator.remove();
+            }
+        }
+
+        String[] nodes = clusterNodes.toArray(new String[clusterNodes.size()]);
+        logger.debug("Final set of refreshed nodes: {}", Arrays.toString(nodes));
+
+        return nodes;
     }
 
     /**

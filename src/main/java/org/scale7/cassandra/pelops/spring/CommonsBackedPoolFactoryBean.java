@@ -59,6 +59,7 @@ public class CommonsBackedPoolFactoryBean
     private OperandPolicy operandPolicy;
     private CommonsBackedPool.INodeSelectionStrategy nodeSelectionStrategy;
     private CommonsBackedPool.INodeSuspensionStrategy nodeSuspensionStrategy;
+    private CommonsBackedPool.IConnectionValidator connectionValidator;
 
     private IThriftPool thriftPool;
 
@@ -98,28 +99,11 @@ public class CommonsBackedPoolFactoryBean
         Assert.notNull(getCluster(), "The cluster property is required");
         Assert.notNull(getKeyspace(), "The keyspace property is required");
 
-        logger.info("Initializing Pelops pool for nodes {}", Arrays.toString(getCluster().getNodes()));
-
-        if (getPolicy() == null) {
-            logger.info("No configuration policy provided, using defaults");
-            setPolicy(new CommonsBackedPool.Policy());
-        }
-        if (getOperandPolicy() == null) {
-            logger.info("No operand policy provided, using default");
-            setOperandPolicy(new OperandPolicy());
-        }
-        if (getNodeSelectionStrategy() == null) {
-            logger.info("No node selection strategy specified, using {}", LeastLoadedNodeSelectionStrategy.class.getName());
-            setNodeSelectionStrategy(new LeastLoadedNodeSelectionStrategy());
-        }
-        if (getNodeSuspensionStrategy() == null) {
-            logger.info("No node suspension strategy specified, using {}", NoOpNodeSuspensionStrategy.class.getName());
-            setNodeSuspensionStrategy(new NoOpNodeSuspensionStrategy());
-        }
+        logger.info("Initializing Pelops pool keyspace {} for nodes {}", getKeyspace(), Arrays.toString(getCluster().getNodes()));
 
         this.thriftPool = new CommonsBackedPool(
-                getCluster(), getPolicy(), getOperandPolicy(), getKeyspace(), getNodeSelectionStrategy(),
-                getNodeSuspensionStrategy()
+                getCluster(), getKeyspace(), getPolicy(), getOperandPolicy(), getNodeSelectionStrategy(),
+                getNodeSuspensionStrategy(), getConnectionValidator()
         );
     }
 
@@ -181,5 +165,13 @@ public class CommonsBackedPoolFactoryBean
 
     public void setNodeSuspensionStrategy(CommonsBackedPool.INodeSuspensionStrategy nodeSuspensionStrategy) {
         this.nodeSuspensionStrategy = nodeSuspensionStrategy;
+    }
+
+    public CommonsBackedPool.IConnectionValidator getConnectionValidator() {
+        return connectionValidator;
+    }
+
+    public void setConnectionValidator(CommonsBackedPool.IConnectionValidator connectionValidator) {
+        this.connectionValidator = connectionValidator;
     }
 }

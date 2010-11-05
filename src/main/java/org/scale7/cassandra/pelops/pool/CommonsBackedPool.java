@@ -29,6 +29,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     private final INodeSelectionStrategy nodeSelectionStrategy;
     private final INodeSuspensionStrategy nodeSuspensionStrategy;
+    private final IConnectionValidator connectionValidator;
 
     private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
     private GenericKeyedObjectPool pool;
@@ -39,18 +40,59 @@ public class CommonsBackedPool extends ThriftPoolBase {
     /* running stats */
     private RunningStatistics statistics;
 
-    public CommonsBackedPool(Cluster cluster, Policy policy, OperandPolicy operandPolicy, String keyspace, INodeSelectionStrategy nodeSelectionStrategy, INodeSuspensionStrategy nodeSuspensionStrategy) {
-        this.cluster = cluster;
-        this.policy = policy;
-        this.operandPolicy = operandPolicy;
-        this.keyspace = keyspace;
+    /**
+     * Create a new instance with reasonable defaults.
+     * @param cluster the cluster this pool is pooling connections to
+     * @param keyspace the keyspace this pool is for
+     * @see #CommonsBackedPool(org.scale7.cassandra.pelops.Cluster, String, org.scale7.cassandra.pelops.pool.CommonsBackedPool.Policy,org.scale7.cassandra.pelops.OperandPolicy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSelectionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSuspensionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.IConnectionValidator)
+     */
+    public CommonsBackedPool(Cluster cluster, String keyspace) {
+        this(cluster, keyspace, new Policy(), new OperandPolicy());
+    }
 
-        this.nodeSelectionStrategy = nodeSelectionStrategy;
-        this.nodeSuspensionStrategy = nodeSuspensionStrategy;
+    /**
+     * Create a new instance with reasonable defaults.
+     * @param cluster the cluster this pool is pooling connections to
+     * @param keyspace the keyspace this pool is for
+     * @param policy the pool config
+     * @param operandPolicy the operand config
+     * @see #CommonsBackedPool(org.scale7.cassandra.pelops.Cluster, String, org.scale7.cassandra.pelops.pool.CommonsBackedPool.Policy,org.scale7.cassandra.pelops.OperandPolicy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSelectionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSuspensionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.IConnectionValidator)
+     */
+    public CommonsBackedPool(Cluster cluster, String keyspace, Policy policy, OperandPolicy operandPolicy) {
+        this(cluster, keyspace, policy, operandPolicy, null, null, null);
+    }
+
+    /**
+     * Create a new instance of the pool.
+     * @param cluster the cluster this pool is pooling connections to
+     * @param keyspace the keyspace this pool is for
+     * @param policy the pool config
+     * @param operandPolicy the operand config
+     * @param nodeSelectionStrategy the node selection strategy (if null then {@link org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy} is used)
+     * @param nodeSuspensionStrategy the node suspend strategy (if null then {@link org.scale7.cassandra.pelops.pool.NoOpNodeSuspensionStrategy} is used)
+     * @param connectionValidator validator used to validate idle connections (if null then {@link org.scale7.cassandra.pelops.pool.DescribeVersionConnectionValidator} is used)
+     */
+    public CommonsBackedPool(Cluster cluster, String keyspace, Policy policy, OperandPolicy operandPolicy, INodeSelectionStrategy nodeSelectionStrategy, INodeSuspensionStrategy nodeSuspensionStrategy, IConnectionValidator connectionValidator) {
+        if (cluster == null) throw new IllegalArgumentException("cluster is a required argument");
+        if (keyspace == null) throw new IllegalArgumentException("keyspace is a required argument");
+        this.cluster = cluster;
+        this.keyspace = keyspace;
+        
+        this.policy = policy != null ? policy : new Policy();
+        this.operandPolicy = operandPolicy != null ? operandPolicy : new OperandPolicy();
+
+        logger.info("Initialising pool configuration policy: {}", this.policy.toString());
+
+        this.nodeSelectionStrategy = nodeSelectionStrategy != null ? nodeSelectionStrategy : new LeastLoadedNodeSelectionStrategy();
+        logger.info("Initialising pool node selection strategy: {}", this.nodeSelectionStrategy);
+
+        this.nodeSuspensionStrategy = nodeSuspensionStrategy != null ? nodeSuspensionStrategy : new NoOpNodeSuspensionStrategy();
+        logger.info("Initialising pool node suspension strategy: {}", this.nodeSuspensionStrategy);
+
+        this.connectionValidator = connectionValidator != null ? connectionValidator : new DescribeVersionConnectionValidator();
+        logger.info("Initialising pool connection validator: {}", this.connectionValidator);
 
         this.statistics = new RunningStatistics();
-
-        logger.info("Initialising pool configuration policy: {}", policy.toString());
 
         configureBackingPool();
 
@@ -66,6 +108,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
     private void configureScheduledTasks() {
         if (policy.getTimeBetweenScheduledTaskRunsMillis() > 0) {
+            if (Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS >= policy.getTimeBetweenScheduledTaskRunsMillis()) {
+                logger.warn("Setting the scheduled tasks to run less than every {} milliseconds is not a good idea...", Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS);
+            }
+
             logger.info("Configuring scheduled tasks to run every {} milliseconds", policy.getTimeBetweenScheduledTaskRunsMillis());
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
@@ -109,7 +155,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
         pool.setMaxIdle(policy.getMaxIdlePerNode());
         pool.setMaxTotal(policy.getMaxTotal());
         pool.setTimeBetweenEvictionRunsMillis(-1); // we don't want to eviction thread running
-        pool.setTestOnReturn(true); // in case the connection is corrupt
+        pool.setTestWhileIdle(policy.isTestConnectionsWhileIdle());
     }
 
     protected void runScheduledTasks() {
@@ -136,7 +182,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
             statistics.nodesSuspended.set(nodesSuspended);
 
             try {
-                logger.debug("Evicting idle nodes based on configuration rules");
+                logger.debug("Validating and possibly evicting idle connections based on configuration rules");
                 pool.evict();
             } catch (Exception e) {
                 // do nothing
@@ -146,7 +192,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     private void handleClusterRefresh() {
-        cluster.refresh();
+        cluster.refresh(getKeyspace());
         Cluster.Node[] currentNodes = cluster.getNodes();
         logger.debug("Determining which nodes need to be added and removed based on latest nodes list");
         // figure out which of the nodes are new
@@ -216,11 +262,11 @@ public class CommonsBackedPool extends ThriftPoolBase {
             if (timeout == -1) {
                 // first run through calc the timeout for the next loop
                 // (this makes debugging easier)
-                timeout = getConfig().getMaxWaitForConnection() > 0 ?
-                        System.currentTimeMillis() + getConfig().getMaxWaitForConnection() :
+                timeout = getPolicy().getMaxWaitForConnection() > 0 ?
+                        System.currentTimeMillis() + getPolicy().getMaxWaitForConnection() :
                         Long.MAX_VALUE;
             } else if (timeout < System.currentTimeMillis()) {
-                logger.debug("Max time for connection exceeded");
+                logger.debug("Max wait time for connection exceeded");
                 break;
             }
 
@@ -231,7 +277,7 @@ public class CommonsBackedPool extends ThriftPoolBase {
                 try {
                     Thread.sleep(DEFAULT_WAIT_PERIOD);
                 } catch (InterruptedException e) {
-                    // do nothing
+                    Thread.currentThread().interrupt();
                 }
                 continue;
             }
@@ -275,11 +321,18 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     protected void releaseConnection(PooledConnection connection) {
-        logger.debug("Returning connection '{}'", connection);
         try {
-            pool.returnObject(connection.getNode().getAddress(), connection);
             statistics.connectionsActive.decrementAndGet();
             reportConnectionReleased(connection.getNode().getAddress());
+
+            if (connection.isCorrupt() || !connection.isOpen()) {
+                logger.debug("Returned connection '{}' has been closed or is marked as corrupt", connection);
+                reportConnectionCorrupted(connection.getNode().getAddress());
+                pool.invalidateObject(connection.getNode().getAddress(), connection);
+            } else {
+                logger.debug("Returning connection '{}'", connection);
+                pool.returnObject(connection.getNode().getAddress(), connection);
+            }
         } catch (Exception e) {
             // do nothing
         }
@@ -288,12 +341,21 @@ public class CommonsBackedPool extends ThriftPoolBase {
     @Override
     public void shutdown() {
         if (executorService != null) {
-            logger.debug("Terminating background thread...");
+            logger.info("Terminating background thread...");
             executorService.shutdownNow();
+            while (executorService.isTerminated()) {
+                try {
+                    if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+                        logger.info("Still waiting for background thread to terminate...");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
 
         try {
-            logger.debug("Closing pooled connections...");
+            logger.info("Closing pooled connections...");
             pool.close();
         } catch (Exception e) {
             logger.error("Failed to close pool", e);
@@ -310,8 +372,24 @@ public class CommonsBackedPool extends ThriftPoolBase {
         return keyspace;
     }
 
-    public Policy getConfig() {
+    public Policy getPolicy() {
         return policy;
+    }
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public INodeSelectionStrategy getNodeSelectionStrategy() {
+        return nodeSelectionStrategy;
+    }
+
+    public INodeSuspensionStrategy getNodeSuspensionStrategy() {
+        return nodeSuspensionStrategy;
+    }
+
+    public IConnectionValidator getConnectionValidator() {
+        return connectionValidator;
     }
 
     /**
@@ -374,12 +452,16 @@ public class CommonsBackedPool extends ThriftPoolBase {
     }
 
     public static class Policy {
+        private static final int DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 60;
+        private static final int MIN_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 10;
+
         private int maxActivePerNode = 20;
         private int maxTotal = -1;
         private int maxIdlePerNode = 10;
         private int minIdlePerNode = 10;
         private int maxWaitForConnection = 1000;
-        private int timeBetweenScheduledTaskRunsMillis = 1000 * 60;
+        private int timeBetweenScheduledTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
+        private boolean testConnectionsWhileIdle = true;
 
         public Policy() {
         }
@@ -400,6 +482,9 @@ public class CommonsBackedPool extends ThriftPoolBase {
             this.maxActivePerNode = maxActivePerNode;
         }
 
+        /**
+         * @see #setMaxActivePerNode(int)
+         */
         public int getMaxIdlePerNode() {
             return maxIdlePerNode;
         }
@@ -486,6 +571,22 @@ public class CommonsBackedPool extends ThriftPoolBase {
          */
         public void setTimeBetweenScheduledTaskRunsMillis(int timeBetweenScheduledTaskRunsMillis) {
             this.timeBetweenScheduledTaskRunsMillis = timeBetweenScheduledTaskRunsMillis;
+        }
+
+        /**
+         * @see #setTestConnectionsWhileIdle(boolean) 
+         */
+        public boolean isTestConnectionsWhileIdle() {
+            return testConnectionsWhileIdle;
+        }
+
+        /**
+         * When true, connections will be validated by scheduled tasks thread (if enabled). If an connection fails to
+         * validate, it will be dropped from the pool.
+         * @param testConnectionsWhileIdle true if enabled, otherwise false
+         */
+        public void setTestConnectionsWhileIdle(boolean testConnectionsWhileIdle) {
+            this.testConnectionsWhileIdle = testConnectionsWhileIdle;
         }
 
         @Override
@@ -659,12 +760,10 @@ public class CommonsBackedPool extends ThriftPoolBase {
         public boolean validateObject(Object key, Object obj) {
             String nodeAddress = (String) key;
             PooledConnection connection = (PooledConnection) obj;
-            if (connection.isCorrupt() || !connection.isOpen()) {
-                logger.debug("Connection '{}' is corrupt or no longer open, invalidating...", connection);
-                return false;
-            } else {
-                return true;
-            }
+
+            logger.debug("Validating connection '{}'", connection);
+
+            return connectionValidator.validate(connection);
         }
 
         @Override
@@ -673,11 +772,6 @@ public class CommonsBackedPool extends ThriftPoolBase {
 
         @Override
         public void passivateObject(Object key, Object obj) throws Exception {
-            String nodeAddress = (String) key;
-            PooledConnection connection = (PooledConnection) obj;
-
-            if (connection.isCorrupt())
-                reportConnectionCorrupted(nodeAddress);
         }
     }
 
@@ -788,5 +882,20 @@ public class CommonsBackedPool extends ThriftPoolBase {
          *         longer considered suspended)
          */
         boolean isSuspended();
+    }
+
+    /**
+     * Interface used to define how a connection is validated while idle.
+     *
+     * @see INodeSuspensionStrategy
+     */
+    public static interface IConnectionValidator {
+        /**
+         * Used to indicate if a connection is valid.
+         *
+         * @param connection the connection
+         * @return true if the connection is valid, otherwise false
+         */
+        boolean validate(PooledConnection connection);
     }
 }
