@@ -598,6 +598,8 @@ public class CommonsBackedPool extends ThriftPoolBase {
             sb.append(", maxIdlePerNode=").append(maxIdlePerNode);
             sb.append(", minIdlePerNode=").append(minIdlePerNode);
             sb.append(", maxWaitForConnection=").append(maxWaitForConnection);
+            sb.append(", testConnectionsWhileIdle=").append(testConnectionsWhileIdle);
+            sb.append(", timeBetweenScheduledTaskRunsMillis=").append(timeBetweenScheduledTaskRunsMillis);
             sb.append('}');
             return sb.toString();
         }
