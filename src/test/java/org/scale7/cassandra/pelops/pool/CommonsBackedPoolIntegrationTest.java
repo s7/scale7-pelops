@@ -1,13 +1,11 @@
 package org.scale7.cassandra.pelops.pool;
 
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.scale7.cassandra.pelops.OperandPolicy;
-import org.scale7.cassandra.pelops.Selector;
-import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
-import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -17,12 +15,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.sun.tools.internal.ws.wsdl.parser.Util.fail;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
+import org.apache.cassandra.thrift.CfDef;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.scale7.cassandra.pelops.OperandPolicy;
+import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
+import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 /**
  * Tests the {@link CommonsBackedPool} class.
