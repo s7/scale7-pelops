@@ -47,6 +47,7 @@ import java.util.Arrays;
  * </pre>
  * <br/>
  */
+@Deprecated
 public class CachePerNodePoolFactoryBean
         implements FactoryBean<IThriftPool>, InitializingBean, DisposableBean {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(CachePerNodePoolFactoryBean.class);

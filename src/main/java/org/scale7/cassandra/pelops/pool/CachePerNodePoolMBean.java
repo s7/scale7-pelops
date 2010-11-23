@@ -2,7 +2,8 @@ package org.scale7.cassandra.pelops.pool;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public interface CachePerNodePoolMXBean {
+@Deprecated
+public interface CachePerNodePoolMBean {
     String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops:type=CachePerNodePool";
 
     long getGetConnCount();

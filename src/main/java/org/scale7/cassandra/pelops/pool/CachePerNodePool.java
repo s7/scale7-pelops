@@ -30,9 +30,10 @@ import org.slf4j.Logger;
  * detect response times in order to further improve connection distribution.
  *
  * @author dominicwilliams
- *
+ * @deprecated Use {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool} instead
  */
-public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePoolMXBean {
+@Deprecated
+public class CachePerNodePool extends ThriftPoolBase implements CachePerNodePoolMBean {
 
 	private static final Logger logger = SystemProxy.getLoggerFromFactory(CachePerNodePool.class);
 

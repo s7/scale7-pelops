@@ -3,6 +3,7 @@ package org.scale7.cassandra.pelops;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.scale7.cassandra.pelops.pool.CachePerNodePool;
+import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
@@ -21,7 +22,22 @@ public class Pelops {
 	 * @param keyspace				The keyspace in the Cassandra cluster against which pool operations will apply
 	 */
 	public static void addPool(String poolName, Cluster cluster, String keyspace) {
-		addPool(poolName, cluster, keyspace, new OperandPolicy(), new CachePerNodePool.Policy());
+        IThriftPool pool = new CommonsBackedPool(cluster, keyspace);
+		addPool(poolName, pool);
+	}
+
+	/**
+	 * Add a new Thrift connection pool for a specific cluster and keyspace. The name given to the pool is later used
+	 * when creating operands such as <code>Mutator</code> and <code>Selector</code>.
+	 * @param poolName				A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
+     * @param cluster				The Cassandra cluster that network connections will be made to
+     * @param keyspace				The keyspace in the Cassandra cluster against which pool operations will apply
+     * @param policy                The configuration used by the pool
+     * @param operandPolicy         The configuration used by the {@link org.scale7.cassandra.pelops.Operand}
+     */
+	public static void addPool(String poolName, Cluster cluster, String keyspace, CommonsBackedPool.Policy policy, OperandPolicy operandPolicy) {
+        IThriftPool pool = new CommonsBackedPool(cluster, keyspace, policy, operandPolicy);
+		addPool(poolName, pool);
 	}
 
     /**
@@ -32,7 +48,9 @@ public class Pelops {
 	 * @param keyspace				The keyspace in the Cassandra cluster against which pool operations will apply
      * @param operandPolicy		    Policy for behaviour of operations made by operands e.g. max operation retries
      * @param poolPolicy            Policy for behaviour of pool e.g. target cached connection count
+     * @deprecated Use the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool}
 	 */
+    @Deprecated
 	public static void addPool(String poolName, Cluster cluster, String keyspace, OperandPolicy operandPolicy, CachePerNodePool.Policy poolPolicy) {
 		CachePerNodePool newPool = new CachePerNodePool(cluster, keyspace, operandPolicy, poolPolicy);
         addPool(poolName, newPool);
