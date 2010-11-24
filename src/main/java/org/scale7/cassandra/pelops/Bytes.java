@@ -13,7 +13,7 @@ import java.util.*;
  * <p>In an effort to provide a very stable and well tested marshalling strategy
  * this class uses the various methods available on {@link java.nio.ByteBuffer} to perform serialization.  The exceptions
  * to this are the UUID and String methods (see their javadoc comments for details).</p>
- *
+ * <p/>
  * <b>Note</b>: Instances of this class should *not* be considered thread safe.
  */
 public class Bytes {
@@ -40,7 +40,6 @@ public class Bytes {
     static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final ByteBuffer bytes;
-    private final int position;
     private int hashCode = -1;
 
     /**
@@ -59,14 +58,11 @@ public class Bytes {
      * @param bytes the bytes
      */
     public Bytes(ByteBuffer bytes) {
-        this.bytes = bytes;
-
-        // mark the point to reset to
-        // could use mark/reset but want to avoid making changes to the byte buffer instance
-        if (!isNull())
-            position = this.bytes.position();
-        else
-            position = -1;
+        if (bytes != null) {
+            this.bytes = bytes.duplicate();
+            this.bytes.mark();
+        } else
+            this.bytes = null;
     }
 
     /**
@@ -88,7 +84,7 @@ public class Bytes {
     public String toString() {
         if (isNull()) return null;
 
-        bytes.position(position);
+        bytes.reset();
         return Arrays.toString(Arrays.copyOfRange(bytes.array(), bytes.position(), bytes.limit()));
     }
 
@@ -158,6 +154,16 @@ public class Bytes {
      * @return the Bytes instance
      */
     public static Bytes fromBytes(byte[] value) {
+        return fromByteArray(value);
+    }
+
+    /**
+     * Creates an instance based on the provided byte array.
+     *
+     * @param value the value
+     * @return the Bytes instance
+     */
+    public static Bytes fromByteArray(byte[] value) {
         return new Bytes(value);
     }
 
@@ -460,12 +466,12 @@ public class Bytes {
      */
     public char toChar() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getChar();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -490,15 +496,15 @@ public class Bytes {
      */
     public byte[] toByteArray() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return Arrays.copyOfRange(this.bytes.array(), this.bytes.position(), this.bytes.limit());
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
-    
+
     /**
      * Converts the backing array to the appropriate object instance handling nulls.
      *
@@ -520,12 +526,12 @@ public class Bytes {
      */
     public byte toByte() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.get();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -550,12 +556,12 @@ public class Bytes {
      */
     public long toLong() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getLong();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -580,12 +586,12 @@ public class Bytes {
      */
     public int toInt() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getInt();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -610,12 +616,12 @@ public class Bytes {
      */
     public short toShort() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getShort();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -640,12 +646,12 @@ public class Bytes {
      */
     public double toDouble() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getDouble();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -670,12 +676,12 @@ public class Bytes {
      */
     public float toFloat() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.getFloat();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -700,12 +706,12 @@ public class Bytes {
      */
     public boolean toBoolean() throws IllegalStateException {
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return this.bytes.get() != BOOLEAN_FALSE;
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -719,7 +725,7 @@ public class Bytes {
         if (isNull()) return null;
 
         try {
-            this.bytes.position(position);
+            bytes.reset();
             long msb = this.bytes.getLong();
             long lsb = this.bytes.getLong();
 
@@ -727,7 +733,7 @@ public class Bytes {
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -741,7 +747,7 @@ public class Bytes {
         if (isNull()) return null;
 
         try {
-            this.bytes.position(position);
+            bytes.reset();
             long time = this.bytes.getLong();
             long clockSeqAndNode = this.bytes.getLong();
 
@@ -749,13 +755,13 @@ public class Bytes {
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
     /**
      * Converts the backing array to the appropriate object instance handling nulls.
-     *
+     * <p/>
      * <p>Note: we could potentially depend on the {@link org.apache.cassandra.utils.ByteBufferUtil#string(java.nio.ByteBuffer, java.nio.charset.Charset)}.
      * Is it a public API?
      *
@@ -765,10 +771,10 @@ public class Bytes {
         if (isNull()) return null;
 
         try {
-            this.bytes.position(position);
+            bytes.reset();
             return new String(this.bytes.array(), this.bytes.position(), this.bytes.remaining(), UTF8);
         } finally {
-            this.bytes.position(position);
+            this.bytes.reset();
         }
     }
 
@@ -877,11 +883,12 @@ public class Bytes {
      * @return the underlying byte array of the instance or null
      */
     public static ByteBuffer nullSafeGet(Bytes bytes) {
-        return bytes == null ? null : bytes.getBytes(); 
+        return bytes == null ? null : bytes.getBytes();
     }
 
     /**
      * Helper used to determine if the underlying {@link ByteBuffer} is null.
+     *
      * @return true if null, otherwise false
      */
     public boolean isNull() {
