@@ -3,7 +3,6 @@ package org.scale7.cassandra.pelops;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.cassandra.thrift.*;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
@@ -646,6 +645,40 @@ public class Selector extends Operand {
     }
 
     /**
+     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
+     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of super columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<Column> iterateColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int batchSize, final ConsistencyLevel cLevel) {
+        return new ColumnIterator(this, columnFamily, rowKey, startBeyondName, reversed, batchSize, cLevel);
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
+     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of super columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<Column> iterateColumnsFromRow(final String columnFamily, final String rowKey, final String startBeyondName, final boolean reversed, final int batchSize, final ConsistencyLevel cLevel) {
+        return iterateColumnsFromRow(columnFamily, Bytes.fromUTF8(rowKey), Bytes.fromUTF8(startBeyondName), reversed, batchSize, cLevel);
+    }
+
+    /**
      * Retrieve a page of super columns composed from a segment of the sequence of super columns in a row.
      * @param columnFamily                  The name of the column family containing the super columns
      * @param rowKey                        The key of the row
@@ -735,6 +768,23 @@ public class Selector extends Operand {
      */
     public Iterator<SuperColumn> iterateSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int batchSize, final ConsistencyLevel cLevel) {
         return new SuperColumnIterator(this, columnFamily, rowKey, startBeyondName, reversed, batchSize, cLevel);
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
+     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of super columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<SuperColumn> iterateSuperColumnsFromRow(final String columnFamily, String rowKey, String startBeyondName, final boolean reversed, final int batchSize, final ConsistencyLevel cLevel) {
+        return iterateSuperColumnsFromRow(columnFamily, Bytes.fromUTF8(rowKey), Bytes.fromUTF8(startBeyondName), reversed, batchSize, cLevel);
     }
 
     /**

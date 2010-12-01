@@ -331,8 +331,6 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void testIterateSuperColumnsFromRowUsingOnlyNext() {
-        for (char letter = 'A'; letter <= 'Z'; letter++) {
-        }
         Iterator<SuperColumn> iterator = createSelector().iterateSuperColumnsFromRow(SCF, fromLong(50l), null, false, 10, ConsistencyLevel.ONE);
 
         char letter = 'A';
@@ -355,6 +353,50 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
             // expected
         }
     }
+
+    @Test
+    public void testIterateColumnsFromRow() {
+        Iterator<Column> iterator = createSelector().iterateColumnsFromRow(CF, fromLong(50l), null, false, 10, ConsistencyLevel.ONE);
+
+        char letter = 'a';
+        int count = 0;
+        while (iterator.hasNext()) {
+            Column column = iterator.next();
+
+            assertEquals("Wrong column value returned", letter, fromBytes(column.getName()).toChar());
+
+            letter++;
+            count++;
+        }
+
+        assertEquals("Not all columns were processed", 26, count);
+    }
+
+    @Test
+    public void testIterateColumnsFromRowUsingOnlyNext() {
+        Iterator<Column> iterator = createSelector().iterateColumnsFromRow(CF, fromLong(50l), null, false, 10, ConsistencyLevel.ONE);
+
+        char letter = 'a';
+        int count = 0;
+        for (int i = 0; i < 26; i++) {
+            Column column = iterator.next();
+
+            assertEquals("Wrong column value returned", letter, fromBytes(column.getName()).toChar());
+
+            letter++;
+            count++;
+        }
+
+        assertEquals("Not all columns were processed", 26, count);
+
+        try {
+            iterator.next();
+            fail("The iterator should have thrown a NoSuchElementException exception");
+        } catch (NoSuchElementException e) {
+            // expected
+        }
+    }
+
 
     private void verifySuperColumns(char[] expectedColumns, List<SuperColumn> superColumns) {
         assertEquals("Wrong number of super columns returned", expectedColumns.length, superColumns.size());
