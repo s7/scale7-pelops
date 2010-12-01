@@ -57,8 +57,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param column                    The value of the column
      */
-    public void writeColumn(String colFamily, String rowKey, Column column) {
+    public Mutator writeColumn(String colFamily, String rowKey, Column column) {
         writeColumn(colFamily, fromUTF8(rowKey), column);
+        return this;
     }
 
     /**
@@ -67,8 +68,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param column                    The value of the column
      */
-    public void writeColumn(String colFamily, Bytes rowKey, Column column) {
+    public Mutator writeColumn(String colFamily, Bytes rowKey, Column column) {
         writeColumn(colFamily, rowKey, column, this.deleteIfNull);
+        return this;
     }
 
     /**
@@ -81,7 +83,7 @@ public class Mutator extends Operand {
      *                                  {@link org.apache.cassandra.thrift.Column#isSetValue()} method) then issue a
      *                                  {@link #deleteColumn(String, Bytes, Bytes) delete} instead.
      */
-    public void writeColumn(String colFamily, Bytes rowKey, Column column, boolean deleteIfNullValue) {
+    public Mutator writeColumn(String colFamily, Bytes rowKey, Column column, boolean deleteIfNullValue) {
         if (!deleteIfNullValue) {
             writeColumnInternal(colFamily, rowKey, column);
         } else {
@@ -91,6 +93,7 @@ public class Mutator extends Operand {
                 deleteColumn(colFamily, rowKey, Bytes.fromBytes(column.getName()));
             }
         }
+        return this;
     }
 
     private void writeColumnInternal(String colFamily, Bytes rowKey, Column column) {
@@ -107,8 +110,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param columns                   The list of columns to write
      */
-    public void writeColumns(String colFamily, String rowKey, List<Column> columns) {
+    public Mutator writeColumns(String colFamily, String rowKey, List<Column> columns) {
         writeColumns(colFamily, Bytes.fromUTF8(rowKey), columns);
+        return this;
     }
 
     /**
@@ -117,10 +121,11 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param columns                   The list of columns to write
      */
-    public void writeColumns(String colFamily, Bytes rowKey, List<Column> columns) {
+    public Mutator writeColumns(String colFamily, Bytes rowKey, List<Column> columns) {
         for (Column column : columns) {
             writeColumn(colFamily, rowKey, column);
         }
+        return this;
     }
 
     /**
@@ -134,10 +139,11 @@ public class Mutator extends Operand {
      *                                  {@link org.apache.cassandra.thrift.Column#isSetValue()} method) then issue a
      *                                  {@link #deleteColumn(String, Bytes, Bytes) delete} instead.
      */
-    public void writeColumns(String colFamily, Bytes rowKey, List<Column> columns, boolean deleteIfNullValue) {
+    public Mutator writeColumns(String colFamily, Bytes rowKey, List<Column> columns, boolean deleteIfNullValue) {
         for (Column column : columns) {
             writeColumn(colFamily, rowKey, column, deleteIfNullValue);
         }
+        return this;
     }
 
     /**
@@ -148,8 +154,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String colFamily, String rowKey, String colName, Column subColumn) {
+    public Mutator writeSubColumn(String colFamily, String rowKey, String colName, Column subColumn) {
         writeSubColumn(colFamily, rowKey, fromUTF8(colName), subColumn);
+        return this;
     }
 
     /**
@@ -160,8 +167,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String colFamily, String rowKey, Bytes colName, Column subColumn) {
+    public Mutator writeSubColumn(String colFamily, String rowKey, Bytes colName, Column subColumn) {
         writeSubColumn(colFamily, Bytes.fromUTF8(rowKey), colName, subColumn);
+        return this;
     }
 
     /**
@@ -172,8 +180,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumn                 The sub-column
      */
-    public void writeSubColumn(String colFamily, Bytes rowKey, Bytes colName, Column subColumn) {
+    public Mutator writeSubColumn(String colFamily, Bytes rowKey, Bytes colName, Column subColumn) {
         writeSubColumns(colFamily, rowKey, colName, Arrays.asList(subColumn));
+        return this;
     }
 
     /**
@@ -183,8 +192,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String colFamily, String rowKey, String colName, List<Column> subColumns) {
+    public Mutator writeSubColumns(String colFamily, String rowKey, String colName, List<Column> subColumns) {
         writeSubColumns(colFamily, rowKey, fromUTF8(colName), subColumns);
+        return this;
     }
 
     /**
@@ -194,8 +204,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String colFamily, String rowKey, Bytes colName, List<Column> subColumns) {
+    public Mutator writeSubColumns(String colFamily, String rowKey, Bytes colName, List<Column> subColumns) {
         writeSubColumns(colFamily, fromUTF8(rowKey), colName, subColumns);
+        return this;
     }
 
     /**
@@ -205,8 +216,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column
      * @param subColumns                A list of the sub-columns to write
      */
-    public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
+    public Mutator writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
         writeSubColumns(colFamily, rowKey, colName, subColumns, this.deleteIfNull);
+        return this;
     }
 
     /**
@@ -221,7 +233,7 @@ public class Mutator extends Operand {
      *                                  call to {@link #deleteSubColumns(String, String, Bytes)} with the columns that
      *                                  have no values.
      */
-    public void writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns, boolean deleteIfNullValue) {
+    public Mutator writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns, boolean deleteIfNullValue) {
         if (!deleteIfNullValue) {
             writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
         } else {
@@ -252,6 +264,7 @@ public class Mutator extends Operand {
                 deleteSubColumns(colFamily, rowKey, colName, subColumnsWithoutValue);
             }
         }
+        return this;
     }
 
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
@@ -269,8 +282,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String colFamily, String rowKey, String colName) {
+    public Mutator deleteColumn(String colFamily, String rowKey, String colName) {
         deleteColumn(colFamily, rowKey, fromUTF8(colName));
+        return this;
     }
 
     /**
@@ -279,8 +293,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String colFamily, String rowKey, Bytes colName) {
+    public Mutator deleteColumn(String colFamily, String rowKey, Bytes colName) {
         deleteColumn(colFamily, Bytes.fromUTF8(rowKey), colName);
+        return this;
     }
 
     /**
@@ -289,8 +304,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colName                   The name of the column or super column to delete.
      */
-    public void deleteColumn(String colFamily, Bytes rowKey, Bytes colName) {
+    public Mutator deleteColumn(String colFamily, Bytes rowKey, Bytes colName) {
         deleteColumns(colFamily, rowKey, Arrays.asList(colName));
+        return this;
     }
 
     /**
@@ -299,8 +315,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String colFamily, String rowKey, Bytes... colNames) {
+    public Mutator deleteColumns(String colFamily, String rowKey, Bytes... colNames) {
         deleteColumns(colFamily, Bytes.fromUTF8(rowKey), Arrays.asList(colNames));
+        return this;
     }
 
     /**
@@ -309,8 +326,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String colFamily, Bytes rowKey, Bytes... colNames) {
+    public Mutator deleteColumns(String colFamily, Bytes rowKey, Bytes... colNames) {
         deleteColumns(colFamily, rowKey, Arrays.asList(colNames));
+        return this;
     }
 
     /**
@@ -319,11 +337,12 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String colFamily, String rowKey, String... colNames) {
+    public Mutator deleteColumns(String colFamily, String rowKey, String... colNames) {
         List<Bytes> colNameList = new ArrayList<Bytes>(colNames.length);
         for (String colName : colNames)
             colNameList.add(fromUTF8(colName));
         deleteColumns(colFamily, Bytes.fromUTF8(rowKey), colNameList);
+        return this;
     }
 
     /**
@@ -332,8 +351,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String colFamily, String rowKey, List<Bytes> colNames) {
+    public Mutator deleteColumns(String colFamily, String rowKey, List<Bytes> colNames) {
         deleteColumns(colFamily, Bytes.fromUTF8(rowKey), colNames);
+        return this;
     }
 
     /**
@@ -342,7 +362,7 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colNames                  The column and/or super column names to delete
      */
-    public void deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
+    public Mutator deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
         Deletion deletion = new Deletion(timestamp);
@@ -350,6 +370,7 @@ public class Mutator extends Operand {
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
         getMutationList(colFamily, rowKey).add(mutation);
+        return this;
     }
 
     /**
@@ -359,8 +380,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String colFamily, String rowKey, String colName, String subColName) {
+    public Mutator deleteSubColumn(String colFamily, String rowKey, String colName, String subColName) {
         deleteSubColumn(colFamily, rowKey, fromUTF8(colName), fromUTF8(subColName));
+        return this;
     }
 
     /**
@@ -370,8 +392,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String colFamily, String rowKey, Bytes colName, String subColName) {
+    public Mutator deleteSubColumn(String colFamily, String rowKey, Bytes colName, String subColName) {
         deleteSubColumn(colFamily, rowKey, colName, fromUTF8(subColName));
+        return this;
     }
 
     /**
@@ -381,8 +404,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String colFamily, String rowKey, String colName, Bytes subColName) {
+    public Mutator deleteSubColumn(String colFamily, String rowKey, String colName, Bytes subColName) {
         deleteSubColumn(colFamily, rowKey, fromUTF8(colName), subColName);
+        return this;
     }
 
     /**
@@ -392,8 +416,9 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String colFamily, String rowKey, Bytes colName, Bytes subColName) {
+    public Mutator deleteSubColumn(String colFamily, String rowKey, Bytes colName, Bytes subColName) {
         deleteSubColumn(colFamily, Bytes.fromUTF8(rowKey), colName, subColName);
+        return this;
     }
 
     /**
@@ -403,10 +428,11 @@ public class Mutator extends Operand {
      * @param colName                   The name of the super column to modify.
      * @param subColName                The name of the sub-column to delete.
      */
-    public void deleteSubColumn(String colFamily, Bytes rowKey, Bytes colName, Bytes subColName) {
+    public Mutator deleteSubColumn(String colFamily, Bytes rowKey, Bytes colName, Bytes subColName) {
         List<Bytes> subColNames = new ArrayList<Bytes>(1);
         subColNames.add(subColName);
         deleteSubColumns(colFamily, rowKey, colName, subColNames);
+        return this;
     }
 
     /**
@@ -416,8 +442,9 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String colFamily, String rowKey, String colName, String... subColNames) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, String colName, String... subColNames) {
         deleteSubColumns(colFamily, rowKey, fromUTF8(colName), subColNames);
+        return this;
     }
 
     /**
@@ -427,8 +454,9 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName, String... subColNames) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, Bytes colName, String... subColNames) {
         deleteSubColumns(colFamily, Bytes.fromUTF8(rowKey), colName, subColNames);
+        return this;
     }
 
     /**
@@ -438,11 +466,12 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete (empty value will result in all columns being removed)
      */
-    public void deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, String... subColNames) {
+    public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, String... subColNames) {
         List<Bytes> subColNamesList = new ArrayList<Bytes>(subColNames.length);
         for (String subColName : subColNames)
             subColNamesList.add(fromUTF8(subColName));
         deleteSubColumns(colFamily, rowKey, colName, subColNamesList);
+        return this;
     }
 
     /**
@@ -451,8 +480,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colName               	The name of the super column to modify
      */
-    public void deleteSubColumns(String colFamily, String rowKey, String colName) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, String colName) {
         deleteSubColumns(colFamily, fromUTF8(rowKey), fromUTF8(colName), (List<Bytes>) null);
+        return this;
     }
 
     /**
@@ -462,8 +492,9 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String colFamily, String rowKey, String colName, List<Bytes> subColNames) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, String colName, List<Bytes> subColNames) {
         deleteSubColumns(colFamily, fromUTF8(rowKey), fromUTF8(colName), subColNames);
+        return this;
     }
 
     /**
@@ -472,8 +503,9 @@ public class Mutator extends Operand {
      * @param rowKey                    The key of the row to modify
      * @param colName               	The name of the super column to modify
      */
-    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, Bytes colName) {
         deleteSubColumns(colFamily, fromUTF8(rowKey), colName, (List<Bytes>) null);
+        return this;
     }
 
     /**
@@ -483,8 +515,9 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String colFamily, String rowKey, Bytes colName, List<Bytes> subColNames) {
+    public Mutator deleteSubColumns(String colFamily, String rowKey, Bytes colName, List<Bytes> subColNames) {
         deleteSubColumns(colFamily, fromUTF8(rowKey), colName, subColNames);
+        return this;
     }
 
     /**
@@ -494,7 +527,7 @@ public class Mutator extends Operand {
      * @param colName               	The name of the super column to modify
      * @param subColNames               The sub-column names to delete
      */
-    public void deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
+    public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
         Deletion deletion = new Deletion(timestamp);
         deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
@@ -505,6 +538,7 @@ public class Mutator extends Operand {
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
         getMutationList(colFamily, rowKey).add(mutation);
+        return this;
     }
 
     /**
