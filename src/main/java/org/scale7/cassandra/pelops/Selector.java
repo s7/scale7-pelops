@@ -2,12 +2,8 @@ package org.scale7.cassandra.pelops;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.cassandra.thrift.*;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
@@ -722,6 +718,23 @@ public class Selector extends Operand {
             }
             return columns;
         }
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
+     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of super columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the super columns
+     * @param rowKey                        The key of the row
+     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending super column name order
+     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<SuperColumn> iterateSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int batchSize, final ConsistencyLevel cLevel) {
+        return new SuperColumnIterator(this, columnFamily, rowKey, startBeyondName, reversed, batchSize, cLevel);
     }
 
     /**

@@ -12,11 +12,7 @@ import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_L
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
@@ -311,6 +307,53 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         List<SuperColumn> superColumns = createSelector().getPageOfSuperColumnsFromRow(SCF, fromLong(50l), fromChar('V'), true, expectedColumns.length, ConsistencyLevel.ONE);
 
         verifySuperColumns(expectedColumns, superColumns);
+    }
+
+    @Test
+    public void testIterateSuperColumnsFromRow() {
+        for (char letter = 'A'; letter <= 'Z'; letter++) {
+        }
+        Iterator<SuperColumn> iterator = createSelector().iterateSuperColumnsFromRow(SCF, fromLong(50l), null, false, 10, ConsistencyLevel.ONE);
+
+        char letter = 'A';
+        int count = 0;
+        while (iterator.hasNext()) {
+            SuperColumn superColumn = iterator.next();
+
+            assertEquals("Wrong super column value returned", letter, fromBytes(superColumn.getName()).toChar());
+
+            letter++;
+            count++;
+        }
+
+        assertEquals("Not all super columns were processed", 26, count);
+    }
+
+    @Test
+    public void testIterateSuperColumnsFromRowUsingOnlyNext() {
+        for (char letter = 'A'; letter <= 'Z'; letter++) {
+        }
+        Iterator<SuperColumn> iterator = createSelector().iterateSuperColumnsFromRow(SCF, fromLong(50l), null, false, 10, ConsistencyLevel.ONE);
+
+        char letter = 'A';
+        int count = 0;
+        for (int i = 0; i < 26; i++) {
+            SuperColumn superColumn = iterator.next();
+
+            assertEquals("Wrong super column value returned", letter, fromBytes(superColumn.getName()).toChar());
+
+            letter++;
+            count++;
+        }
+
+        assertEquals("Not all super columns were processed", 26, count);
+
+        try {
+            iterator.next();
+            fail("The iterator should have thrown a NoSuchElementException exception");
+        } catch (NoSuchElementException e) {
+            // expected
+        }
     }
 
     private void verifySuperColumns(char[] expectedColumns, List<SuperColumn> superColumns) {
