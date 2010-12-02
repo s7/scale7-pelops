@@ -1,5 +1,9 @@
 package org.scale7.cassandra.pelops;
 
+/**
+ * @deprecated Use the methods available on {@link Bytes} class.
+ */
+@Deprecated
 public class NumberHelper {
 
 	public static final long toLong(byte[] b) {
