@@ -114,7 +114,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             JmxMBeanManager.getInstance().unregisterMBean(beanName);
         }
 
-        logger.warn("Registering MBean '{}'...", beanName);
+        logger.info("Registering MBean '{}'...", beanName);
         JmxMBeanManager.getInstance().registerMBean(this, beanName);
     }
 
