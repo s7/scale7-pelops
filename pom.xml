@@ -4,7 +4,7 @@
     <groupId>org.scale7</groupId>
     <artifactId>scale7-pelops</artifactId>
     <packaging>jar</packaging>
-    <version>0.912-0.7.0-SNAPSHOT</version>
+    <version>0.913-0.7.0-SNAPSHOT</version>
     <name>Pelops - A library for accessing the Cassandra database</name>
     <url>http://github.com/s7/pelops</url>
     <properties>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>apache-cassandra</artifactId>
-            <version>0.7.0-rc4</version>
+            <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>libthrift</groupId>
