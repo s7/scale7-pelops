@@ -162,7 +162,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         // make sure the data was written as expected
         Selector selector = createSelector();
         List<Column> persistedColumns = selector.getColumnsFromRow(
-                CF, rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
+                CF, rowKey, newColumnsPredicateAll(false), ConsistencyLevel.ONE
         );
 
         verifyColumns(columns, persistedColumns);
@@ -180,7 +180,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         // make sure the data was written as expected and that the appropriate columns have been deleted
         selector = createSelector();
         persistedColumns = selector.getColumnsFromRow(
-                CF, rowKey, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
+                CF, rowKey, newColumnsPredicateAll(false), ConsistencyLevel.ONE
         );
 
         verifyColumns(columns.subList(0, 1), persistedColumns);
@@ -227,7 +227,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         // make sure the data was written as expected
         Selector selector = createSelector();
         List<Column> persistedColumns = selector.getSubColumnsFromRow(
-                SCF, rowKey, columnName, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
+                SCF, rowKey, columnName, newColumnsPredicateAll(false), ConsistencyLevel.ONE
         );
 
         verifyColumns(columns, persistedColumns);
@@ -245,7 +245,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         // make sure the data was written as expected and that the appropriate columns have been deleted
         selector = createSelector();
         persistedColumns = selector.getSubColumnsFromRow(
-                SCF, rowKey, columnName, newColumnsPredicateAll(false, Integer.MAX_VALUE), ConsistencyLevel.ONE
+                SCF, rowKey, columnName, newColumnsPredicateAll(false), ConsistencyLevel.ONE
         );
 
         verifyColumns(columns.subList(0, 1), persistedColumns);
