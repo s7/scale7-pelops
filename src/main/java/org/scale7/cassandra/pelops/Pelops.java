@@ -66,6 +66,17 @@ public class Pelops {
         poolMap.put(poolName, thriftPool);
     }
 
+    /**
+     * Removes and shuts down a  previously added Thrift connection pool.
+     *
+     * @param poolName A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
+     */
+    public static void removePool(String poolName) {
+        logger.info("Pelops removes pool {}", poolName);
+        IThriftPool pool = poolMap.remove(poolName);
+        pool.shutdown();
+    }
+
 	/**
 	 * Shutdown Pelops. This proceeds by shutting down all connection pools.
 	 */
