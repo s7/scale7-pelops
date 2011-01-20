@@ -74,7 +74,8 @@ public class Pelops {
     public static void removePool(String poolName) {
         logger.info("Pelops removes pool {}", poolName);
         IThriftPool pool = poolMap.remove(poolName);
-        pool.shutdown();
+        if (pool != null) // avoid null pointers
+            pool.shutdown();
     }
 
 	/**
