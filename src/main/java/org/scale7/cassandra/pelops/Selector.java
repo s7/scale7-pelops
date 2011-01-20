@@ -558,16 +558,6 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    @Deprecated
-    public enum OrderType {
-        BytesType,
-        AsciiType,
-        UTF8Type,
-        LongType,
-        LexicalUUIDType,
-        TimeUUIDType
-    }
-
     /**
      * Retrieve a page of columns composed from a segment of the sequence of columns in a row.
      * @param columnFamily                  The column family containing the row
