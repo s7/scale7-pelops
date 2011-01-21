@@ -406,6 +406,18 @@ public class Bytes {
     }
 
     /**
+     * Creates an instance based on the provided value handling nulls.  If the provided value is not null then this method
+     * delegates to {@link #fromTimeUuid(long, long)} to perform the deserialization.
+     *
+     * @param value the value
+     * @return the instance or null if the value provided was null
+     * @see java.nio.ByteBuffer for details on long serializaion format
+     */
+    public static Bytes fromTimeUuid(UUID value) {
+        return value == null ? NULL : fromTimeUuid(value.toString());
+    }
+
+    /**
      * Creates an instance based on the provided value handling nulls.  If the provided value is not null then a new
      * instance of {@link com.eaio.uuid.UUID} is created and then
      * {@link #fromTimeUuid(long, long)} is called to perform the deserialization.

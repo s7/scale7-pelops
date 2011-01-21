@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.scale7.cassandra.pelops.pool.CachePerNodePool;
 import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
@@ -41,22 +40,6 @@ public class Pelops {
 	}
 
     /**
-	 * Add a new Thrift connection pool for a specific cluster and keyspace. The name given to the pool is later used
-	 * when creating operands such as <code>Mutator</code> and <code>Selector</code>.
-	 * @param poolName				A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
-	 * @param cluster				The Cassandra cluster that network connections will be made to
-	 * @param keyspace				The keyspace in the Cassandra cluster against which pool operations will apply
-     * @param operandPolicy		    Policy for behaviour of operations made by operands e.g. max operation retries
-     * @param poolPolicy            Policy for behaviour of pool e.g. target cached connection count
-     * @deprecated Use the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool}
-	 */
-    @Deprecated
-	public static void addPool(String poolName, Cluster cluster, String keyspace, OperandPolicy operandPolicy, CachePerNodePool.Policy poolPolicy) {
-		CachePerNodePool newPool = new CachePerNodePool(cluster, keyspace, operandPolicy, poolPolicy);
-        addPool(poolName, newPool);
-	}
-
-    /**
      * Add an already instantiated instance of {@link IThriftPool} to pelops.
      * @param poolName A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
      * @param thriftPool an instance of the {@link IThriftPool} interface
@@ -64,6 +47,18 @@ public class Pelops {
     public static void addPool(String poolName, IThriftPool thriftPool) {
         logger.info("Pelops adds new pool {}", poolName);
         poolMap.put(poolName, thriftPool);
+    }
+
+    /**
+     * Removes and shuts down a  previously added Thrift connection pool.
+     *
+     * @param poolName A name used to reference the pool e.g. "MainDatabase" or "LucandraIndexes"
+     */
+    public static void removePool(String poolName) {
+        logger.info("Pelops removes pool {}", poolName);
+        IThriftPool pool = poolMap.remove(poolName);
+        if (pool != null) // avoid null pointers
+            pool.shutdown();
     }
 
 	/**

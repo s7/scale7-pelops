@@ -1,89 +1,73 @@
 package org.scale7.cassandra.pelops;
 
+import org.joda.time.DateTime;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.UUID;
+
 public class UuidHelper {
+    /*
+      Magic number obtained from #cassandra's thobbs, who
+      claims to have stolen it from a Python library.
+    */
+    static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+
 	/**
-	 * Generate a new time UUID object
+	 * Generate a new time UUID insatnce.
 	 * @return							A new time UUID object
 	 */
-	public static java.util.UUID newTimeUuid()
-	{
+	public static java.util.UUID newTimeUuid() {
 		return java.util.UUID.fromString(new com.eaio.uuid.UUID().toString());
-	}
-	
-	/**
-	 * Generate a new time UUID in serialized form
-	 * @return							The serialized bytes of a new time UUID object
-     * @deprecated Use the methods available on {@link Bytes}
-	 */
-    @Deprecated
-	public static byte[] newTimeUuidBytes()
-	{
-		return timeUuidToBytes(newTimeUuid());
-	}
-
-	/**
-	 * Deserializes a TimeUUID from a byte array
-	 * @param uuid						The bytes of the time UUID
-	 * @return							The deserialized time UUID object
-     * @deprecated Use the methods available on {@link Bytes}
-	 */
-    @Deprecated
-	public static java.util.UUID timeUuidFromBytes( byte[] uuid )
-	{
-		long msb = 0;
-		long lsb = 0;
-		assert uuid.length == 16;
-		for (int i=0; i<8; i++)
-			msb = (msb << 8) | (uuid[i] & 0xff);
-		for (int i=8; i<16; i++)
-			lsb = (lsb << 8) | (uuid[i] & 0xff);
-		
-		com.eaio.uuid.UUID u = new com.eaio.uuid.UUID(msb,lsb);
-		
-		return java.util.UUID.fromString(u.toString());
-	}
-
-	/**
-	 * Serialize a time UUID into a byte array.
-	 * @param uuid						The time UUID to serialize
-	 * @return							The serialized bytes of the time UUID
-     * @deprecated Use the methods available on {@link Bytes}
-	 */
-    @Deprecated
-	public static byte[] timeUuidToBytes(java.util.UUID uuid)
-	{
-		long msb = uuid.getMostSignificantBits();
-		long lsb = uuid.getLeastSignificantBits();
-		
-		return uuidToBytes(msb, lsb);
 	}
 
     /**
-     * @deprecated Use the methods available on {@link Bytes}
+     * @see #nonUniqueTimeUuidForDate(long)
      */
-    @Deprecated
-	public static byte[] uuidToBytes(long msb, long lsb) {
-				
-		byte[] buffer = new byte[16];
+    public static java.util.UUID nonUniqueTimeUuidForDate(Date d) {
+        return nonUniqueTimeUuidForDate(d.getTime());
+    }
 
-		for (int i = 0; i < 8; i++) {
-			buffer[i] = (byte) (msb >>> 8 * (7 - i));
-		}
-		for (int i = 8; i < 16; i++) {
-			buffer[i] = (byte) (lsb >>> 8 * (7 - i));
-		}
+    /**
+     * @see #nonUniqueTimeUuidForDate(long)
+     */
+    public static java.util.UUID nonUniqueTimeUuidForDate(Calendar c) {
+        return nonUniqueTimeUuidForDate(c.getTime());
+    }
 
-		return buffer;
-	}
-	
-	/**
-	 * Convert a string representation of a time UUID into bytes
-	 * @param uuidStr					The string representation of the time UUID
-	 * @return							The serialized bytes of the represented time UUID object
-     * @deprecated Use the methods available on {@link Bytes}
-	 */
-    @Deprecated
-	public static byte[] timeUuidStringToBytes(String uuidStr) {
-		return timeUuidToBytes(java.util.UUID.fromString(uuidStr));
-	}
+    /**
+     * @see #nonUniqueTimeUuidForDate(long)
+     */
+    public static java.util.UUID nonUniqueTimeUuidForDate(DateTime d) {
+        return nonUniqueTimeUuidForDate(d.getMillis());
+    }
+
+    /**
+     * <p>This method is useful to create a <b>*non-unique*</b> TimeUUID instance from some time other than the present.
+     * For example, to use as the lower bound in a SlicePredicate to retrieve all columns whose TimeUUID comes
+     * after time X.
+     *
+     * <p><b>WARNING:</b> Never assume such a UUID is unique, use it only as a marker for a specific time.
+     * <p>Note: This method and it's doco is taken (almost verbatim) from the Cassandra WIKI
+     * (http://wiki.apache.org/cassandra/FAQ#working_with_timeuuid_in_java).
+     * @param millis Gets the milliseconds of the datetime instant from the Java epoch of 1970-01-01T00:00:00Z
+     * @return return
+     */
+    public static java.util.UUID nonUniqueTimeUuidForDate(long millis) {
+        long time = millis * 10000 + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
+        long timeLow = time &       0xffffffffL;
+        long timeMid = time &   0xffff00000000L;
+        long timeHi = time & 0xfff000000000000L;
+        long upperLong = (timeLow << 32) | (timeMid >> 16) | (1 << 12) | (timeHi >> 48) ;
+        return new java.util.UUID(upperLong, 0xC000000000000000L);
+    }
+
+    /**
+     * <p>Extracts the millis from the Java epoch of 1970-01-01T00:00:00Z.</p>
+     * @param uuid the time uuid
+     * @return the millis since Java epoch
+     */
+    public static long millisFromTimeUuid(UUID uuid) {
+        return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
+    }
 }
