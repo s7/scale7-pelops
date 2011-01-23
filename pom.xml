@@ -74,9 +74,18 @@
             <version>0.5</version>
         </dependency>
         <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
+            <version>1.5.5</version>
+        </dependency>
+
+        <!--          OPTIONAL DEPENDENCIES              -->
+        <!-- http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html -->
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>3.0.5.RELEASE</version>
+            <!-- only required if you use the classes in org.scale7.cassandra.pelops.spring -->
             <optional>true</optional>
             <exclusions>
                 <exclusion>
@@ -86,16 +95,14 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.5.5</version>
-        </dependency>
-        <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>1.6.2</version>
+            <!-- only required if you use the methods specific Joda Time helpers. -->
             <optional>true</optional>
         </dependency>
+
+        <!--          TEST DEPENDENCIES              -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
