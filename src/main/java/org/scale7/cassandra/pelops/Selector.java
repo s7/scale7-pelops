@@ -1068,7 +1068,11 @@ public class Selector extends Operand {
                 Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<SuperColumn> columns = toSuperColumnList(coscList);
+                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
+                    for (ColumnOrSuperColumn cosc : coscList) {
+                        assert cosc.super_column != null : "The super column should not be null";
+                        columns.add(cosc.super_column);
+                    }
                     result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
@@ -1969,7 +1973,7 @@ public class Selector extends Operand {
         return columns;
     }
 
-    private List<SuperColumn> toSuperColumnList(List<ColumnOrSuperColumn> coscList) {
+    private static List<SuperColumn> toSuperColumnList(List<ColumnOrSuperColumn> coscList) {
         List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
         for (ColumnOrSuperColumn cosc : coscList) {
             assert cosc.super_column != null : "The super column should not be null";
