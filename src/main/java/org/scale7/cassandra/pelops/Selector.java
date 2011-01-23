@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -1826,9 +1825,8 @@ public class Selector extends Operand {
      * @param colName                         The name of the column from which to retrieve the value
      * @param defaultValue                    A default value to return if a column with the specified name is not present in the list
      * @return                                The column value
-     * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
-    public static String getColumnValue(List<Column> columns, String colName, String defaultValue) throws UnsupportedEncodingException {
+    public static String getColumnValue(List<Column> columns, String colName, String defaultValue) {
         return getColumnValue(columns, fromUTF8(colName), defaultValue);
     }
 
@@ -1863,9 +1861,8 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @param defaultValue                   A default value to return if a column with the specified name is not present in the list
      * @return                               The column value
-     * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
-    public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) throws UnsupportedEncodingException {
+    public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
                 return fromByteBuffer(column.value).toUTF8();
@@ -1926,9 +1923,8 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @return                               The column value as a <code>String</code>
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
-    public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
+    public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
         return getColumnStringValue(columns, fromUTF8(colName));
     }
 
@@ -1938,9 +1934,8 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @return                               The column value as a <code>String</code>
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
-    public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
+    public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
                 return fromByteBuffer(column.value).toUTF8();
@@ -1952,7 +1947,7 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
+     * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a column with the specified name
      */
     public static long getColumnTimestamp(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
@@ -1966,7 +1961,7 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
+     * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a column with the specified name
      */
     public static long getColumnTimestamp(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
         return getColumnTimestamp(columns, fromUTF8(colName));
