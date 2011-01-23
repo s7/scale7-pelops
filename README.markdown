@@ -65,14 +65,7 @@ Pelops also includes the following **[optional dependencies](http://maven.apache
 * org.springframework:spring-context - version: 3.0.5.RELEASE (only required by classes in the org.scale7.cassandra.pelops.spring package)
 * joda-time:joda-time -version: 1.6.2 (only required a few helper methods on the UuidHelper class)
 
-Cassandra 0.6.x users can use:
-
-		<dependency>
-			<groupId>org.wyki</groupId>
-			<artifactId>pelops</artifactId>
-			<version>0.805-0.6.4</version>
-		</dependency>
-**Please note that the 0.6.x version is not maintained and has known issues**.  These issues have been fixed in the 0.7.x version.  If you're interested in helping maintaining the 0.6.x branch let us know...
-
-More Resources:
+More Resources
+============
 [Mailing List](http://groups.google.com/group/scale7)
+[Introduction on Bits and Bytes](http://ria101.wordpress.com/2010/06/11/pelops-the-beautiful-cassandra-database-client-for-java/)
