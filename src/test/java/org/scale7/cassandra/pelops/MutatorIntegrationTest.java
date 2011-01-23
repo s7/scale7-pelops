@@ -4,7 +4,6 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static org.scale7.cassandra.pelops.Bytes.fromBytes;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
@@ -271,8 +270,8 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
             Column expectedColumn = expectedColumns.get(i);
             Column actualColumn = actualColumns.get(i);
 
-            assertEquals("Column names didn't match", fromBytes(expectedColumn.getName()), fromBytes(actualColumn.getName()));
-            assertEquals("Column values didn't match", fromBytes(expectedColumn.getValue()), fromBytes(actualColumn.getValue()));
+            assertEquals("Column names didn't match", Bytes.fromByteArray(expectedColumn.getName()), Bytes.fromByteArray(actualColumn.getName()));
+            assertEquals("Column values didn't match", Bytes.fromByteArray(expectedColumn.getValue()), Bytes.fromByteArray(actualColumn.getValue()));
         }
     }
 

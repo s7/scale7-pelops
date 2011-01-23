@@ -90,7 +90,7 @@ public class Mutator extends Operand {
             if (column.isSetValue()) {
                 writeColumnInternal(colFamily, rowKey, column);
             } else {
-                deleteColumn(colFamily, rowKey, Bytes.fromBytes(column.getName()));
+                deleteColumn(colFamily, rowKey, Bytes.fromByteArray(column.getName()));
             }
         }
         return this;
@@ -256,7 +256,7 @@ public class Mutator extends Operand {
                     if (subColumn.isSetValue()) {
                         subColumnsWithValue.add(subColumn);
                     } else {
-                        subColumnsWithoutValue.add(Bytes.fromBytes(subColumn.getName()));
+                        subColumnsWithoutValue.add(Bytes.fromByteArray(subColumn.getName()));
                     }
                 }
 

@@ -20,32 +20,32 @@ public class BytesUnitTest {
     
     @Test
     public void testEquals() {
-        Bytes one = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
-        Bytes two = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
+        Bytes one = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
+        Bytes two = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
 
         assertTrue("Two instance were not equal", one.equals(two));
     }
 
     @Test
     public void testEqualsNegative() {
-        Bytes one = Bytes.fromBytes(new byte[] {5, 4, 3, 2, 1});
-        Bytes two = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
+        Bytes one = Bytes.fromByteArray(new byte[]{5, 4, 3, 2, 1});
+        Bytes two = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
 
         assertFalse("Two instance were not equal", one.equals(two));
     }
 
     @Test
     public void testHashCode() {
-        Bytes one = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
-        Bytes two = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
+        Bytes one = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
+        Bytes two = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
 
         assertEquals("The hashCode method should generate the same value from the same input", one.hashCode(), two.hashCode());
     }
 
     @Test
     public void testHashCodeDifferent() {
-        Bytes one = Bytes.fromBytes(new byte[] {5, 4, 3, 2, 1});
-        Bytes two = Bytes.fromBytes(new byte[] {1, 2, 3, 4, 5});
+        Bytes one = Bytes.fromByteArray(new byte[]{5, 4, 3, 2, 1});
+        Bytes two = Bytes.fromByteArray(new byte[]{1, 2, 3, 4, 5});
 
         assertFalse("The hashCode method should generate the a different value from different input", one.hashCode() == two.hashCode());
     }
@@ -53,7 +53,7 @@ public class BytesUnitTest {
     @Test
     public void testBytes() {
         byte[] value = {1, 2, 3, 4, 5};
-        Bytes from = Bytes.fromBytes(value);
+        Bytes from = Bytes.fromByteArray(value);
         byte[] to = from.getBytes().array();
 
         assertTrue("Conversion did not match", Arrays.equals(value, to));
@@ -62,7 +62,7 @@ public class BytesUnitTest {
     @Test
     public void testByteArray() {
         byte[] value = {1, 2, 3, 4, 5};
-        Bytes from = Bytes.fromBytes(value);
+        Bytes from = Bytes.fromByteArray(value);
         byte[] to = from.toByteArray();
 
         assertTrue("Conversion did not match", Arrays.equals(value, to));
