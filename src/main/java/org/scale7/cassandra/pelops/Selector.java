@@ -22,6 +22,11 @@ import static org.scale7.cassandra.pelops.Bytes.*;
  *
  */
 public class Selector extends Operand {
+
+    // SlicePredicates constants for common internal uses
+    private static final SlicePredicate COLUMNS_PREDICATE_ALL = newColumnsPredicateAll(false);
+    private static final SlicePredicate COLUMNS_PREDICATE_ALL_REVERSED = newColumnsPredicateAll(true);
+
     /**
      * Get the count of columns in a row.
      * @param columnFamily                  The column family containing the row
@@ -31,7 +36,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -56,7 +61,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -82,7 +87,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -109,7 +114,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -136,7 +141,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -163,7 +168,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -189,7 +194,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -214,7 +219,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -1270,6 +1275,15 @@ public class Selector extends Operand {
     }
 
     /**
+     * Create a new <code>SlicePredicate</code> instance that selects "all" columns with no imposed limit
+     * @param reversed                        Whether the results should be returned in reverse order
+     * @return                                The new <code>SlicePredicate</code>
+     */
+    public static SlicePredicate newColumnsPredicateAll(boolean reversed) {
+        return newColumnsPredicateAll(reversed, Integer.MAX_VALUE);
+    }
+
+    /**
      * Create a new <code>SlicePredicate</code> instance that selects "all" columns
      * @param reversed                        Whether the results should be returned in reverse order
      * @param maxColCount                     The maximum number of columns to return
@@ -1279,15 +1293,6 @@ public class Selector extends Operand {
         SlicePredicate predicate = new SlicePredicate();
         predicate.setSlice_range(new SliceRange(Bytes.EMPTY.getBytes(), Bytes.EMPTY.getBytes(), reversed, maxColCount));
         return predicate;
-    }
-
-    /**
-     * Create a new <code>SlicePredicate</code> instance that selects "all" columns with no imposed limit
-     * @param reversed                        Whether the results should be returned in reverse order
-     * @return                                The new <code>SlicePredicate</code>
-     */
-    public static SlicePredicate newColumnsPredicateAll(boolean reversed) {
-        return newColumnsPredicateAll(reversed, Integer.MAX_VALUE);
     }
 
     /**
