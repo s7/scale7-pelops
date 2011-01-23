@@ -585,10 +585,7 @@ public class Selector extends Operand {
             @Override
             public List<Column> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), colParent, colPredicate, cLevel);
-                List<Column> result = new ArrayList<Column>(apiResult.size());
-                for (ColumnOrSuperColumn cosc : apiResult)
-                    result.add(cosc.column);
-                return result;
+                return toColumnList(apiResult);
             }
         };
         return tryOperation(operation);
@@ -647,10 +644,7 @@ public class Selector extends Operand {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), newColumnParent(columnFamily), colPredicate, cLevel);
-                List<SuperColumn> result = new ArrayList<SuperColumn>(apiResult.size());
-                for (ColumnOrSuperColumn cosc : apiResult)
-                    result.add(cosc.super_column);
-                return result;
+                return toSuperColumnList(apiResult);
             }
         };
         return tryOperation(operation);
@@ -1074,11 +1068,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList) {
-                        assert cosc.super_column != null : "The super column should not be null";
-                        columns.add(cosc.super_column);
-                    }
+                    List<SuperColumn> columns = toSuperColumnList(coscList);
                     result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
@@ -1117,9 +1107,7 @@ public class Selector extends Operand {
                 Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        columns.add(cosc.super_column);
+                    List<SuperColumn> columns = toSuperColumnList(coscList);
                     result.put(toUTF8(rowKey), columns);
                 }
                 return result;
@@ -1136,11 +1124,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<Column> columns = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList) {
-                        assert cosc.column != null : "The column should not be null";
-                        columns.add(cosc.column);
-                    }
+                    List<Column> columns = toColumnList(coscList);
                     result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
@@ -1157,9 +1141,7 @@ public class Selector extends Operand {
                 Map<String, List<Column>> result = new HashMap<String, List<Column>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<Column> columns = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        columns.add(cosc.column);
+                    List<Column> columns = toColumnList(coscList);
                     result.put(toUTF8(rowKey), columns);
                 }
                 return result;
@@ -1410,9 +1392,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.super_column);
+                    List<SuperColumn> colList = toSuperColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1457,9 +1437,7 @@ public class Selector extends Operand {
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.super_column);
+                    List<SuperColumn> colList = toSuperColumnList(coscList);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
@@ -1476,9 +1454,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1495,9 +1471,7 @@ public class Selector extends Operand {
                 Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
@@ -1574,9 +1548,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1987,4 +1959,23 @@ public class Selector extends Operand {
     public static ColumnParent newColumnParent(String columnFamily) {
         return new ColumnParent(columnFamily);
     }
+
+    private static List<Column> toColumnList(List<ColumnOrSuperColumn> coscList) {
+        List<Column> columns = new ArrayList<Column>(coscList.size());
+        for (ColumnOrSuperColumn cosc : coscList) {
+            assert cosc.column != null : "The column should not be null";
+            columns.add(cosc.column);
+        }
+        return columns;
+    }
+
+    private List<SuperColumn> toSuperColumnList(List<ColumnOrSuperColumn> coscList) {
+        List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
+        for (ColumnOrSuperColumn cosc : coscList) {
+            assert cosc.super_column != null : "The super column should not be null";
+            columns.add(cosc.super_column);
+        }
+        return columns;
+    }
+
 }
