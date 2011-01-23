@@ -37,6 +37,7 @@ public class UuidHelper {
 
     /**
      * @see #nonUniqueTimeUuidForDate(long)
+     * <p>Note: the use of the class required the *optional* joda-time dependency.</p>
      */
     public static java.util.UUID nonUniqueTimeUuidForDate(DateTime d) {
         return nonUniqueTimeUuidForDate(d.getMillis());

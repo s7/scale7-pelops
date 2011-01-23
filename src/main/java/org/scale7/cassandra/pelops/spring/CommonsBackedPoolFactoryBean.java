@@ -48,6 +48,8 @@ import java.util.Arrays;
  * }
  * </pre>
  * <br/>
+ *
+ * <p>Note: the use of the class required the *optional* spring dependency.</p>
  */
 public class CommonsBackedPoolFactoryBean
         implements FactoryBean<IThriftPool>, InitializingBean, DisposableBean {
