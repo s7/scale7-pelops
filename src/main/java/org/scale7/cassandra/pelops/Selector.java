@@ -1865,7 +1865,7 @@ public class Selector extends Operand {
     public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
-                return fromByteBuffer(column.value).toUTF8();
+                return toUTF8(column.value);
         return defaultValue;
     }
 
@@ -1938,7 +1938,7 @@ public class Selector extends Operand {
     public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
-                return fromByteBuffer(column.value).toUTF8();
+                return toUTF8(column.value);
         throw new ArrayIndexOutOfBoundsException();
     }
 
