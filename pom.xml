@@ -4,14 +4,17 @@
     <groupId>org.scale7</groupId>
     <artifactId>scale7-pelops</artifactId>
     <packaging>jar</packaging>
-    <version>0.913-0.7.0-SNAPSHOT</version>
+    <version>1.0-RC1-0.7.0-SNAPSHOT</version>
     <name>Pelops - A library for accessing the Cassandra database</name>
     <url>http://github.com/s7/pelops</url>
     <properties>
         <!--
            The ${scale7.deploy.dir} should point to the directory that contains the clone of http://github.com/s7/mvnrepo.
-           By default it assumes that it's a sibling of the current project directory.  To change the default value alter
-           your ~/.m2/settings.xml file.
+           By default it assumes that it's a sibling of the current project directory.
+
+           To change the default value alter your ~/.m2/settings.xml file.
+
+           NOTE: In order to perform releases this must be an absolute path (specified in your settings.xml).
         -->
         <scale7.deploy.dir>file://${basedir}/../mvnrepo</scale7.deploy.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,7 +35,7 @@
     </developers>
     <scm>
         <connection>scm:git:http://github.com/s7/scale7-pelops.git</connection>
-        <developerConnection>scm:git:ssh://github.com/s7/scale7-pelops.git</developerConnection>
+        <developerConnection>scm:git:git://github.com/s7/scale7-pelops.git</developerConnection>
         <url>http://github.com/s7/scale7-pelops</url>
     </scm>
     <issueManagement>
@@ -58,7 +61,7 @@
         <dependency>
             <groupId>org.scale7</groupId>
             <artifactId>scale7-core</artifactId>
-            <version>1.3-SNAPSHOT</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cassandra</groupId>
@@ -71,9 +74,18 @@
             <version>0.5</version>
         </dependency>
         <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
+            <version>1.5.5</version>
+        </dependency>
+
+        <!--          OPTIONAL DEPENDENCIES              -->
+        <!-- http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html -->
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>3.0.5.RELEASE</version>
+            <!-- only required if you use the classes in org.scale7.cassandra.pelops.spring -->
             <optional>true</optional>
             <exclusions>
                 <exclusion>
@@ -83,10 +95,14 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.5.5</version>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.6.2</version>
+            <!-- only required if you use the methods specific Joda Time helpers. -->
+            <optional>true</optional>
         </dependency>
+
+        <!--          TEST DEPENDENCIES              -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
