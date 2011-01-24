@@ -2,8 +2,11 @@ package org.scale7.cassandra.pelops.pool;
 
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.scale7.cassandra.pelops.Cluster;
+import org.scale7.cassandra.pelops.IConnection;
 import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.Selector;
 import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
@@ -277,6 +280,42 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
             pool.runMaintenanceTasks();
 
             assertTrue("Connection validation was not invoked", invoked.get());
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    /**
+     * Test initialization with static node list that contains an offline node.
+     * https://github.com/s7/scale7-pelops/issues#issue/24
+     */
+    @Test
+    public void testInitWithDownedNode() throws Exception {
+        final int timeout = 2000;
+        Cluster cluster = new Cluster(new String[] {RPC_LISTEN_ADDRESS, "127.0.0.2"}, new IConnection.Config(RPC_PORT, true, timeout), false);
+
+        CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
+        config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
+        config.setMaxActivePerNode(1);
+
+        long startMillis = System.currentTimeMillis();
+        CommonsBackedPool pool = new CommonsBackedPool(
+                cluster,
+                AbstractIntegrationTest.KEYSPACE,
+                config,
+                new OperandPolicy(),
+                new LeastLoadedNodeSelectionStrategy(),
+                new NoOpNodeSuspensionStrategy(),
+                new DescribeVersionConnectionValidator()
+        );
+
+        long totalMillis = System.currentTimeMillis() - startMillis;
+
+        // validate the actual timeout is within 10% of the configured
+        assertTrue(totalMillis >= timeout && totalMillis <= (timeout + (timeout * 10 / 100)));
+
+        try {
+            pool.createSelector();
         } finally {
             pool.shutdown();
         }
