@@ -25,6 +25,6 @@ public class ColumnIterator extends PageOfIterator<Column> {
 
     @Override
     protected Bytes nextStartBeyondName(List<Column> batch) {
-        return batch.isEmpty() ? Bytes.NULL : Bytes.fromBytes(batch.get(batch.size() - 1).getName());
+        return batch.isEmpty() ? Bytes.NULL : Bytes.fromByteArray(batch.get(batch.size() - 1).getName());
     }
 }

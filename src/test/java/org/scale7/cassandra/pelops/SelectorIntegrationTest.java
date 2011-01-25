@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
-import static org.scale7.cassandra.pelops.Bytes.fromBytes;
 import static org.scale7.cassandra.pelops.Bytes.fromChar;
 import static org.scale7.cassandra.pelops.Bytes.fromLong;
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
@@ -116,8 +115,8 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     	assertEquals("Wrong column 'name' value", "name-b", toUTF8(column.getValue()));
 
     	column = keys.get(key).get(1);
-    	
-    	assertEquals("Wrong column 'value' value", 1L, Bytes.fromBytes(column.getValue()).toLong());
+
+        assertEquals("Wrong column 'value' value", 1L, Bytes.fromByteArray(column.getValue()).toLong());
     }
 
     @Test
@@ -168,8 +167,8 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     		assertEquals("Wrong column 'name' value", "name-1", toUTF8(column.getValue()));
 
     		column = keys.get(key).get(1);
-    	
-    		assertEquals("Wrong column 'value' value", 0L, Bytes.fromBytes(column.getValue()).toLong());
+
+            assertEquals("Wrong column 'value' value", 0L, Bytes.fromByteArray(column.getValue()).toLong());
     		
     		fail("Other than EQ index operator is supported now.");
     	}
@@ -257,7 +256,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     private void verifyColumns(char[] expectedColumns, List<Column> columns) {
         assertEquals("Wrong number of columns returned", expectedColumns.length, columns.size());
         for (int i = 0; i < expectedColumns.length; i++) {
-            assertEquals("Wrong column value returned", expectedColumns[i], fromBytes(columns.get(i).getValue()).toChar());
+            assertEquals("Wrong column value returned", expectedColumns[i], Bytes.fromByteArray(columns.get(i).getValue()).toChar());
         }
     }
 
@@ -320,7 +319,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         while (iterator.hasNext()) {
             SuperColumn superColumn = iterator.next();
 
-            assertEquals("Wrong super column value returned", letter, fromBytes(superColumn.getName()).toChar());
+            assertEquals("Wrong super column value returned", letter, Bytes.fromByteArray(superColumn.getName()).toChar());
 
             letter++;
             count++;
@@ -338,7 +337,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         for (int i = 0; i < 26; i++) {
             SuperColumn superColumn = iterator.next();
 
-            assertEquals("Wrong super column value returned", letter, fromBytes(superColumn.getName()).toChar());
+            assertEquals("Wrong super column value returned", letter, Bytes.fromByteArray(superColumn.getName()).toChar());
 
             letter++;
             count++;
@@ -363,7 +362,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         while (iterator.hasNext()) {
             Column column = iterator.next();
 
-            assertEquals("Wrong column value returned", letter, fromBytes(column.getName()).toChar());
+            assertEquals("Wrong column value returned", letter, Bytes.fromByteArray(column.getName()).toChar());
 
             letter++;
             count++;
@@ -381,7 +380,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         for (int i = 0; i < 26; i++) {
             Column column = iterator.next();
 
-            assertEquals("Wrong column value returned", letter, fromBytes(column.getName()).toChar());
+            assertEquals("Wrong column value returned", letter, Bytes.fromByteArray(column.getName()).toChar());
 
             letter++;
             count++;
@@ -401,7 +400,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     private void verifySuperColumns(char[] expectedColumns, List<SuperColumn> superColumns) {
         assertEquals("Wrong number of super columns returned", expectedColumns.length, superColumns.size());
         for (int i = 0; i < expectedColumns.length; i++) {
-            assertEquals("Wrong super column value returned", expectedColumns[i], fromBytes(superColumns.get(i).getName()).toChar());
+            assertEquals("Wrong super column value returned", expectedColumns[i], Bytes.fromByteArray(superColumns.get(i).getName()).toChar());
         }
     }
 }

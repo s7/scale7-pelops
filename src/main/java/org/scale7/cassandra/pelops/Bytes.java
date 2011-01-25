@@ -152,7 +152,9 @@ public class Bytes {
      *
      * @param value the value
      * @return the Bytes instance
+     * @deprecated use {@link #fromByteArray(byte[])} instead
      */
+    @Deprecated
     public static Bytes fromBytes(byte[] value) {
         return fromByteArray(value);
     }

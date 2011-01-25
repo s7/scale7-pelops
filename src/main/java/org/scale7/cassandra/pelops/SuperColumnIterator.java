@@ -25,6 +25,6 @@ public class SuperColumnIterator extends PageOfIterator<SuperColumn> {
 
     @Override
     protected Bytes nextStartBeyondName(List<SuperColumn> batch) {
-        return batch.isEmpty() ? null : Bytes.fromBytes(batch.get(batch.size() - 1).getName());
+        return batch.isEmpty() ? null : Bytes.fromByteArray(batch.get(batch.size() - 1).getName());
     }
 }

@@ -90,7 +90,7 @@ public class Mutator extends Operand {
             if (column.isSetValue()) {
                 writeColumnInternal(colFamily, rowKey, column);
             } else {
-                deleteColumn(colFamily, rowKey, Bytes.fromBytes(column.getName()));
+                deleteColumn(colFamily, rowKey, Bytes.fromByteArray(column.getName()));
             }
         }
         return this;
@@ -256,7 +256,7 @@ public class Mutator extends Operand {
                     if (subColumn.isSetValue()) {
                         subColumnsWithValue.add(subColumn);
                     } else {
-                        subColumnsWithoutValue.add(Bytes.fromBytes(subColumn.getName()));
+                        subColumnsWithoutValue.add(Bytes.fromByteArray(subColumn.getName()));
                     }
                 }
 
@@ -584,6 +584,15 @@ public class Mutator extends Operand {
     }
 
     /**
+     * Create new Column object with an empty value and the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(String colName) {
+        return newColumn(fromUTF8(colName), Bytes.EMPTY);
+    }
+
+    /**
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
@@ -591,6 +600,16 @@ public class Mutator extends Operand {
      */
     public Column newColumn(String colName, Bytes colValue) {
         return newColumn(fromUTF8(colName), colValue);
+    }
+
+    /**
+     * Create new Column object with an empty value and the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param ttl                        The time to live (in seconds) for the column
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(String colName, int ttl) {
+        return newColumn(fromUTF8(colName), Bytes.EMPTY, ttl);
     }
 
     /**
@@ -605,6 +624,15 @@ public class Mutator extends Operand {
     }
 
     /**
+     * Create new Column object with an empty value and the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(Bytes colName) {
+        return newColumn(colName, Bytes.EMPTY);
+    }
+
+    /**
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
@@ -612,6 +640,16 @@ public class Mutator extends Operand {
      */
     public Column newColumn(Bytes colName, Bytes colValue) {
         return newColumn(colName, colValue, this.ttl);
+    }
+
+    /**
+     * Create new Column object with an empty value and the time stamp passed to the constructor
+     * @param colName                    The column name
+     * @param ttl                        The time to live (in seconds) for the column
+     * @return                           An appropriate <code>Column</code> object
+     */
+    public Column newColumn(Bytes colName, int ttl) {
+        return newColumn(colName, Bytes.EMPTY, ttl);
     }
 
     /**

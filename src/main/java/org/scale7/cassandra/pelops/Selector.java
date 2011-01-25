@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -22,6 +21,11 @@ import static org.scale7.cassandra.pelops.Bytes.*;
  *
  */
 public class Selector extends Operand {
+
+    // SlicePredicates constants for common internal uses
+    private static final SlicePredicate COLUMNS_PREDICATE_ALL = newColumnsPredicateAll(false);
+    private static final SlicePredicate COLUMNS_PREDICATE_ALL_REVERSED = newColumnsPredicateAll(true);
+
     /**
      * Get the count of columns in a row.
      * @param columnFamily                  The column family containing the row
@@ -31,7 +35,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -56,7 +60,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -82,7 +86,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -109,7 +113,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, Bytes superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -136,7 +140,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, String rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -163,7 +167,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSubColumnCount(String columnFamily, Bytes rowKey, String superColName, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily, superColName), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -189,7 +193,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, Bytes rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), rowKey, newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), rowKey, COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -214,7 +218,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public int getSuperColumnCount(String columnFamily, String rowKey, ConsistencyLevel cLevel) throws PelopsException {
-        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), newColumnsPredicateAll(false), cLevel);
+        return getColumnCount(newColumnParent(columnFamily), fromUTF8(rowKey), COLUMNS_PREDICATE_ALL, cLevel);
     }
 
     /**
@@ -437,6 +441,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param reversed                      Whether the results should be returned in descending column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<Column> getColumnsFromRow(String columnFamily, String rowKey, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRow(newColumnParent(columnFamily), rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve columns from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
@@ -450,6 +467,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param reversed                      Whether the results should be returned in descending column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<Column> getColumnsFromRow(String columnFamily, Bytes rowKey, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRow(newColumnParent(columnFamily), rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve columns from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
@@ -460,6 +490,20 @@ public class Selector extends Operand {
      */
     public List<Column> getColumnsFromRow(String columnFamily, Bytes rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
+     * @param superColName                  The name of the super column
+     * @param reversed                      Whether the results should be returned in descending sub-column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<Column> getSubColumnsFromRow(String columnFamily, Bytes rowKey, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -477,6 +521,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all sub-columns from a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
+     * @param superColName                  The name of the super column
+     * @param reversed                      Whether the results should be returned in descending sub-column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row containing the super column
@@ -488,6 +546,20 @@ public class Selector extends Operand {
      */
     public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super column
+     * @param superColName                  The name of the super column
+     * @param reversed                      Whether the results should be returned in descending sub-column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<Column> getSubColumnsFromRow(String columnFamily, String rowKey, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRow(newColumnParent(columnFamily, superColName), rowKey, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -513,13 +585,23 @@ public class Selector extends Operand {
             @Override
             public List<Column> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), colParent, colPredicate, cLevel);
-                List<Column> result = new ArrayList<Column>(apiResult.size());
-                for (ColumnOrSuperColumn cosc : apiResult)
-                    result.add(cosc.column);
-                return result;
+                return toColumnList(apiResult);
             }
         };
         return tryOperation(operation);
+    }
+
+    /**
+     * Retrieve all super columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super columns
+     * @param reversed                      Whether the results should be returned in descending super column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final String rowKey, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRow(columnFamily, fromUTF8(rowKey), columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -536,6 +618,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all super columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the super columns
+     * @param reversed                      Whether the results should be returned in descending super column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRow(columnFamily, rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve super columns from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row containing the super columns
@@ -549,10 +644,7 @@ public class Selector extends Operand {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), newColumnParent(columnFamily), colPredicate, cLevel);
-                List<SuperColumn> result = new ArrayList<SuperColumn>(apiResult.size());
-                for (ColumnOrSuperColumn cosc : apiResult)
-                    result.add(cosc.super_column);
-                return result;
+                return toSuperColumnList(apiResult);
             }
         };
         return tryOperation(operation);
@@ -778,6 +870,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the columns
+     * @param reversed                       Whether the results should be returned in descending column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve columns from a set of rows.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the columns
@@ -788,6 +893,19 @@ public class Selector extends Operand {
      */
     public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the columns
+     * @param reversed                       Whether the results should be returned in descending column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -802,6 +920,20 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param reversed                       Whether the results should be returned in descending sub-column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -820,6 +952,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param reversed                       Whether the results should be returned in descending sub-column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
@@ -832,6 +978,20 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
     	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param reversed                       Whether the results should be returned in descending sub-column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -850,6 +1010,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all sub-columns from a super column in a set of rows.
+     * @param columnFamily                   The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param superColName                   The name of the super column
+     * @param reversed                       Whether the results should be returned in descending sub-column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
@@ -862,6 +1036,19 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all super columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param reversed                       Whether the results should be returned in descending super column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRows(columnFamily, rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -895,6 +1082,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all super columns from a set of rows.
+     * @param columnFamily                  The column family containing the rows
+     * @param rowKeys                        The keys of the rows containing the super columns
+     * @param reversed                       Whether the results should be returned in descending super column name order
+     * @param cLevel                         The Cassandra consistency level with which to perform the operation
+     * @return                               A map from row keys to the matching lists of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRowsUtf8Keys(columnFamily, rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve super columns from a set of rows.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
@@ -911,9 +1111,7 @@ public class Selector extends Operand {
                 Map<String, List<SuperColumn>> result = new HashMap<String, List<SuperColumn>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        columns.add(cosc.super_column);
+                    List<SuperColumn> columns = toSuperColumnList(coscList);
                     result.put(toUTF8(rowKey), columns);
                 }
                 return result;
@@ -930,11 +1128,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<Column> columns = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList) {
-                        assert cosc.column != null : "The column should not be null";
-                        columns.add(cosc.column);
-                    }
+                    List<Column> columns = toColumnList(coscList);
                     result.put(Bytes.fromByteBuffer(rowKey), columns);
                 }
                 return result;
@@ -951,15 +1145,29 @@ public class Selector extends Operand {
                 Map<String, List<Column>> result = new HashMap<String, List<Column>>();
                 for (ByteBuffer rowKey : apiResult.keySet()) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<Column> columns = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        columns.add(cosc.column);
+                    List<Column> columns = toColumnList(coscList);
                     result.put(toUTF8(rowKey), columns);
                 }
                 return result;
             }
         };
         return tryOperation(operation);
+    }
+
+    /**
+     * Retrieve all columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param reversed                        Whether the results should be returned in descending column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -980,6 +1188,22 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param reversed                        Whether the results should be returned in descending column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve columns from a range of rows.
      * The method returns a map from the keys of rows in the specified range to lists of columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
@@ -994,6 +1218,23 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param reversed                        Whether the results should be returned in descending sub-column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1015,6 +1256,23 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param reversed                        Whether the results should be returned in descending sub-column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a range of rows.
      * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
@@ -1030,6 +1288,23 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param reversed                        Whether the results should be returned in descending sub-column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1051,6 +1326,23 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all sub-columns from a super column in a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param superColName                    The name of the super column
+     * @param reversed                        Whether the results should be returned in descending sub-column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of sub-columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a range of rows.
      * The method returns a map from the keys of rows in the specified range to lists of sub-columns from the rows. The map
      * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
@@ -1066,6 +1358,22 @@ public class Selector extends Operand {
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all super columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of super columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param reversed                        Whether the results should be returned in descending super column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final KeyRange keyRange, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRows(columnFamily, keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1088,15 +1396,29 @@ public class Selector extends Operand {
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.super_column);
+                    List<SuperColumn> colList = toSuperColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
             }
         };
         return tryOperation(operation);
+    }
+
+    /**
+     * Retrieve all super columns from a range of rows.
+     * The method returns a map from the keys of rows in the specified range to lists of super columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param columnFamily                    The column family containing the rows
+     * @param keyRange                        A key range selecting the rows
+     * @param reversed                        Whether the results should be returned in descending super column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of super columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final KeyRange keyRange, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getSuperColumnsFromRowsUtf8Keys(columnFamily, keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1119,9 +1441,7 @@ public class Selector extends Operand {
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.super_column);
+                    List<SuperColumn> colList = toSuperColumnList(coscList);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
@@ -1138,9 +1458,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1157,15 +1475,29 @@ public class Selector extends Operand {
                 Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
             }
         };
         return tryOperation(operation);
+    }
+
+    /**
+     * Retrieve all columns from a range of indexed rows using its secondary index.
+     * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param colParent                    The column parent containing the rows
+     * @param indexClause                        A index clause
+     * @param reversed                        Whether the results should be returned in descending column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause,boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    	return getIndexedColumns(newColumnParent(colParent), indexClause, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1182,6 +1514,22 @@ public class Selector extends Operand {
      */
     public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
     	return getIndexedColumns(newColumnParent(colParent), indexClause, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieve all columns from a range of indexed rows using its secondary index.
+     * The method returns a map from the keys of indexed rows in the specified range to lists of columns from the rows. The map
+     * returned is a <code>LinkedHashMap</code> and its key iterator proceeds in the order that the key data was returned by
+     * Cassandra. If the cluster uses the RandomPartitioner, this order appears random.
+     * @param colParent                    The column parent
+     * @param indexClause                        A index key range selecting the rows
+     * @param reversed                        Whether the results should be returned in descending column name order
+     * @param cLevel                          The Cassandra consistency level with which to perform the operation
+     * @return                                A map from row keys to the matching lists of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Map<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final boolean reversed, final ConsistencyLevel cLevel) throws PelopsException {
+        return getIndexedColumns(colParent, indexClause, columnsPredicateAll(reversed), cLevel);
     }
 
     /**
@@ -1204,9 +1552,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = new ArrayList<Column>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList)
-                        colList.add(cosc.column);
+                    List<Column> colList = toColumnList(coscList);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1260,15 +1606,13 @@ public class Selector extends Operand {
     }
 
     /**
-     * Create a new <code>SlicePredicate</code> instance that selects "all" columns
+     * Create the internal <code>SlicePredicate</code> instance that selects "all" columns with no imposed limit.
+     * Note: these instances should be handled carefully, as they are mutable.
      * @param reversed                        Whether the results should be returned in reverse order
-     * @param maxColCount                     The maximum number of columns to return
      * @return                                The new <code>SlicePredicate</code>
      */
-    public static SlicePredicate newColumnsPredicateAll(boolean reversed, int maxColCount) {
-        SlicePredicate predicate = new SlicePredicate();
-        predicate.setSlice_range(new SliceRange(Bytes.EMPTY.getBytes(), Bytes.EMPTY.getBytes(), reversed, maxColCount));
-        return predicate;
+    private static SlicePredicate columnsPredicateAll(boolean reversed) {
+        return reversed ? COLUMNS_PREDICATE_ALL_REVERSED : COLUMNS_PREDICATE_ALL;
     }
 
     /**
@@ -1278,6 +1622,18 @@ public class Selector extends Operand {
      */
     public static SlicePredicate newColumnsPredicateAll(boolean reversed) {
         return newColumnsPredicateAll(reversed, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Create a new <code>SlicePredicate</code> instance that selects "all" columns
+     * @param reversed                        Whether the results should be returned in reverse order
+     * @param maxColCount                     The maximum number of columns to return
+     * @return                                The new <code>SlicePredicate</code>
+     */
+    public static SlicePredicate newColumnsPredicateAll(boolean reversed, int maxColCount) {
+        SlicePredicate predicate = new SlicePredicate();
+        predicate.setSlice_range(new SliceRange(Bytes.EMPTY.getBytes(), Bytes.EMPTY.getBytes(), reversed, maxColCount));
+        return predicate;
     }
 
     /**
@@ -1445,9 +1801,8 @@ public class Selector extends Operand {
      * @param colName                         The name of the column from which to retrieve the value
      * @param defaultValue                    A default value to return if a column with the specified name is not present in the list
      * @return                                The column value
-     * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
-    public static String getColumnValue(List<Column> columns, String colName, String defaultValue) throws UnsupportedEncodingException {
+    public static String getColumnValue(List<Column> columns, String colName, String defaultValue) {
         return getColumnValue(columns, fromUTF8(colName), defaultValue);
     }
 
@@ -1482,12 +1837,11 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @param defaultValue                   A default value to return if a column with the specified name is not present in the list
      * @return                               The column value
-     * @throws UnsupportedEncodingException    Thrown if the column value was not a string
      */
-    public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) throws UnsupportedEncodingException {
+    public static String getColumnValue(List<Column> columns, Bytes colName, String defaultValue) {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
-                return fromByteBuffer(column.value).toUTF8();
+                return toUTF8(column.value);
         return defaultValue;
     }
 
@@ -1545,9 +1899,8 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @return                               The column value as a <code>String</code>
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
-    public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
+    public static String getColumnStringValue(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
         return getColumnStringValue(columns, fromUTF8(colName));
     }
 
@@ -1557,12 +1910,11 @@ public class Selector extends Operand {
      * @param colName                        The name of the column from which to retrieve the value
      * @return                               The column value as a <code>String</code>
      * @throws ArrayIndexOutOfBoundsException    Thrown if the specified column was not found
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
      */
-    public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException {
+    public static String getColumnStringValue(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
             if (column.name.equals(nullSafeGet(colName)))
-                return fromByteBuffer(column.value).toUTF8();
+                return toUTF8(column.value);
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -1571,7 +1923,7 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
+     * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a column with the specified name
      */
     public static long getColumnTimestamp(List<Column> columns, Bytes colName) throws ArrayIndexOutOfBoundsException {
         for (Column column : columns)
@@ -1585,7 +1937,7 @@ public class Selector extends Operand {
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the timestamp
      * @return                               The time stamp (the <code>Mutator</code> object uses time stamps as microseconds)
-     * @throws UnsupportedEncodingException     Thrown if the column value did not contain a valid UTF-8 string
+     * @throws ArrayIndexOutOfBoundsException    Thrown if the list does not contain a column with the specified name
      */
     public static long getColumnTimestamp(List<Column> columns, String colName) throws ArrayIndexOutOfBoundsException {
         return getColumnTimestamp(columns, fromUTF8(colName));
@@ -1611,4 +1963,23 @@ public class Selector extends Operand {
     public static ColumnParent newColumnParent(String columnFamily) {
         return new ColumnParent(columnFamily);
     }
+
+    private static List<Column> toColumnList(List<ColumnOrSuperColumn> coscList) {
+        List<Column> columns = new ArrayList<Column>(coscList.size());
+        for (ColumnOrSuperColumn cosc : coscList) {
+            assert cosc.column != null : "The column should not be null";
+            columns.add(cosc.column);
+        }
+        return columns;
+    }
+
+    private static List<SuperColumn> toSuperColumnList(List<ColumnOrSuperColumn> coscList) {
+        List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
+        for (ColumnOrSuperColumn cosc : coscList) {
+            assert cosc.super_column != null : "The super column should not be null";
+            columns.add(cosc.super_column);
+        }
+        return columns;
+    }
+
 }

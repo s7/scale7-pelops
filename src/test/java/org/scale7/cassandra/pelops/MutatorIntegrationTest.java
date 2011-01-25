@@ -4,7 +4,6 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static org.scale7.cassandra.pelops.Bytes.fromBytes;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
@@ -161,9 +160,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
         // make sure the data was written as expected
         Selector selector = createSelector();
-        List<Column> persistedColumns = selector.getColumnsFromRow(
-                CF, rowKey, newColumnsPredicateAll(false), ConsistencyLevel.ONE
-        );
+        List<Column> persistedColumns = selector.getColumnsFromRow(CF, rowKey, false, ConsistencyLevel.ONE);
 
         verifyColumns(columns, persistedColumns);
 
@@ -179,9 +176,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
         // make sure the data was written as expected and that the appropriate columns have been deleted
         selector = createSelector();
-        persistedColumns = selector.getColumnsFromRow(
-                CF, rowKey, newColumnsPredicateAll(false), ConsistencyLevel.ONE
-        );
+        persistedColumns = selector.getColumnsFromRow(CF, rowKey, false, ConsistencyLevel.ONE);
 
         verifyColumns(columns.subList(0, 1), persistedColumns);
     }
@@ -226,9 +221,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
         // make sure the data was written as expected
         Selector selector = createSelector();
-        List<Column> persistedColumns = selector.getSubColumnsFromRow(
-                SCF, rowKey, columnName, newColumnsPredicateAll(false), ConsistencyLevel.ONE
-        );
+        List<Column> persistedColumns = selector.getSubColumnsFromRow(SCF, rowKey, columnName, false, ConsistencyLevel.ONE);
 
         verifyColumns(columns, persistedColumns);
 
@@ -244,9 +237,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
         // make sure the data was written as expected and that the appropriate columns have been deleted
         selector = createSelector();
-        persistedColumns = selector.getSubColumnsFromRow(
-                SCF, rowKey, columnName, newColumnsPredicateAll(false), ConsistencyLevel.ONE
-        );
+        persistedColumns = selector.getSubColumnsFromRow(SCF, rowKey, columnName, false, ConsistencyLevel.ONE);
 
         verifyColumns(columns.subList(0, 1), persistedColumns);
     }
@@ -279,8 +270,8 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
             Column expectedColumn = expectedColumns.get(i);
             Column actualColumn = actualColumns.get(i);
 
-            assertEquals("Column names didn't match", fromBytes(expectedColumn.getName()), fromBytes(actualColumn.getName()));
-            assertEquals("Column values didn't match", fromBytes(expectedColumn.getValue()), fromBytes(actualColumn.getValue()));
+            assertEquals("Column names didn't match", Bytes.fromByteArray(expectedColumn.getName()), Bytes.fromByteArray(actualColumn.getName()));
+            assertEquals("Column values didn't match", Bytes.fromByteArray(expectedColumn.getValue()), Bytes.fromByteArray(actualColumn.getValue()));
         }
     }
 
