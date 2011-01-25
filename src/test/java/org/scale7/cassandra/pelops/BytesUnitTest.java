@@ -492,4 +492,24 @@ public class BytesUnitTest {
         );
         assertEquals("Duplicate not equal", bytes, bytes.duplicate());
     }
+
+    @Test
+    public void testBuilder() {
+        final String utf8Part = "foo";
+        final int intPart = 123;
+        Bytes bytes = Bytes.builder().addUTF8(utf8Part).addInt(intPart).build();
+
+        final ByteBuffer byteBuffer = bytes.getBytes();
+
+        final byte[] target = new byte[3];
+        byteBuffer.get(target, 0, 3);
+        String utf8PartActual = new String(target, Bytes.UTF8);
+
+        int intPartActual = byteBuffer.getInt();
+
+        assertEquals("String part did not match", utf8Part, utf8PartActual);
+        assertEquals("Int part did not match", intPart, intPartActual);
+
+        // todo: test all the different types
+    }
 }

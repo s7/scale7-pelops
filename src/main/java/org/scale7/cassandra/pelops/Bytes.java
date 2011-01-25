@@ -908,4 +908,177 @@ public class Bytes {
     public boolean isNull() {
         return this.bytes == null;
     }
+
+    /**
+     * Creates an instance of {@link CompositeBuilder} and assumes that the composite will be made up of two parts.
+     * @return the builder
+     */
+    public static CompositeBuilder builder() {
+        return new CompositeBuilder(2);
+    }
+
+    /**
+     * Creates an instance of {@link CompositeBuilder} with a specified number of parts.
+     * @param parts the number of parts the composite will be created from
+     * @return the builder
+     */
+    public static CompositeBuilder builder(int parts) {
+        return new CompositeBuilder(parts);
+    }
+
+    /**
+     * A builder that's used to create instance of composite keys.
+     */
+    public static class CompositeBuilder {
+        private List<Bytes> parts;
+
+        public CompositeBuilder(int count) {
+            parts = new ArrayList<Bytes>(count);
+        }
+
+        public CompositeBuilder addBoolean(boolean value) {
+            parts.add(Bytes.fromBoolean(value));
+            return this;
+        }
+
+        public CompositeBuilder addBoolean(Boolean value) {
+            parts.add(Bytes.fromBoolean(value));
+            return this;
+        }
+
+        public CompositeBuilder addByte(byte value) {
+            parts.add(Bytes.fromByte(value));
+            return this;
+        }
+
+        public CompositeBuilder addByte(Byte value) {
+            parts.add(Bytes.fromByte(value));
+            return this;
+        }
+
+        public CompositeBuilder addByteArray(byte[] value) {
+            parts.add(Bytes.fromByteArray(value));
+            return this;
+        }
+
+        public CompositeBuilder addByteBuffer(ByteBuffer value) {
+            parts.add(Bytes.fromByteBuffer(value));
+            return this;
+        }
+
+        public CompositeBuilder addChar(char value) {
+            parts.add(Bytes.fromChar(value));
+            return this;
+        }
+
+        public CompositeBuilder addChar(Character value) {
+            parts.add(Bytes.fromChar(value));
+            return this;
+        }
+
+        public CompositeBuilder addDouble(double value) {
+            parts.add(Bytes.fromDouble(value));
+            return this;
+        }
+
+        public CompositeBuilder addDouble(Double value) {
+            parts.add(Bytes.fromDouble(value));
+            return this;
+        }
+
+        public CompositeBuilder addFloat(float value) {
+            parts.add(Bytes.fromFloat(value));
+            return this;
+        }
+
+        public CompositeBuilder addFloat(Float value) {
+            parts.add(Bytes.fromFloat(value));
+            return this;
+        }
+
+        public CompositeBuilder addInt(int value) {
+            parts.add(Bytes.fromInt(value));
+            return this;
+        }
+
+        public CompositeBuilder addInt(Integer value) {
+            parts.add(Bytes.fromInt(value));
+            return this;
+        }
+
+        public CompositeBuilder addLong(long value) {
+            parts.add(Bytes.fromLong(value));
+            return this;
+        }
+
+        public CompositeBuilder addLong(Long value) {
+            parts.add(Bytes.fromLong(value));
+            return this;
+        }
+
+        public CompositeBuilder addShort(short value) {
+            parts.add(Bytes.fromShort(value));
+            return this;
+        }
+
+        public CompositeBuilder addShort(Short value) {
+            parts.add(Bytes.fromShort(value));
+            return this;
+        }
+
+        public CompositeBuilder addTimeUuid(UUID value) {
+            parts.add(Bytes.fromTimeUuid(value));
+            return this;
+        }
+
+        public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
+            parts.add(Bytes.fromTimeUuid(value));
+            return this;
+        }
+
+        public CompositeBuilder addTimeUuid(String value) {
+            parts.add(Bytes.fromTimeUuid(value));
+            return this;
+        }
+
+        public CompositeBuilder addTimeUuid(long time, long clockSeqAndNode) {
+            parts.add(Bytes.fromTimeUuid(time, clockSeqAndNode));
+            return this;
+        }
+
+        public CompositeBuilder addUTF8(String str) {
+            parts.add(Bytes.fromUTF8(str));
+            return this;
+        }
+
+        public CompositeBuilder addUuid(UUID value) {
+            parts.add(Bytes.fromUuid(value));
+            return this;
+        }
+
+        public CompositeBuilder addUuid(String value) {
+            parts.add(Bytes.fromUuid(value));
+            return this;
+        }
+
+        public CompositeBuilder addUuid(long msb, long lsb) {
+            parts.add(Bytes.fromUuid(msb, lsb));
+            return this;
+        }
+
+        public Bytes build() {
+            // we could avoid the duplicate loops by incrementing the length as we add parts...
+            int length = 0;
+            for (Bytes part : parts) {
+                length += part.length();
+            }
+
+            final ByteBuffer buffer = ByteBuffer.allocate(length);
+            for (Bytes part : parts) {
+                buffer.put(part.getBytes());
+            }
+
+            return fromByteBuffer((ByteBuffer) buffer.rewind());
+        }
+    }
 }
