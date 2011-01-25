@@ -774,6 +774,37 @@ public class Bytes {
     }
 
     /**
+     * Efficiently constructs a time uuid from a bytes array without creating any intermediate objects
+     *
+     * @param uuid The bytes representing the time uuid.
+     * @return A time uuid object
+     */
+    public static java.util.UUID timeUuidFromBytes(byte[] uuid)
+    {
+            long msb = 0;
+            long lsb = 0;
+            assert uuid.length == 16;
+            for (int i=0; i<8; i++)
+                    msb = (msb << 8) | (uuid[i] & 0xff);
+            for (int i=8; i<16; i++)
+                    lsb = (lsb << 8) | (uuid[i] & 0xff);
+
+            com.eaio.uuid.UUID u = new com.eaio.uuid.UUID(msb,lsb);
+
+            return java.util.UUID.fromString(u.toString());
+    }
+
+    /**
+     * Createa a UTF-8 representation of a time uuid from a bytes array
+     * @param uuid The bytes representing the time uuid.
+     * @return A string representation of the time uuid
+     */
+    public static String utf8TimeUuidFromBytes(byte[] uuid)
+    {
+    	return timeUuidFromBytes(uuid).toString();
+    }
+
+    /**
      * Converts the backing array to the appropriate object instance handling nulls.
      * <p/>
      * <p>Note: we could potentially depend on the {@link org.apache.cassandra.utils.ByteBufferUtil#string(java.nio.ByteBuffer, java.nio.charset.Charset)}.
