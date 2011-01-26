@@ -2,7 +2,7 @@ package org.scale7.cassandra.pelops;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link org.scale7.cassandra.pelops.Cluster} class.

@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops.pool;
 
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.Cluster;
@@ -20,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
 

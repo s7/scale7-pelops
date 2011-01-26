@@ -1,10 +1,10 @@
 package org.scale7.cassandra.pelops;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.UUID;
 
+import static org.junit.Assert.*;
 import static org.scale7.cassandra.pelops.UuidHelper.millisFromTimeUuid;
 import static org.scale7.cassandra.pelops.UuidHelper.nonUniqueTimeUuidForDate;
 
@@ -17,6 +17,6 @@ public class UuidHelperUnitTest {
 
         long millisFromUuid = millisFromTimeUuid(uuid);
 
-        Assert.assertEquals("Timestamp was not equal to source", millisSource, millisFromUuid);
+        assertEquals("Timestamp was not equal to source", millisSource, millisFromUuid);
     }
 }

@@ -4,8 +4,7 @@ import org.junit.Test;
 
 import java.net.SocketException;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link IExceptionTranslator.ExceptionTranslator} class.

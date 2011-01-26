@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link Bytes} class.
@@ -292,7 +292,7 @@ public class BytesUnitTest {
         Bytes from = Bytes.fromFloat(value);
         float to = from.toFloat();
 
-        assertEquals("Conversion did not match", value, to);
+        assertEquals("Conversion did not match", value, to, 0);
 
         // make sure the buffer is rewound
         from.toFloat();
@@ -322,7 +322,7 @@ public class BytesUnitTest {
         Bytes from = Bytes.fromDouble(value);
         double to = from.toDouble();
 
-        assertEquals("Conversion did not match", value, to);
+        assertEquals("Conversion did not match", value, to, 0);
 
         // make sure the buffer is rewound
         from.toDouble();

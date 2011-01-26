@@ -7,9 +7,7 @@ import org.mockito.stubbing.Answer;
 
 import java.util.*;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link LeastLoadedNodeSelectionStrategy} class.

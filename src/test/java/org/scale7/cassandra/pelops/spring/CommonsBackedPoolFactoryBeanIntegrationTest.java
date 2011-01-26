@@ -9,7 +9,7 @@ import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 import java.util.ArrayList;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link CommonsBackedPoolFactoryBean} class.

@@ -1,17 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
-import static org.scale7.cassandra.pelops.Selector.newColumnsPredicateAll;
-
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
@@ -23,6 +11,12 @@ import org.scale7.cassandra.pelops.exceptions.ProtocolException;
 import org.scale7.cassandra.pelops.pool.DebuggingPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.*;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 
 /**
  * Tests the {@link Selector} class.

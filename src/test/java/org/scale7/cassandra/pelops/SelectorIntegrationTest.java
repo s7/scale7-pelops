@@ -1,29 +1,16 @@
 package org.scale7.cassandra.pelops;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
-import static org.scale7.cassandra.pelops.Bytes.fromChar;
-import static org.scale7.cassandra.pelops.Bytes.fromLong;
-import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
-import static org.scale7.cassandra.pelops.Bytes.toUTF8;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_LONG;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
-
-import java.util.*;
-
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnDef;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.IndexOperator;
-import org.apache.cassandra.thrift.IndexType;
-import org.apache.cassandra.thrift.SuperColumn;
+import org.apache.cassandra.thrift.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.exceptions.InvalidRequestException;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
+
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.scale7.cassandra.pelops.Bytes.*;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 
 /**
  * Tests the {@link org.scale7.cassandra.pelops.Selector} class.
