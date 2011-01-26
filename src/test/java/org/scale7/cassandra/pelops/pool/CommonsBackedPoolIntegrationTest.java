@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
@@ -291,6 +292,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testInitWithDownedNode() throws Exception {
         final int timeout = 2000;
+        final int allowedDeviation = 10; // allowed timeout deviation in percentage
         Cluster cluster = new Cluster(new String[] {RPC_LISTEN_ADDRESS, "127.0.0.2"}, new IConnection.Config(RPC_PORT, true, timeout), false);
 
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
@@ -308,10 +310,10 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
                 new DescribeVersionConnectionValidator()
         );
 
-        long totalMillis = System.currentTimeMillis() - startMillis;
+        double totalMillis = System.currentTimeMillis() - startMillis;
 
-        // validate the actual timeout is within 10% of the configured
-        assertTrue(totalMillis >= timeout && totalMillis <= (timeout + (timeout * 10 / 100)));
+        String reason = String.format("actual timeout should be within %d%% of the configured", allowedDeviation);
+        assertThat(reason, totalMillis, closeTo(timeout, (allowedDeviation / 100.0) * timeout));
 
         try {
             pool.createSelector();
