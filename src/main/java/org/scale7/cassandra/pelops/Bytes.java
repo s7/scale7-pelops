@@ -906,137 +906,115 @@ public class Bytes {
      * A composite that's used to create instance of composite keys.
      */
     public static class CompositeBuilder {
-        private List<Bytes> parts;
+        private List<ByteBuffer> parts;
+        private int length;
 
         public CompositeBuilder(int count) {
-            parts = new ArrayList<Bytes>(count);
-        }
-
-        public CompositeBuilder addBoolean(boolean value) {
-            parts.add(Bytes.fromBoolean(value));
-            return this;
-        }
-
-        public CompositeBuilder addBoolean(Boolean value) {
-            parts.add(Bytes.fromBoolean(value));
-            return this;
-        }
-
-        public CompositeBuilder addByte(byte value) {
-            parts.add(Bytes.fromByte(value));
-            return this;
-        }
-
-        public CompositeBuilder addByte(Byte value) {
-            parts.add(Bytes.fromByte(value));
-            return this;
-        }
-
-        public CompositeBuilder addByteArray(byte[] value) {
-            parts.add(Bytes.fromByteArray(value));
-            return this;
+            parts = new ArrayList<ByteBuffer>(count);
         }
 
         public CompositeBuilder addByteBuffer(ByteBuffer value) {
-            parts.add(Bytes.fromByteBuffer(value));
+            parts.add(value);
+            length += value.remaining();
             return this;
+        }
+
+        public CompositeBuilder addBytes(Bytes value) {
+            return addByteBuffer(value.getBytes());
+        }
+
+        public CompositeBuilder addBoolean(boolean value) {
+            return addBytes(Bytes.fromBoolean(value));
+        }
+
+        public CompositeBuilder addBoolean(Boolean value) {
+            return addBytes(Bytes.fromBoolean(value));
+        }
+
+        public CompositeBuilder addByte(byte value) {
+            return addBytes(Bytes.fromByte(value));
+        }
+
+        public CompositeBuilder addByte(Byte value) {
+            return addBytes(Bytes.fromByte(value));
+        }
+
+        public CompositeBuilder addByteArray(byte[] value) {
+            return addBytes(Bytes.fromByteArray(value));
         }
 
         public CompositeBuilder addChar(char value) {
-            parts.add(Bytes.fromChar(value));
-            return this;
+            return addBytes(Bytes.fromChar(value));
         }
 
         public CompositeBuilder addChar(Character value) {
-            parts.add(Bytes.fromChar(value));
-            return this;
+            return addBytes(Bytes.fromChar(value));
         }
 
         public CompositeBuilder addDouble(double value) {
-            parts.add(Bytes.fromDouble(value));
-            return this;
+            return addBytes(Bytes.fromDouble(value));
         }
 
         public CompositeBuilder addDouble(Double value) {
-            parts.add(Bytes.fromDouble(value));
-            return this;
+            return addBytes(Bytes.fromDouble(value));
         }
 
         public CompositeBuilder addFloat(float value) {
-            parts.add(Bytes.fromFloat(value));
-            return this;
+            return addBytes(Bytes.fromFloat(value));
         }
 
         public CompositeBuilder addFloat(Float value) {
-            parts.add(Bytes.fromFloat(value));
-            return this;
+            return addBytes(Bytes.fromFloat(value));
         }
 
         public CompositeBuilder addInt(int value) {
-            parts.add(Bytes.fromInt(value));
-            return this;
+            return addBytes(Bytes.fromInt(value));
         }
 
         public CompositeBuilder addInt(Integer value) {
-            parts.add(Bytes.fromInt(value));
-            return this;
+            return addBytes(Bytes.fromInt(value));
         }
 
         public CompositeBuilder addLong(long value) {
-            parts.add(Bytes.fromLong(value));
-            return this;
+            return addBytes(Bytes.fromLong(value));
         }
 
         public CompositeBuilder addLong(Long value) {
-            parts.add(Bytes.fromLong(value));
-            return this;
+            return addBytes(Bytes.fromLong(value));
         }
 
         public CompositeBuilder addShort(short value) {
-            parts.add(Bytes.fromShort(value));
-            return this;
+            return addBytes(Bytes.fromShort(value));
         }
 
         public CompositeBuilder addShort(Short value) {
-            parts.add(Bytes.fromShort(value));
-            return this;
+            return addBytes(Bytes.fromShort(value));
         }
 
         public CompositeBuilder addUTF8(String str) {
-            parts.add(Bytes.fromUTF8(str));
-            return this;
+            return addBytes(Bytes.fromUTF8(str));
         }
 
         public CompositeBuilder addUuid(UUID value) {
-            parts.add(Bytes.fromUuid(value));
-            return this;
+            return addBytes(Bytes.fromUuid(value));
         }
 
         public CompositeBuilder addUuid(String value) {
-            parts.add(Bytes.fromUuid(value));
-            return this;
+            return addBytes(Bytes.fromUuid(value));
         }
 
         public CompositeBuilder addUuid(long msb, long lsb) {
-            parts.add(Bytes.fromUuid(msb, lsb));
-            return this;
+            return addBytes(Bytes.fromUuid(msb, lsb));
         }
 
         public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
-            parts.add(Bytes.fromTimeUuid(value));
-            return this;
+            return addBytes(Bytes.fromTimeUuid(value));
         }
 
         public Bytes build() {
-            // we could avoid the duplicate loops by incrementing the length as we add parts...
-            int length = 0;
-            for (Bytes part : parts) {
-                length += part.length();
-            }
-
             final ByteBuffer buffer = ByteBuffer.allocate(length);
-            for (Bytes part : parts) {
-                buffer.put(part.getBytes());
+            for (ByteBuffer part : parts) {
+                buffer.put(part);
             }
 
             return fromByteBuffer((ByteBuffer) buffer.rewind());
