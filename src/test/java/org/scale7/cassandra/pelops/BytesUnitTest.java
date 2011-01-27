@@ -497,7 +497,7 @@ public class BytesUnitTest {
     public void testBuilder() {
         final String utf8Part = "foo";
         final int intPart = 123;
-        Bytes bytes = Bytes.builder().addUTF8(utf8Part).addInt(intPart).build();
+        Bytes bytes = Bytes.composite().addUTF8(utf8Part).addInt(intPart).build();
 
         final ByteBuffer byteBuffer = bytes.getBytes();
 

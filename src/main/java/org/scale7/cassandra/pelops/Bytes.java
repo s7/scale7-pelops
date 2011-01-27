@@ -942,23 +942,23 @@ public class Bytes {
 
     /**
      * Creates an instance of {@link CompositeBuilder} and assumes that the composite will be made up of two parts.
-     * @return the builder
+     * @return the composite composite
      */
-    public static CompositeBuilder builder() {
+    public static CompositeBuilder composite() {
         return new CompositeBuilder(2);
     }
 
     /**
      * Creates an instance of {@link CompositeBuilder} with a specified number of parts.
      * @param parts the number of parts the composite will be created from
-     * @return the builder
+     * @return the composite
      */
-    public static CompositeBuilder builder(int parts) {
+    public static CompositeBuilder composite(int parts) {
         return new CompositeBuilder(parts);
     }
 
     /**
-     * A builder that's used to create instance of composite keys.
+     * A composite that's used to create instance of composite keys.
      */
     public static class CompositeBuilder {
         private List<Bytes> parts;
