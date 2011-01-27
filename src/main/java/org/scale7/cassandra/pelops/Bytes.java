@@ -397,54 +397,14 @@ public class Bytes {
 
     /**
      * Creates an instance based on the provided value handling nulls.  If the provided value is not null then this method
-     * delegates to {@link #fromTimeUuid(long, long)} to perform the deserialization.
+     * delegates to {@link #fromUuid(long, long)} to perform the deserialization.
      *
      * @param value the value
      * @return the instance or null if the value provided was null
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromTimeUuid(com.eaio.uuid.UUID value) {
-        return value == null ? NULL : fromTimeUuid(value.getTime(), value.getClockSeqAndNode());
-    }
-
-    /**
-     * Creates an instance based on the provided value handling nulls.  If the provided value is not null then this method
-     * delegates to {@link #fromTimeUuid(long, long)} to perform the deserialization.
-     *
-     * @param value the value
-     * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
-     */
-    public static Bytes fromTimeUuid(UUID value) {
-        return value == null ? NULL : fromTimeUuid(value.toString());
-    }
-
-    /**
-     * Creates an instance based on the provided value handling nulls.  If the provided value is not null then a new
-     * instance of {@link com.eaio.uuid.UUID} is created and then
-     * {@link #fromTimeUuid(long, long)} is called to perform the deserialization.
-     *
-     * @param value the value
-     * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
-     */
-    public static Bytes fromTimeUuid(String value) {
-        return value == null ? NULL : fromTimeUuid(new com.eaio.uuid.UUID(value));
-    }
-
-    /**
-     * Creates an instance based on the provided values.  The {@link java.nio.ByteBuffer#putLong(long)} is called twice,
-     * the first call for the time value and second for the clockSeqAndNode value.
-     *
-     * @param time            the time value
-     * @param clockSeqAndNode the clockSeqAndNode value
-     * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
-     */
-    public static Bytes fromTimeUuid(long time, long clockSeqAndNode) {
-        return new Bytes(
-                ByteBuffer.allocate(SIZEOF_UUID).putLong(time).putLong(clockSeqAndNode).rewind()
-        );
+        return value == null ? NULL : fromUuid(value.getTime(), value.getClockSeqAndNode());
     }
 
     /**
@@ -758,50 +718,35 @@ public class Bytes {
      * @throws IllegalStateException if the underlying array does not contain the appropriate data
      */
     public com.eaio.uuid.UUID toTimeUuid() throws IllegalStateException {
-        if (isNull()) return null;
-
-        try {
-            bytes.reset();
-            long time = this.bytes.getLong();
-            long clockSeqAndNode = this.bytes.getLong();
-
-            return new com.eaio.uuid.UUID(time, clockSeqAndNode);
-        } catch (BufferUnderflowException e) {
-            throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
-        } finally {
-            this.bytes.reset();
-        }
+        UUID uuid = toUuid();
+        if (uuid == null) return null;
+        return new com.eaio.uuid.UUID(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
     }
 
     /**
-     * Efficiently constructs a time uuid from a bytes array without creating any intermediate objects
+     * Efficiently constructs a uuid from a bytes array without creating any intermediate objects
      *
-     * @param uuid The bytes representing the time uuid.
-     * @return A time uuid object
+     * @param uuid The bytes representing the uuid.
+     * @return A uuid object
      */
-    public static java.util.UUID timeUuidFromBytes(byte[] uuid)
-    {
-            long msb = 0;
-            long lsb = 0;
-            assert uuid.length == 16;
-            for (int i=0; i<8; i++)
-                    msb = (msb << 8) | (uuid[i] & 0xff);
-            for (int i=8; i<16; i++)
-                    lsb = (lsb << 8) | (uuid[i] & 0xff);
-
-            com.eaio.uuid.UUID u = new com.eaio.uuid.UUID(msb,lsb);
-
-            return java.util.UUID.fromString(u.toString());
+    public static UUID uuidFromBytes(byte[] uuid) {
+        long msb = 0;
+        long lsb = 0;
+        assert uuid.length == 16;
+        for (int i = 0; i < 8; i++)
+            msb = (msb << 8) | (uuid[i] & 0xff);
+        for (int i = 8; i < 16; i++)
+            lsb = (lsb << 8) | (uuid[i] & 0xff);
+        return new UUID(msb, lsb);
     }
 
     /**
-     * Createa a UTF-8 representation of a time uuid from a bytes array
-     * @param uuid The bytes representing the time uuid.
-     * @return A string representation of the time uuid
+     * Createa a UTF-8 representation of a uuid from a bytes array
+     * @param uuid The bytes representing the uuid.
+     * @return A string representation of the uuid
      */
-    public static String utf8TimeUuidFromBytes(byte[] uuid)
-    {
-    	return timeUuidFromBytes(uuid).toString();
+    public static String utf8UuidFromBytes(byte[] uuid) {
+    	return uuidFromBytes(uuid).toString();
     }
 
     /**
@@ -1057,26 +1002,6 @@ public class Bytes {
             return this;
         }
 
-        public CompositeBuilder addTimeUuid(UUID value) {
-            parts.add(Bytes.fromTimeUuid(value));
-            return this;
-        }
-
-        public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
-            parts.add(Bytes.fromTimeUuid(value));
-            return this;
-        }
-
-        public CompositeBuilder addTimeUuid(String value) {
-            parts.add(Bytes.fromTimeUuid(value));
-            return this;
-        }
-
-        public CompositeBuilder addTimeUuid(long time, long clockSeqAndNode) {
-            parts.add(Bytes.fromTimeUuid(time, clockSeqAndNode));
-            return this;
-        }
-
         public CompositeBuilder addUTF8(String str) {
             parts.add(Bytes.fromUTF8(str));
             return this;
@@ -1094,6 +1019,11 @@ public class Bytes {
 
         public CompositeBuilder addUuid(long msb, long lsb) {
             parts.add(Bytes.fromUuid(msb, lsb));
+            return this;
+        }
+
+        public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
+            parts.add(Bytes.fromTimeUuid(value));
             return this;
         }
 

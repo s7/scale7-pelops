@@ -411,21 +411,10 @@ public class BytesUnitTest {
     @Test
     public void testTimeUuidString() {
         String value = new com.eaio.uuid.UUID().toString();
-        Bytes from = Bytes.fromTimeUuid(value);
-        com.eaio.uuid.UUID to = from.toTimeUuid();
+        Bytes from = Bytes.fromUuid(value);
+        String to = from.toTimeUuid().toString();
 
-        assertEquals("Conversion did not match", value, to.toString());
-    }
-
-    @Test
-    public void testTimeUuidLongs() {
-        long time = 1l;
-        long clockSeq = 2l;
-        Bytes from = Bytes.fromTimeUuid(time, clockSeq);
-        com.eaio.uuid.UUID to = from.toTimeUuid();
-
-        assertEquals("Conversion did not match", time, to.getTime());
-        assertEquals("Conversion did not match", clockSeq, to.getClockSeqAndNode());
+        assertEquals("Conversion did not match", value, to);
     }
 
     /**
