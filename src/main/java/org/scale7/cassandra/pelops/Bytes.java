@@ -408,6 +408,40 @@ public class Bytes {
     }
 
     /**
+     * Creates an instance based on the provided value handling nulls.
+     *
+     * @param value the value
+     * @return the instance or null if the value provided was null
+     * @see java.nio.ByteBuffer for details on long serializaion format
+     */
+    public static Bytes fromTimeUuid(UUID value) {
+        return fromUuid(value);
+    }
+
+    /**
+     * Creates an instance based on the provided value handling nulls.
+     *
+     * @param value the value
+     * @return the instance or null if the value provided was null
+     * @see java.nio.ByteBuffer for details on long serializaion format
+     */
+    public static Bytes fromTimeUuid(String value) {
+        return fromUuid(value);
+    }
+
+    /**
+     * Creates an instance based on the provided values.
+     *
+     * @param time            the time value
+     * @param clockSeqAndNode the clockSeqAndNode value
+     * @return the instance or null if the value provided was null
+     * @see java.nio.ByteBuffer for details on long serializaion format
+     */
+    public static Bytes fromTimeUuid(long time, long clockSeqAndNode) {
+        return fromUuid(time, clockSeqAndNode);
+    }
+
+    /**
      * Creates an instance based on the provided value in UTF-8 format handling nulls.
      *
      * @param value the value
@@ -741,12 +775,31 @@ public class Bytes {
     }
 
     /**
+     * Efficiently constructs a uuid from a bytes array without creating any intermediate objects
+     *
+     * @param uuid The bytes representing the uuid.
+     * @return A uuid object
+     */
+    public static UUID timeUuidFromBytes(byte[] uuid) {
+        return uuidFromBytes(uuid);
+    }
+
+    /**
      * Createa a UTF-8 representation of a uuid from a bytes array
      * @param uuid The bytes representing the uuid.
      * @return A string representation of the uuid
      */
     public static String utf8UuidFromBytes(byte[] uuid) {
     	return uuidFromBytes(uuid).toString();
+    }
+
+    /**
+     * Createa a UTF-8 representation of a uuid from a bytes array
+     * @param uuid The bytes representing the uuid.
+     * @return A string representation of the uuid
+     */
+    public static String utf8TimeUuidFromBytes(byte[] uuid) {
+    	return utf8UuidFromBytes(uuid);
     }
 
     /**
@@ -1009,6 +1062,18 @@ public class Bytes {
 
         public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
             return addBytes(Bytes.fromTimeUuid(value));
+        }
+
+        public CompositeBuilder addTimeUuid(UUID value) {
+            return addUuid(value);
+        }
+
+        public CompositeBuilder addTimeUuid(String value) {
+            return addUuid(value);
+        }
+
+        public CompositeBuilder addTimeUuid(long time, long clockSeqAndNode) {
+            return addUuid(time, clockSeqAndNode);
         }
 
         public Bytes build() {
