@@ -16,26 +16,26 @@ To use Pelops with Cassandra 0.7.x use the following:
 
 1. Add the following repository to your project repositories:
 
-		<repositories>
-			<repository>
-				<id>central</id>
-				<name>Maven Central Repo</name>
-				<url>http://repo1.maven.org/maven2</url>
-			</repository>
+        <repositories>
+            <repository>
+                <id>central</id>
+                <name>Maven Central Repo</name>
+                <url>http://repo1.maven.org/maven2</url>
+            </repository>
             <repository>
                 <id>riptano</id>
                 <name>riptano</name>
                 <url>http://mvn.riptano.com/content/repositories/public/</url>
             </repository>
-			<repository>
-				<id>maven.scale7.org</id>
-				<name>Scale7 Maven Repo</name>
-				<url>https://github.com/s7/mvnrepo/raw/master</url>
-				<snapshots>
-					<enabled>true</enabled>
-				</snapshots>
-			</repository>
-		</repositories>
+            <repository>
+                <id>maven.scale7.org</id>
+                <name>Scale7 Maven Repo</name>
+                <url>https://github.com/s7/mvnrepo/raw/master</url>
+                <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            </repository>
+        </repositories>
 
 2. Add the Pelops dependency to your project (depends on Cassandra 0.7.0)):
 
@@ -48,6 +48,44 @@ To use Pelops with Cassandra 0.7.x use the following:
     Note: this version is the only one getting Pelops fixes and updates.
 
 3. Start using Pelops.
+
+        /*
+          NOTE: This example uses the static Pelops methods because they are more concise.  If you'd prefer not
+                to work with static methods you can construct an instance of IThriftPool and use it's instance
+                methods instead.
+                e.g. IThriftPool pool = new CommonsBackedPool(cluster, keyspace)
+        */
+        String pool = "pool";
+        String keyspace = "keyspace";
+        String colFamily = "users";
+
+        // init the connection pool
+        Cluster cluster = new Cluster("localhost", 9160);
+        Pelops.addPool(pool, cluster, keyspace);
+
+        String rowKey = "abc123";
+        
+        // write out some data
+        Mutator mutator = Pelops.createMutator(pool);
+        mutator.writeColumns(
+                colFamily, rowKey,
+                mutator.newColumnList(
+                        mutator.newColumn("name", "Dan"),
+                        mutator.newColumn("age", Bytes.fromInt(33))
+                )
+        );
+        mutator.execute(ConsistencyLevel.ONE);
+        
+        // read back the data we just wrote
+        Selector selector = Pelops.createSelector(pool);
+        List<Column> columns = selector.getColumnsFromRow(colFamily, rowKey, false, ConsistencyLevel.ONE);
+        
+        System.out.println("Name: " + Selector.getColumnStringValue(columns, "name"));
+        System.out.println("Age: " + Selector.getColumnValue(columns, "age").toInt());
+        
+        // shut down the pool
+        Pelops.shutdown();
+        
 
 A note on dependencies
 ----------------------------------
