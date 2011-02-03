@@ -210,7 +210,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         if (executorService != null) {
             logger.info("Terminating background thread...");
             executorService.shutdownNow();
-            while (executorService.isTerminated()) {
+            while (!executorService.isTerminated()) {
                 try {
                     if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
                         logger.info("Still waiting for background thread to terminate...");
