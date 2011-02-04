@@ -48,7 +48,15 @@ To use Pelops with Cassandra 0.7.x use the following:
     Note: this version is the only one getting Pelops fixes and updates.
 
 3. Start using Pelops.
+    1. Create your keyspace and column family using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
+    
+        create keyspace 'mykeyspace' with replication_factor = 1 and placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy';
+        use mykeyspace;
+        create column family users with column_type = 'Standard' and comparator = 'UTF8Type';
 
+
+    2. Play around with this simple example.
+    
         /*
           NOTE: This example uses the static Pelops methods because they are more concise.  If you'd prefer not
                 to work with static methods you can construct an instance of IThriftPool and use it's instance
@@ -56,7 +64,7 @@ To use Pelops with Cassandra 0.7.x use the following:
                 e.g. IThriftPool pool = new CommonsBackedPool(cluster, keyspace)
         */
         String pool = "pool";
-        String keyspace = "keyspace";
+        String keyspace = "mykeyspace";
         String colFamily = "users";
 
         // init the connection pool
