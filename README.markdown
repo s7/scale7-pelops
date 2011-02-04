@@ -49,7 +49,7 @@ To use Pelops with Cassandra 0.7.x use the following:
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
 
-        create keyspace 'mykeyspace' with replication_factor = 1 and placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy';
+        create keyspace mykeyspace with replication_factor = 1 and placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy';
         use mykeyspace;
         create column family users with column_type = 'Standard' and comparator = 'UTF8Type';
 
