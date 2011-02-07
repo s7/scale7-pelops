@@ -413,7 +413,9 @@ public class Bytes {
      * @param value the value
      * @return the instance or null if the value provided was null
      * @see java.nio.ByteBuffer for details on long serializaion format
+     * @deprecated use {@link #fromUuid(UUID)} instead
      */
+    @Deprecated
     public static Bytes fromTimeUuid(UUID value) {
         return fromUuid(value);
     }
@@ -424,7 +426,9 @@ public class Bytes {
      * @param value the value
      * @return the instance or null if the value provided was null
      * @see java.nio.ByteBuffer for details on long serializaion format
+     * @deprecated use {@link #fromUuid(String)} instead
      */
+    @Deprecated
     public static Bytes fromTimeUuid(String value) {
         return fromUuid(value);
     }
@@ -436,7 +440,9 @@ public class Bytes {
      * @param clockSeqAndNode the clockSeqAndNode value
      * @return the instance or null if the value provided was null
      * @see java.nio.ByteBuffer for details on long serializaion format
+     * @deprecated use {@link #fromUuid(long, long)} instead
      */
+    @Deprecated
     public static Bytes fromTimeUuid(long time, long clockSeqAndNode) {
         return fromUuid(time, clockSeqAndNode);
     }
@@ -779,7 +785,9 @@ public class Bytes {
      *
      * @param uuid The bytes representing the uuid.
      * @return A uuid object
+     * @deprecated use {@link #uuidFromBytes(byte[])} instead
      */
+    @Deprecated
     public static UUID timeUuidFromBytes(byte[] uuid) {
         return uuidFromBytes(uuid);
     }
@@ -797,7 +805,9 @@ public class Bytes {
      * Createa a UTF-8 representation of a uuid from a bytes array
      * @param uuid The bytes representing the uuid.
      * @return A string representation of the uuid
+     * @deprecated use {@link #utf8UuidFromBytes(byte[])} instead
      */
+    @Deprecated
     public static String utf8TimeUuidFromBytes(byte[] uuid) {
     	return utf8UuidFromBytes(uuid);
     }
@@ -1064,14 +1074,20 @@ public class Bytes {
             return addBytes(Bytes.fromTimeUuid(value));
         }
 
+        /** @deprecated use {@link #addUuid(UUID)} instead */
+        @Deprecated
         public CompositeBuilder addTimeUuid(UUID value) {
             return addUuid(value);
         }
 
+        /** @deprecated use {@link #addUuid(String)} instead */
+        @Deprecated
         public CompositeBuilder addTimeUuid(String value) {
             return addUuid(value);
         }
 
+        /** @deprecated use {@link #addUuid(long, long)} instead */
+        @Deprecated
         public CompositeBuilder addTimeUuid(long time, long clockSeqAndNode) {
             return addUuid(time, clockSeqAndNode);
         }
