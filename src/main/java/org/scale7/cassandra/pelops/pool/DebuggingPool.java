@@ -45,11 +45,10 @@ public class DebuggingPool extends ThriftPoolBase {
         PooledConnection connection = null;
         try {
             connection = new PooledConnection(nodes[index], keyspace);
+            connection.open();
         } catch (Exception e) {
             throw new NoConnectionsAvailableException();
         }
-
-        connection.open();
 
         return connection;
     }

@@ -2,7 +2,6 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
-import org.scale7.cassandra.pelops.pool.DebuggingPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -34,6 +33,10 @@ public class Cluster {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, -1), dynamicNodeDiscovery);
     }
 
+    public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout), dynamicNodeDiscovery);
+    }
+
     public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery);
     }
@@ -50,9 +53,9 @@ public class Cluster {
         this.nodes = new HashSet<String>(Arrays.asList(nodes)).toArray(new String[nodes.length]);
 
         if (!dynamicNodeDiscovery) {
-            logger.debug("Dynamic node discovery is disabled, using {} as a static list of nodes", Arrays.toString(nodes));
+            logger.info("Dynamic node discovery is disabled, using {} as a static list of nodes", Arrays.toString(nodes));
         } else {
-            logger.debug("Dynamic node discovery is enabled, detecting initial list of nodes from {}", Arrays.toString(nodes));
+            logger.info("Dynamic node discovery is enabled, detecting initial list of nodes from {}", Arrays.toString(nodes));
             refresh();
         }
 	}
@@ -141,7 +144,7 @@ public class Cluster {
      * @return the list of nodes
 	 */
 	private String[] refreshInternal() throws Exception {
-        KeyspaceManager kspcMngr = Pelops.createKeyspaceManager(this);
+        KeyspaceManager kspcMngr = new ClusterKeyspaceManager(this);
         List<KsDef> keyspaces = kspcMngr.getKeyspaceNames();
         Iterator<KsDef> k = keyspaces.iterator();
         KsDef appKeyspace = null;
@@ -242,6 +245,12 @@ public class Cluster {
         @Override
         public String toString() {
             return address + ":" + config.getThriftPort();
+        }
+    }
+
+    public class ClusterKeyspaceManager extends KeyspaceManager {
+        public ClusterKeyspaceManager(Cluster cluster) {
+            super(cluster, 0);
         }
     }
 }

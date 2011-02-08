@@ -1,6 +1,7 @@
 package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.thrift.transport.TTransportException;
 
 public interface IConnection {
     /**
@@ -28,9 +29,9 @@ public interface IConnection {
     /**
      * Opens a connection.
      *
-     * @return true if the connection was opened, otherwise false
+     * @throws org.apache.thrift.transport.TTransportException if a thrift error occurs
      */
-    boolean open();
+    void open() throws TTransportException;
 
     /**
      * Close the connection.

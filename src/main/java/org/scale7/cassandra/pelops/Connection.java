@@ -63,25 +63,18 @@ public class Connection implements IConnection {
      * @return true if the connection was opened, otherwise false
      */
     @Override
-    public boolean open() {
-        if (isOpen()) return true;
+    public void open() throws TTransportException {
+        if (isOpen()) return;
         
-        try {
-            transport.open();
+        transport.open();
 
-            if (keyspace != null) {
-                try {
-                    client.set_keyspace(keyspace);
-                } catch (Exception e) {
-                    logger.warn("Failed to set keyspace on client.  See cause for details...", e);
-                    return false;
-                }
+        if (keyspace != null) {
+            try {
+                client.set_keyspace(keyspace);
+            } catch (Exception e) {
+                logger.warn("Failed to set keyspace on client.  See cause for details...", e);
             }
-        } catch (TTransportException e) {
-            logger.error("Failed to open transport.  See cause for details...", e);
-            return false;
         }
-        return true;
     }
 
     /**
