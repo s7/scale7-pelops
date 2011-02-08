@@ -1,5 +1,6 @@
 package org.scale7.cassandra.pelops.pool;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -116,10 +117,10 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
      * Test to verify that the node with the least active connections is skipped because of the notNodeHint.
      */
     @Test
-    public void testLeastLoadedNodeSkippedOnNotNodeHint() {
-        String leastLoadedNodeAddress = "node1";
+    public void testAvoidNodesHint() {
+        String avoidNode = "node1";
         String selectedNodeAddress = "node2";
-        List<String> nodeAddresses = Arrays.asList(leastLoadedNodeAddress, selectedNodeAddress, "node3", "node4", "node5");
+        List<String> nodeAddresses = Arrays.asList(avoidNode, selectedNodeAddress, "node3", "node4", "node5");
         CommonsBackedPool pool = Mockito.mock(CommonsBackedPool.class);
 
         // setup each pooled node to report it's number of active connections
@@ -140,7 +141,42 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
 
         LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
 
-        PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), leastLoadedNodeAddress);
+        PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), Sets.newHashSet(avoidNode));
+
+        assertNotNull("No nodes were returned from the pool", node);
+        assertEquals("Wrong node returned from the pool", selectedNodeAddress, node.getAddress());
+    }
+
+    /**
+     * Test to verify that the node with the least active connections is skipped because of the notNodeHint.
+     */
+    @Test
+    public void testAvoidNodesHintMultiple() {
+        String avoidNode1 = "node1";
+        String avoidNode2 = "node2";
+        String selectedNodeAddress = "node3";
+        List<String> nodeAddresses = Arrays.asList(avoidNode1, avoidNode2, selectedNodeAddress, "node4", "node5");
+        CommonsBackedPool pool = Mockito.mock(CommonsBackedPool.class);
+
+        // setup each pooled node to report it's number of active connections
+        for (int i = 0; i < nodeAddresses.size(); i++) {
+            final int numActive = i;
+            mockPoolMethods(pool, nodeAddresses.get(i), new PooledNode(pool, nodeAddresses.get(i)) {
+                @Override
+                public boolean isSuspended() {
+                    return false;
+                }
+
+                @Override
+                public int getNumActive() {
+                    return numActive;
+                }
+            });
+        }
+
+        LeastLoadedNodeSelectionStrategy strategy = new LeastLoadedNodeSelectionStrategy();
+
+        PooledNode node = strategy.select(pool, new HashSet<String>(nodeAddresses), Sets.newHashSet(avoidNode1, avoidNode2));
 
         assertNotNull("No nodes were returned from the pool", node);
         assertEquals("Wrong node returned from the pool", selectedNodeAddress, node.getAddress());

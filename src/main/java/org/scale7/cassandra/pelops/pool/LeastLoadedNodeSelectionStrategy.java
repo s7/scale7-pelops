@@ -13,18 +13,21 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
     private static final Logger logger = SystemProxy.getLoggerFromFactory(LeastLoadedNodeSelectionStrategy.class);
 
     @Override
-    public PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, String notNodeHint) {
+    public PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, Set<String> avoidNodesHint) {
         // create a candidate list (otherwise the numActive could change while sorting)
-        logger.debug("Determining which node is the least loaded");
+        if (logger.isDebugEnabled())
+            logger.debug("Determining which node is the least loaded");
         List<Candidate> candidates = new ArrayList<Candidate>(nodeAddresses.size());
         for (String nodeAddress : nodeAddresses) {
             PooledNode pooledNode = pool.getPooledNode(nodeAddress);
             if (pooledNode == null || pooledNode.isSuspended()) {
-                logger.debug("Excluding node '{}' because it's either been removed from the pool or has been suspended", nodeAddress);
+                if (logger.isDebugEnabled())
+                    logger.debug("Excluding node '{}' because it's either been removed from the pool or has been suspended", nodeAddress);
                 continue;
             }
             int active = pooledNode.getNumActive();
-            logger.debug("Node '{}' has {} active connections", pooledNode.getAddress(), active);
+            if (logger.isDebugEnabled())
+                logger.debug("Node '{}' has {} active connections", pooledNode.getAddress(), active);
             candidates.add(new Candidate(pooledNode.getAddress(), active));
         }
 
@@ -41,15 +44,18 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
         PooledNode node = null;
         for (Candidate candidate : candidates) {
             node = pool.getPooledNode(candidate.address);
-            if (!candidate.address.equals(notNodeHint)) {
+            if (avoidNodesHint == null || !avoidNodesHint.contains(candidate.address)) {
                 break;
             } else {
-                logger.debug("Attempting to honor the notNodeHint '{}', skipping node", notNodeHint, candidate.address);
+                if (logger.isDebugEnabled())
+                    logger.debug("Attempting to honor the avoidNodesHint '{}', skipping node '{}'", avoidNodesHint, candidate.address);
                 continue;
             }
         }
 
-        logger.debug("Chose node '{}'...", node.getAddress());
+        if (logger.isDebugEnabled())
+            logger.debug("Chose node '{}'...", node != null ? node.getAddress() : "null");
+
         return node;
     }
 

@@ -15,6 +15,9 @@ import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Base class for objects operating against a Cassandra keyspace.
  *
@@ -36,20 +39,19 @@ public class Operand {
 	}
 
 	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws PelopsException {
-		String lastNode = null;
+        Set<String> avoidNodes = null;
 		Exception lastException = null;
 		int retries = 0;
 		do {
 			// Get a connection to a Cassandra node
             IPooledConnection conn = null;
             try {
-                conn = thrift.getConnectionExcept(lastNode);
+                conn = thrift.getConnectionExcept(avoidNodes);
             } catch (Exception e) {
                 // the pool is responsible for blocking and waiting for a connection, so don't retry
                 throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
             }
 
-            lastNode = conn.getNode().getAddress();
 			try {
 				// Execute operation
                 // Return result!
@@ -76,6 +78,10 @@ public class Operand {
 
                     // This connection is "broken" by network timeout or other problem.
                     conn.corrupted();
+
+                    // to avoid create the set for every request create the set here
+                    if (avoidNodes == null) avoidNodes = new HashSet<String>(10);
+                    avoidNodes.add(conn.getNode().getAddress());
 
 					retries++;
 					lastException = e;
