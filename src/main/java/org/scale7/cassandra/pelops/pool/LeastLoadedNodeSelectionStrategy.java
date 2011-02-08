@@ -25,10 +25,8 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
                     logger.debug("Excluding node '{}' because it's either been removed from the pool or has been suspended", nodeAddress);
                 continue;
             }
-            int active = pooledNode.getNumActive();
-            if (logger.isDebugEnabled())
-                logger.debug("Node '{}' has {} active connections", pooledNode.getAddress(), active);
-            candidates.add(new Candidate(pooledNode.getAddress(), active));
+
+            candidates.add(new Candidate(pooledNode.getAddress(), pooledNode));
         }
 
         // make sure there's at least one node to choose from after filtering out suspended nodes etc
@@ -60,17 +58,32 @@ public class LeastLoadedNodeSelectionStrategy implements CommonsBackedPool.INode
     }
 
     public class Candidate implements Comparable<Candidate> {
-        public Candidate(String address, int numActive) {
+        public Candidate(String address, PooledNode node) {
             this.address = address;
-            this.numActive = numActive;
+            this.numActive = node.getNumActive();
+            this.numBorrowed = node.getConnectionsBorrowedTotal();
+            this.numCorrupted = node.getConnectionsCorrupted();
+
+            if (logger.isDebugEnabled())
+                logger.debug("Node '{}' has {} active connections, {} borrowed connections and {} corrupted connections", new Object[] {address, numActive, numBorrowed, numCorrupted});
         }
 
         String address;
         int numActive;
+        int numBorrowed;
+        int numCorrupted;
 
         @Override
         public int compareTo(Candidate candidate) {
-            return numActive - candidate.numActive;
+            int value = numActive - candidate.numActive;
+
+            if (value == 0)
+                value = numBorrowed - candidate.numBorrowed;
+
+            if (value == 0)
+                value = numCorrupted - candidate.numCorrupted;
+
+            return value;
         }
     }
 }
