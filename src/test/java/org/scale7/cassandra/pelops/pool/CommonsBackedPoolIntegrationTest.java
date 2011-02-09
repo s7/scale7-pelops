@@ -293,7 +293,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
     public void testInitWithDownedNode() throws Exception {
         final int timeout = 2000;
         final int allowedDeviation = 10; // allowed timeout deviation in percentage
-        Cluster cluster = new Cluster(new String[] {RPC_LISTEN_ADDRESS, "127.0.0.2"}, new IConnection.Config(RPC_PORT, true, timeout), false);
+        Cluster cluster = new Cluster(new String[] {RPC_LISTEN_ADDRESS, "192.0.2.0"}, new IConnection.Config(RPC_PORT, true, timeout), false);
 
         CommonsBackedPool.Policy config = new CommonsBackedPool.Policy();
         config.setTimeBetweenScheduledMaintenanceTaskRunsMillis(-1); // disable the background thread
