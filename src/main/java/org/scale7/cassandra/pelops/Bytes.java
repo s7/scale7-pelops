@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -17,8 +16,8 @@ import java.util.*;
  * <b>Note</b>: Instances of this class should *not* be considered thread safe.
  */
 public class Bytes {
-    public static final Bytes EMPTY = new Bytes(new byte[0]);
-    public static final Bytes NULL = new Bytes((ByteBuffer) null);
+    public static final Bytes EMPTY = fromByteArray(new byte[0]);
+    public static final Bytes NULL = fromByteBuffer(null);
 
     static final int SIZEOF_BYTE = Byte.SIZE / Byte.SIZE;
 
@@ -46,9 +45,11 @@ public class Bytes {
      * Constructs a new instance based on the provided byte array.
      *
      * @param bytes the bytes
+     * @deprecated use {@link #fromByteArray(byte[])} instead
      */
+    @Deprecated
     public Bytes(byte[] bytes) {
-        this(ByteBuffer.wrap(bytes));
+        this(ByteBuffer.wrap(bytes), false);
     }
 
     /**
@@ -56,22 +57,27 @@ public class Bytes {
      * in the correct position to read the appropriate value from it.
      *
      * @param bytes the bytes
+     * @deprecated use {@link #fromByteBuffer(java.nio.ByteBuffer)} instead
      */
+    @Deprecated
     public Bytes(ByteBuffer bytes) {
-        if (bytes != null) {
-            this.bytes = bytes.duplicate();
-            this.bytes.mark();
-        } else
-            this.bytes = null;
+        this(bytes, true);
     }
 
     /**
-     * Constructs a new instance based on the provided buffer (must be an instance of ByteBuffer).
+     * Constructs a new instance based on the provided byte buffer.  The {@link java.nio.ByteBuffer#position()} must be
+     * in the correct position to read the appropriate value from it. The given bytes are either used directly,
+     * or duplicated.
      *
      * @param bytes the bytes
+     * @param duplicate if true, duplicates the given bytes; otherwise, it is rewound and used it as-is
      */
-    private Bytes(Buffer bytes) {
-        this((ByteBuffer) bytes);
+    private Bytes(ByteBuffer bytes, boolean duplicate) {
+        if (bytes != null) {
+            this.bytes = duplicate ? bytes.duplicate() : (ByteBuffer)bytes.rewind();
+            this.bytes.mark();
+        } else
+            this.bytes = null;
     }
 
     /**
@@ -105,7 +111,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer#duplicate()
      */
     public Bytes duplicate() {
-        return isNull() ? Bytes.NULL : new Bytes(bytes.duplicate());
+        return isNull() ? Bytes.NULL : new Bytes(bytes, true);
     }
 
     /**
@@ -166,7 +172,7 @@ public class Bytes {
      * @return the Bytes instance
      */
     public static Bytes fromByteArray(byte[] value) {
-        return new Bytes(value);
+        return new Bytes(ByteBuffer.wrap(value), false);
     }
 
     /**
@@ -176,7 +182,7 @@ public class Bytes {
      * @return the Bytes instance
      */
     public static Bytes fromByteBuffer(ByteBuffer value) {
-        return new Bytes(value);
+        return new Bytes(value, true);
     }
 
     /**
@@ -187,7 +193,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromChar(char value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_CHAR).putChar(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_CHAR).putChar(value), false);
     }
 
     /**
@@ -209,7 +215,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromByte(byte value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_BYTE).put(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_BYTE).put(value), false);
     }
 
     /**
@@ -231,7 +237,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromLong(long value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_LONG).putLong(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_LONG).putLong(value), false);
     }
 
     /**
@@ -253,7 +259,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromInt(int value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_INT).putInt(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_INT).putInt(value), false);
     }
 
     /**
@@ -275,7 +281,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromShort(short value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_SHORT).putShort(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_SHORT).putShort(value), false);
     }
 
     /**
@@ -297,7 +303,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromDouble(double value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_DOUBLE).putDouble(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_DOUBLE).putDouble(value), false);
     }
 
     /**
@@ -319,7 +325,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromFloat(float value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_FLOAT).putFloat(value).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_FLOAT).putFloat(value), false);
     }
 
     /**
@@ -341,7 +347,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromBoolean(boolean value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_BOOLEAN).put(value ? BOOLEAN_TRUE : BOOLEAN_FALSE).rewind());
+        return new Bytes(ByteBuffer.allocate(SIZEOF_BOOLEAN).put(value ? BOOLEAN_TRUE : BOOLEAN_FALSE), false);
     }
 
     /**
@@ -390,9 +396,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(long msb, long lsb) {
-        return new Bytes(
-                ByteBuffer.allocate(SIZEOF_UUID).putLong(msb).putLong(lsb).rewind()
-        );
+        return new Bytes(ByteBuffer.allocate(SIZEOF_UUID).putLong(msb).putLong(lsb), false);
     }
 
     /**
@@ -455,7 +459,7 @@ public class Bytes {
      * @see String#getBytes(java.nio.charset.Charset) for details on the format
      */
     public static Bytes fromUTF8(String value) {
-        return value == null ? NULL : new Bytes(value.getBytes(UTF8));
+        return value == null ? NULL : fromByteArray(value.getBytes(UTF8));
     }
 
 
@@ -1098,7 +1102,7 @@ public class Bytes {
                 buffer.put(part);
             }
 
-            return fromByteBuffer((ByteBuffer) buffer.rewind());
+            return new Bytes(buffer, false);
         }
     }
 }
