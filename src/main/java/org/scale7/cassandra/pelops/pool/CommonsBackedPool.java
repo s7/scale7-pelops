@@ -3,7 +3,6 @@ package org.scale7.cassandra.pelops.pool;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedObjectPool;
-import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
 import org.scale7.cassandra.pelops.*;
@@ -241,7 +240,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
     }
 
     @Override
-    public IPooledConnection getConnectionExcept(String notNodeHint) throws NoConnectionsAvailableException {
+    public IPooledConnection getConnectionExcept(Set<String> avoidNodes) throws NoConnectionsAvailableException {
         PooledNode node = null;
         IPooledConnection connection = null;
         long timeout = -1;
@@ -259,7 +258,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                 break;
             }
 
-            node = nodeSelectionStrategy.select(this, nodes.keySet(), notNodeHint);
+            node = nodeSelectionStrategy.select(this, nodes.keySet(), avoidNodes);
             // if the strategy was unable to choose a node (all suspended?) then sleep for a bit and loop
             if (node == null) {
                 logger.debug("The node selection strategy was unable to choose a node, sleeping before trying again...");
@@ -881,12 +880,13 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         /**
          * Called when a node need to be selected.
          *
+         *
          * @param pool          the pool (just in case you need it)
          * @param nodeAddresses the node addresses to select from
-         * @param notNodeHint   a hint of the node address that the selection strategy should avoid (possible null)
+         * @param avoidNodesHint a set of nodes to try and avoid
          * @return the selected node (null if none are available)
          */
-        PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, String notNodeHint);
+        PooledNode select(CommonsBackedPool pool, Set<String> nodeAddresses, Set<String> avoidNodesHint);
     }
 
     /**

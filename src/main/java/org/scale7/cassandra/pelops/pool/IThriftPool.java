@@ -1,9 +1,9 @@
 package org.scale7.cassandra.pelops.pool;
 
-import org.apache.cassandra.thrift.Cassandra;
 import org.scale7.cassandra.pelops.*;
 import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
-import org.scale7.cassandra.pelops.exceptions.PelopsException;
+
+import java.util.Set;
 
 /**
  * The contract for connection pools used by pelops.
@@ -87,18 +87,19 @@ public interface IThriftPool {
      * Get a connection from the pool.
      *
      * @return the connection
-     * @throws Exception if an error occurs
+     * @throws NoConnectionsAvailableException if an error occurs
      */
     IPooledConnection getConnection() throws NoConnectionsAvailableException;
 
     /**
-     * Get a connection from the pool trying to avoid the node specified by the notNode param.
+     * Get a connection from the pool trying to avoid the nodes specified by the avoidNodes param.
      *
-     * @param notNode the node to avoid if possible
+     *
+     * @param avoidNodes the nodes to avoid if possible (may be null)
      * @return the connection
-     * @throws Exception if an error occurs
+     * @throws NoConnectionsAvailableException if an error occurs
      */
-    IPooledConnection getConnectionExcept(String notNode) throws NoConnectionsAvailableException;
+    IPooledConnection getConnectionExcept(Set<String> avoidNodes) throws NoConnectionsAvailableException;
 
     /**
      * Shuts down the pool.

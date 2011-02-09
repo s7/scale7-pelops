@@ -9,12 +9,13 @@ import org.slf4j.Logger;
 
 import java.net.SocketException;
 import java.util.Random;
+import java.util.Set;
 
 import static java.lang.String.format;
 
 /**
  * A basic non-pooled pool impl. A new connection is opened each time the {@link #getConnection()} or
- * {@link #getConnectionExcept(String)} is called.
+ * {@link IThriftPool#getConnectionExcept(java.util.Set} is called.
  *
  * This class is useful for diagnostics.
  */
@@ -44,17 +45,16 @@ public class DebuggingPool extends ThriftPoolBase {
         PooledConnection connection = null;
         try {
             connection = new PooledConnection(nodes[index], keyspace);
+            connection.open();
         } catch (Exception e) {
             throw new NoConnectionsAvailableException();
         }
-
-        connection.open();
 
         return connection;
     }
 
     @Override
-    public IPooledConnection getConnectionExcept(String notNode) throws NoConnectionsAvailableException {
+    public IPooledConnection getConnectionExcept(Set<String> avoidNodes) throws NoConnectionsAvailableException {
         return getConnection();
     }
 

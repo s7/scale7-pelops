@@ -25,6 +25,10 @@ public class KeyspaceManager extends ManagerOperand {
         super(cluster);
     }
 
+    public KeyspaceManager(Cluster cluster, int safeNodeChangeDelay) {
+        super(cluster, safeNodeChangeDelay);
+    }
+
     public List<KsDef> getKeyspaceNames() throws Exception {
         IManagerOperation<List<KsDef>> operation = new IManagerOperation<List<KsDef>>() {
             @Override

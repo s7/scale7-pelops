@@ -38,6 +38,10 @@ public class ManagerOperand {
     	this(cluster, null, SAFE_NODE_CHANGE_DELAY);
     }
 
+    ManagerOperand(Cluster cluster, int safeNodeChangeDelay) {
+        this(cluster, null, safeNodeChangeDelay);
+    }
+
     /**
      * Acquire connections to cluster nodes in a manner that reduces the likelihood of synchronization issues
      * in the event of failure. See http://wiki.apache.org/cassandra/FAQ#no_keyspaces for an explanation.
@@ -46,10 +50,14 @@ public class ManagerOperand {
      */
 	protected void openClient() throws Exception {
 		int attempts = 0;
+        Cluster.Node chosenNode = null;
 		while (true) {
 			try {
-                Cluster.Node chosenNode = nodesSnapshot[chosenNodeIdx];
+                chosenNode = nodesSnapshot[chosenNodeIdx];
 
+                if (logger.isDebugEnabled())
+                    logger.debug("Attempting operation against node '{}'...", chosenNode.getAddress());
+                
                 connection = new Connection(chosenNode, keyspace);
                 connection.open();
 
@@ -66,6 +74,7 @@ public class ManagerOperand {
 						logger.warn("Retrying opening connection to same node after previous failure to avoid potential synchronization issues");
 						Thread.sleep(RETRY_NODE_DELAY);
 					} else {
+                        logger.warn("Failed management operation against node '{}'", chosenNode != null ? chosenNode.getAddress() : "null");
 						chosenNodeIdx++;
 						if (chosenNodeIdx == nodesSnapshot.length) {
 							chosenNodeIdx = 0;
@@ -82,7 +91,8 @@ public class ManagerOperand {
 	}
 
 	private void closeClient() {
-        connection.close();
+        if (connection != null)
+            connection.close();
 	}
 
 	protected interface IManagerOperation<ReturnType> {
