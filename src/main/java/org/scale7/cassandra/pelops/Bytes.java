@@ -19,25 +19,6 @@ public class Bytes {
     public static final Bytes EMPTY = fromByteArray(new byte[0]);
     public static final Bytes NULL = fromByteBuffer(null);
 
-    static final int SIZEOF_BYTE = Byte.SIZE / Byte.SIZE;
-
-    static final int SIZEOF_BOOLEAN = SIZEOF_BYTE;
-
-    static final byte BOOLEAN_TRUE = (byte) 1;
-    static final byte BOOLEAN_FALSE = (byte) 0;
-    static final int SIZEOF_CHAR = Character.SIZE / Byte.SIZE;
-
-    static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
-
-    static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
-    static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
-    static final int SIZEOF_FLOAT = Float.SIZE / Byte.SIZE;
-
-    static final int SIZEOF_DOUBLE = Double.SIZE / Byte.SIZE;
-    static final int SIZEOF_UUID = SIZEOF_LONG + SIZEOF_LONG;
-
-    static final Charset UTF8 = Charset.forName("UTF-8");
-
     private final ByteBuffer bytes;
     private int hashCode = -1;
 
@@ -172,7 +153,7 @@ public class Bytes {
      * @return the Bytes instance
      */
     public static Bytes fromByteArray(byte[] value) {
-        return new Bytes(ByteBuffer.wrap(value), false);
+        return new Bytes(BufferHelper.fromByteArray(value), false);
     }
 
     /**
@@ -193,7 +174,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromChar(char value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_CHAR).putChar(value), false);
+        return new Bytes(BufferHelper.fromChar(value), false);
     }
 
     /**
@@ -215,7 +196,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromByte(byte value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_BYTE).put(value), false);
+        return new Bytes(BufferHelper.fromByte(value), false);
     }
 
     /**
@@ -237,7 +218,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromLong(long value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_LONG).putLong(value), false);
+        return new Bytes(BufferHelper.fromLong(value), false);
     }
 
     /**
@@ -259,7 +240,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromInt(int value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_INT).putInt(value), false);
+        return new Bytes(BufferHelper.fromInt(value), false);
     }
 
     /**
@@ -281,7 +262,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromShort(short value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_SHORT).putShort(value), false);
+        return new Bytes(BufferHelper.fromShort(value), false);
     }
 
     /**
@@ -303,7 +284,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromDouble(double value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_DOUBLE).putDouble(value), false);
+        return new Bytes(BufferHelper.fromDouble(value), false);
     }
 
     /**
@@ -325,7 +306,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromFloat(float value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_FLOAT).putFloat(value), false);
+        return new Bytes(BufferHelper.fromFloat(value), false);
     }
 
     /**
@@ -347,7 +328,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on serializaion format
      */
     public static Bytes fromBoolean(boolean value) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_BOOLEAN).put(value ? BOOLEAN_TRUE : BOOLEAN_FALSE), false);
+        return new Bytes(BufferHelper.fromBoolean(value), false);
     }
 
     /**
@@ -370,7 +351,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(UUID value) {
-        return value == null ? NULL : fromUuid(value.getMostSignificantBits(), value.getLeastSignificantBits());
+        return value == null ? NULL : new Bytes(BufferHelper.fromUuid(value), false);
     }
 
     /**
@@ -383,7 +364,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(String value) {
-        return value == null ? NULL : fromUuid(UUID.fromString(value));
+        return value == null ? NULL : new Bytes(BufferHelper.fromUuid(value), false);
     }
 
     /**
@@ -396,7 +377,7 @@ public class Bytes {
      * @see java.nio.ByteBuffer for details on long serializaion format
      */
     public static Bytes fromUuid(long msb, long lsb) {
-        return new Bytes(ByteBuffer.allocate(SIZEOF_UUID).putLong(msb).putLong(lsb), false);
+        return new Bytes(BufferHelper.fromUuid(msb, lsb), false);
     }
 
     /**
@@ -459,7 +440,7 @@ public class Bytes {
      * @see String#getBytes(java.nio.charset.Charset) for details on the format
      */
     public static Bytes fromUTF8(String value) {
-        return value == null ? NULL : fromByteArray(value.getBytes(UTF8));
+        return value == null ? NULL : new Bytes(BufferHelper.fromUTF8(value), false);
     }
 
 
@@ -725,7 +706,7 @@ public class Bytes {
     public boolean toBoolean() throws IllegalStateException {
         try {
             bytes.reset();
-            return this.bytes.get() != BOOLEAN_FALSE;
+            return this.bytes.get() != BufferHelper.BOOLEAN_FALSE;
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
@@ -829,7 +810,7 @@ public class Bytes {
 
         try {
             bytes.reset();
-            return new String(this.bytes.array(), this.bytes.position(), this.bytes.remaining(), UTF8);
+            return new String(this.bytes.array(), this.bytes.position(), this.bytes.remaining(), BufferHelper.UTF8);
         } finally {
             this.bytes.reset();
         }
@@ -847,7 +828,7 @@ public class Bytes {
             return null;
         int position = bytes.position();
         try {
-            return new String(bytes.array(), position, bytes.remaining(), UTF8);
+            return new String(bytes.array(), position, bytes.remaining(), BufferHelper.UTF8);
         } finally {
             bytes.position(position);
         }
@@ -862,7 +843,7 @@ public class Bytes {
     public static String toUTF8(byte[] bytes) {
         if (bytes == null)
             return null;
-        return new String(bytes, UTF8);
+        return new String(bytes, BufferHelper.UTF8);
     }
 
     /**
@@ -982,7 +963,7 @@ public class Bytes {
 
         public CompositeBuilder addByteBuffer(ByteBuffer value) {
             parts.add(value);
-            length += value.remaining();
+            length += value.rewind().remaining();
             return this;
         }
 
@@ -991,91 +972,91 @@ public class Bytes {
         }
 
         public CompositeBuilder addBoolean(boolean value) {
-            return addBytes(Bytes.fromBoolean(value));
+            return addByteBuffer(BufferHelper.fromBoolean(value));
         }
 
         public CompositeBuilder addBoolean(Boolean value) {
-            return addBytes(Bytes.fromBoolean(value));
+            return addByteBuffer(BufferHelper.fromBoolean(value));
         }
 
         public CompositeBuilder addByte(byte value) {
-            return addBytes(Bytes.fromByte(value));
+            return addByteBuffer(BufferHelper.fromByte(value));
         }
 
         public CompositeBuilder addByte(Byte value) {
-            return addBytes(Bytes.fromByte(value));
+            return addByteBuffer(BufferHelper.fromByte(value));
         }
 
         public CompositeBuilder addByteArray(byte[] value) {
-            return addBytes(Bytes.fromByteArray(value));
+            return addByteBuffer(BufferHelper.fromByteArray(value));
         }
 
         public CompositeBuilder addChar(char value) {
-            return addBytes(Bytes.fromChar(value));
+            return addByteBuffer(BufferHelper.fromChar(value));
         }
 
         public CompositeBuilder addChar(Character value) {
-            return addBytes(Bytes.fromChar(value));
+            return addByteBuffer(BufferHelper.fromChar(value));
         }
 
         public CompositeBuilder addDouble(double value) {
-            return addBytes(Bytes.fromDouble(value));
+            return addByteBuffer(BufferHelper.fromDouble(value));
         }
 
         public CompositeBuilder addDouble(Double value) {
-            return addBytes(Bytes.fromDouble(value));
+            return addByteBuffer(BufferHelper.fromDouble(value));
         }
 
         public CompositeBuilder addFloat(float value) {
-            return addBytes(Bytes.fromFloat(value));
+            return addByteBuffer(BufferHelper.fromFloat(value));
         }
 
         public CompositeBuilder addFloat(Float value) {
-            return addBytes(Bytes.fromFloat(value));
+            return addByteBuffer(BufferHelper.fromFloat(value));
         }
 
         public CompositeBuilder addInt(int value) {
-            return addBytes(Bytes.fromInt(value));
+            return addByteBuffer(BufferHelper.fromInt(value));
         }
 
         public CompositeBuilder addInt(Integer value) {
-            return addBytes(Bytes.fromInt(value));
+            return addByteBuffer(BufferHelper.fromInt(value));
         }
 
         public CompositeBuilder addLong(long value) {
-            return addBytes(Bytes.fromLong(value));
+            return addByteBuffer(BufferHelper.fromLong(value));
         }
 
         public CompositeBuilder addLong(Long value) {
-            return addBytes(Bytes.fromLong(value));
+            return addByteBuffer(BufferHelper.fromLong(value));
         }
 
         public CompositeBuilder addShort(short value) {
-            return addBytes(Bytes.fromShort(value));
+            return addByteBuffer(BufferHelper.fromShort(value));
         }
 
         public CompositeBuilder addShort(Short value) {
-            return addBytes(Bytes.fromShort(value));
+            return addByteBuffer(BufferHelper.fromShort(value));
         }
 
         public CompositeBuilder addUTF8(String str) {
-            return addBytes(Bytes.fromUTF8(str));
+            return addByteBuffer(BufferHelper.fromUTF8(str));
         }
 
         public CompositeBuilder addUuid(UUID value) {
-            return addBytes(Bytes.fromUuid(value));
+            return addByteBuffer(BufferHelper.fromUuid(value));
         }
 
         public CompositeBuilder addUuid(String value) {
-            return addBytes(Bytes.fromUuid(value));
+            return addByteBuffer(BufferHelper.fromUuid(value));
         }
 
         public CompositeBuilder addUuid(long msb, long lsb) {
-            return addBytes(Bytes.fromUuid(msb, lsb));
+            return addByteBuffer(BufferHelper.fromUuid(msb, lsb));
         }
 
         public CompositeBuilder addTimeUuid(com.eaio.uuid.UUID value) {
-            return addBytes(Bytes.fromTimeUuid(value));
+            return addByteBuffer(BufferHelper.fromUuid(value.getTime(), value.getClockSeqAndNode()));
         }
 
         /** @deprecated use {@link #addUuid(UUID)} instead */
@@ -1103,6 +1084,78 @@ public class Bytes {
             }
 
             return new Bytes(buffer, false);
+        }
+    }
+
+    /**
+     * Encapsulates ByteBuffer allocation.
+     */
+    static class BufferHelper {
+
+        static final int SIZEOF_BYTE = Byte.SIZE / Byte.SIZE;
+        static final int SIZEOF_BOOLEAN = SIZEOF_BYTE;
+        static final byte BOOLEAN_TRUE = (byte)1;
+        static final byte BOOLEAN_FALSE = (byte)0;
+        static final int SIZEOF_CHAR = Character.SIZE / Byte.SIZE;
+        static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
+        static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
+        static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
+        static final int SIZEOF_FLOAT = Float.SIZE / Byte.SIZE;
+        static final int SIZEOF_DOUBLE = Double.SIZE / Byte.SIZE;
+        static final int SIZEOF_UUID = SIZEOF_LONG + SIZEOF_LONG;
+
+        public static final Charset UTF8 = Charset.forName("UTF-8");
+
+        public static ByteBuffer fromByteArray(byte[] value) {
+            return ByteBuffer.wrap(value);
+        }
+
+        public static ByteBuffer fromChar(char value) {
+            return ByteBuffer.allocate(SIZEOF_CHAR).putChar(value);
+        }
+
+        public static ByteBuffer fromByte(byte value) {
+            return ByteBuffer.allocate(SIZEOF_BYTE).put(value);
+        }
+
+        public static ByteBuffer fromLong(long value) {
+            return ByteBuffer.allocate(SIZEOF_LONG).putLong(value);
+        }
+
+        public static ByteBuffer fromInt(int value) {
+            return ByteBuffer.allocate(SIZEOF_INT).putInt(value);
+        }
+
+        public static ByteBuffer fromShort(short value) {
+            return ByteBuffer.allocate(SIZEOF_SHORT).putShort(value);
+        }
+
+        public static ByteBuffer fromDouble(double value) {
+            return ByteBuffer.allocate(SIZEOF_DOUBLE).putDouble(value);
+        }
+
+        public static ByteBuffer fromFloat(float value) {
+            return ByteBuffer.allocate(SIZEOF_FLOAT).putFloat(value);
+        }
+
+        public static ByteBuffer fromBoolean(boolean value) {
+            return ByteBuffer.allocate(SIZEOF_BOOLEAN).put(value ? BOOLEAN_TRUE : BOOLEAN_FALSE);
+        }
+
+        public static ByteBuffer fromUuid(UUID value) {
+            return fromUuid(value.getMostSignificantBits(), value.getLeastSignificantBits());
+        }
+
+        public static ByteBuffer fromUuid(String value) {
+            return fromUuid(UUID.fromString(value));
+        }
+
+        public static ByteBuffer fromUuid(long msb, long lsb) {
+            return ByteBuffer.allocate(SIZEOF_UUID).putLong(msb).putLong(lsb);
+        }
+
+        public static ByteBuffer fromUTF8(String value) {
+            return fromByteArray(value.getBytes(UTF8));
         }
     }
 }
