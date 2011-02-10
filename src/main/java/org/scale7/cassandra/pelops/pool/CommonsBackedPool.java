@@ -5,12 +5,14 @@ import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.scale7.cassandra.pelops.*;
 import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
+import java.net.ConnectException;
 import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -79,7 +81,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         this.cluster = cluster;
         this.keyspace = keyspace;
         
-        this.policy = policy != null ? policy : new Policy();
+        this.policy = policy != null ? policy : new Policy(cluster);
         this.operandPolicy = operandPolicy != null ? operandPolicy : new OperandPolicy();
 
         logger.info("Initialising pool configuration policy: {}", this.policy.toString());
@@ -92,6 +94,15 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
 
         this.connectionValidator = connectionValidator != null ? connectionValidator : new DescribeVersionConnectionValidator();
         logger.info("Initialising pool connection validator: {}", this.connectionValidator);
+
+        if (cluster.getConnectionConfig().getTimeout() >= this.policy.getMaxWaitForConnection()) {
+            logger.warn(
+                    "The thrift timeout value ({}ms) is greater than the pools maxWaitForConnection value ({}ms).  " +
+                    "This could lead to errors when a node is down.  As a general rule the pools maxWaitForConnection " +
+                    "should be three times larger than the thrift timeout value.",
+                    cluster.getConnectionConfig().getTimeout(), this.policy.getMaxWaitForConnection()
+            );
+        }
 
         this.statistics = new RunningStatistics();
 
@@ -275,13 +286,26 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                 // note that if no connections are currently available for this node then the pool will sleep for
                 // DEFAULT_WAIT_PERIOD milliseconds
                 connection = (IPooledConnection) pool.borrowObject(node.getAddress());
-            } catch (NoSuchElementException e) {
-                logger.debug("No free connections available for node '{}', trying another node...", node.getAddress());
             } catch (IllegalStateException e) {
                 throw new PelopsException("The pool has been shutdown", e);
             } catch (Exception e) {
-                logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s', " +
-                        "trying another node...", node.getAddress()), e);
+                if (e instanceof NoSuchElementException) {
+                    logger.debug("No free connections available for node '{}'.  Trying another node...", node.getAddress());
+                } else if (e instanceof TTransportException && e.getCause() != null && e.getCause() instanceof ConnectException) {
+                    logger.warn(String.format("A ConnectException was thrown while attempting to create a connection to '%s'.  " +
+                            "This node will be suspended for %sms.  Trying another node...",
+                            node.getAddress(), this.policy.getNodeDownSuspensionMillis()), e);
+                    node.setSuspensionState(new NodeDownSuspensionState());
+                    node.reportSuspension();
+                } else
+                    logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s'.  " +
+                            "Trying another node...", node.getAddress()), e);
+
+                // try and avoid this node on the next trip through the loop
+                if (avoidNodes == null)
+                    avoidNodes = new HashSet<String>(10);
+
+                avoidNodes.add(node.getAddress());
             }
         }
 
@@ -593,18 +617,28 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
     }
 
     public static class Policy {
-        private static final int DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 60;
-        private static final int MIN_TIME_BETWEEN_SCHEDULED_TASKS = 1000 * 10;
+        public static final int ONE_SECOND = 1000;
+        public static final int TEN_SECONDS = ONE_SECOND * 10;
+        private static final int DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS = TEN_SECONDS * 6;
+        private static final int MIN_TIME_BETWEEN_SCHEDULED_TASKS = TEN_SECONDS;
 
         private AtomicInteger maxActivePerNode = new AtomicInteger(20);
         private AtomicInteger maxTotal = new AtomicInteger(-1);
         private AtomicInteger maxIdlePerNode = new AtomicInteger(10);
         private AtomicInteger minIdlePerNode = new AtomicInteger(10);
-        private AtomicInteger maxWaitForConnection = new AtomicInteger(1000);
+        private AtomicInteger maxWaitForConnection = new AtomicInteger(ONE_SECOND * 4);
         private int timeBetweenScheduledMaintenanceTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
         private AtomicBoolean testConnectionsWhileIdle = new AtomicBoolean(true);
+        private AtomicInteger nodeDownSuspensionMillis = new AtomicInteger(TEN_SECONDS);
 
         public Policy() {
+        }
+
+        public Policy(Cluster cluster) {
+            if (!cluster.getConnectionConfig().isTimeoutSet())
+                maxWaitForConnection.set(Integer.MAX_VALUE);
+            else
+                maxWaitForConnection.set(cluster.getConnectionConfig().getTimeout() * 3);
         }
 
         /**
@@ -730,6 +764,22 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             this.testConnectionsWhileIdle.set(testConnectionsWhileIdle);
         }
 
+        /**
+         * The number of milliseconds a node should be suspended when it's detected as down.
+         * @return millis to suspend node
+         */
+        public int getNodeDownSuspensionMillis() {
+            return nodeDownSuspensionMillis.get();
+        }
+
+        /**
+         * The number of milliseconds a node should be suspended when it's detected as down.
+         * @param nodeDownSuspensionMillis millis to suspend node
+         */
+        public void setNodeDownSuspensionMillis(int nodeDownSuspensionMillis) {
+            this.nodeDownSuspensionMillis.set(nodeDownSuspensionMillis);
+        }
+
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
@@ -743,6 +793,19 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             sb.append(", timeBetweenScheduledMaintenanceTaskRunsMillis=").append(timeBetweenScheduledMaintenanceTaskRunsMillis);
             sb.append('}');
             return sb.toString();
+        }
+    }
+
+    private class NodeDownSuspensionState implements INodeSuspensionState {
+        private long suspendedUntil;
+
+        private NodeDownSuspensionState() {
+            suspendedUntil = System.currentTimeMillis() + getPolicy().getNodeDownSuspensionMillis();
+        }
+
+        @Override
+        public boolean isSuspended() {
+            return suspendedUntil > System.currentTimeMillis();
         }
     }
 
