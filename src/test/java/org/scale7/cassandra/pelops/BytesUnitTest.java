@@ -86,11 +86,11 @@ public class BytesUnitTest {
      */
     @Test
     public void testByteBuffer() {
-        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + Bytes.SIZEOF_BYTE + Bytes.SIZEOF_LONG);
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.BufferHelper.SIZEOF_DOUBLE + Bytes.BufferHelper.SIZEOF_BYTE + Bytes.BufferHelper.SIZEOF_LONG);
         buffer.putDouble(Double.MAX_VALUE).put((byte) 9).putLong(Long.MAX_VALUE);
 
         Bytes from = Bytes.fromByteBuffer(
-                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE + 1, Bytes.SIZEOF_BYTE)
+                ByteBuffer.wrap(buffer.array(), Bytes.BufferHelper.SIZEOF_DOUBLE + 1, Bytes.BufferHelper.SIZEOF_BYTE)
         );
         byte to = from.toByte();
 
@@ -425,11 +425,11 @@ public class BytesUnitTest {
     public void testUTF8Buffer() {
         String string = "This is a test";
 
-        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + string.length() + Bytes.SIZEOF_LONG);
-        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.UTF8)).putLong(Long.MAX_VALUE);
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.BufferHelper.SIZEOF_DOUBLE + string.length() + Bytes.BufferHelper.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.BufferHelper.UTF8)).putLong(Long.MAX_VALUE);
 
         Bytes from = Bytes.fromByteBuffer(
-                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, string.length())
+                ByteBuffer.wrap(buffer.array(), Bytes.BufferHelper.SIZEOF_DOUBLE, string.length())
         );
         String to = from.toUTF8();
 
@@ -443,12 +443,12 @@ public class BytesUnitTest {
 
     @Test
     public void testLength() {
-        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + Bytes.SIZEOF_INT + Bytes.SIZEOF_LONG);
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.BufferHelper.SIZEOF_DOUBLE + Bytes.BufferHelper.SIZEOF_INT + Bytes.BufferHelper.SIZEOF_LONG);
         buffer.putDouble(Double.MAX_VALUE).putInt(Integer.MIN_VALUE).putLong(Long.MAX_VALUE);
 
-        Bytes bytes = Bytes.fromByteBuffer(ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, Bytes.SIZEOF_INT));
+        Bytes bytes = Bytes.fromByteBuffer(ByteBuffer.wrap(buffer.array(), Bytes.BufferHelper.SIZEOF_DOUBLE, Bytes.BufferHelper.SIZEOF_INT));
 
-        assertEquals("The length method didn't return the correct value", Bytes.SIZEOF_INT, bytes.length());
+        assertEquals("The length method didn't return the correct value", Bytes.BufferHelper.SIZEOF_INT, bytes.length());
     }
 
     @Test
@@ -473,11 +473,11 @@ public class BytesUnitTest {
         assertEquals("Duplicate not equal", bytes, bytes.duplicate());
 
         String string = "some string";
-        ByteBuffer buffer = ByteBuffer.allocate(Bytes.SIZEOF_DOUBLE + string.length() + Bytes.SIZEOF_LONG);
-        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.UTF8)).putLong(Long.MAX_VALUE);
+        ByteBuffer buffer = ByteBuffer.allocate(Bytes.BufferHelper.SIZEOF_DOUBLE + string.length() + Bytes.BufferHelper.SIZEOF_LONG);
+        buffer.putDouble(Double.MAX_VALUE).put(string.getBytes(Bytes.BufferHelper.UTF8)).putLong(Long.MAX_VALUE);
 
         bytes = Bytes.fromByteBuffer(
-                ByteBuffer.wrap(buffer.array(), Bytes.SIZEOF_DOUBLE, string.length())
+                ByteBuffer.wrap(buffer.array(), Bytes.BufferHelper.SIZEOF_DOUBLE, string.length())
         );
         assertEquals("Duplicate not equal", bytes, bytes.duplicate());
     }
@@ -492,7 +492,7 @@ public class BytesUnitTest {
 
         final byte[] target = new byte[3];
         byteBuffer.get(target, 0, 3);
-        String utf8PartActual = new String(target, Bytes.UTF8);
+        String utf8PartActual = new String(target, Bytes.BufferHelper.UTF8);
 
         int intPartActual = byteBuffer.getInt();
 

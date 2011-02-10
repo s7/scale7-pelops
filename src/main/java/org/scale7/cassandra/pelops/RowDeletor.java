@@ -39,12 +39,11 @@ public class RowDeletor extends Operand {
 	 * @param cLevel					The Cassandra consistency level to be used
 	 * @throws PelopsException
 	 */
-	public void deleteRow(final String columnFamily, final Bytes rowKey, final ConsistencyLevel cLevel) throws PelopsException {
+	public void deleteRow(String columnFamily, final Bytes rowKey, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnPath path = new ColumnPath(columnFamily);
 		IOperation<Void> operation = new IOperation<Void>() {
 			@Override
 			public Void execute(IPooledConnection conn) throws Exception {
-
-				ColumnPath path = new ColumnPath(columnFamily);
 				conn.getAPI().remove(nullSafeGet(rowKey), path, timestamp, cLevel);
 				return null;
 			}
