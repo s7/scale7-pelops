@@ -27,7 +27,6 @@ public interface CommonsBackedPoolMBean {
         CONFIGURATION
      */
 
-
     public int getMaxActivePerNode();
 
     public void setMaxActivePerNode(int maxActivePerNode);
@@ -51,6 +50,10 @@ public interface CommonsBackedPoolMBean {
     public boolean isTestConnectionsWhileIdle();
 
     public void setTestConnectionsWhileIdle(boolean testConnectionsWhileIdle);
+
+    public int getNodeDownSuspensionMillis();
+
+    public void setNodeDownSuspensionMillis(int nodeDownSuspensionMillis);
 
     /*
         OPERATIONS

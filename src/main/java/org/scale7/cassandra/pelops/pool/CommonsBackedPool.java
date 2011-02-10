@@ -608,6 +608,16 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         getPolicy().setTestConnectionsWhileIdle(testConnectionsWhileIdle);
     }
 
+    @Override
+    public int getNodeDownSuspensionMillis() {
+        return getPolicy().getNodeDownSuspensionMillis();
+    }
+
+    @Override
+    public void setNodeDownSuspensionMillis(int nodeDownSuspensionMillis) {
+        getPolicy().setNodeDownSuspensionMillis(nodeDownSuspensionMillis);
+    }
+
     private String getMBeanName() {
         return JMX_MBEAN_OBJ_NAME + "-" + keyspace;
     }
@@ -791,6 +801,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             sb.append(", maxWaitForConnection=").append(maxWaitForConnection);
             sb.append(", testConnectionsWhileIdle=").append(testConnectionsWhileIdle);
             sb.append(", timeBetweenScheduledMaintenanceTaskRunsMillis=").append(timeBetweenScheduledMaintenanceTaskRunsMillis);
+            sb.append(", nodeDownSuspensionMillis=").append(nodeDownSuspensionMillis);
             sb.append('}');
             return sb.toString();
         }
