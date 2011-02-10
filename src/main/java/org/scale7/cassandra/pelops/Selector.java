@@ -10,6 +10,7 @@ import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.<p/>
@@ -727,6 +728,30 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve a page of column names composed from a segment of the sequence of columns in a row.
+     * This method is handy for performing <a href="https://github.com/ericflo/twissandra/">Twissandra</a> style
+     * one to many lookups.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row containing the columns
+     * @param startBeyondName               The sequence of columns must begin with the smallest column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param count                         The maximum number of columns that can be retrieved by the scan
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A page of column names
+     * @throws PelopsException if an error occurs
+     */
+    public List<Bytes> getPageOfColumnNamesFromRow(final String columnFamily, final Bytes rowKey, final Bytes startBeyondName, final boolean reversed, final int count, final ConsistencyLevel cLevel) throws PelopsException {
+        List<Column> columns = getPageOfColumnsFromRow(columnFamily, rowKey, startBeyondName, reversed, count, cLevel);
+        // transform to a list of column names
+        List<Bytes> columnNames = new ArrayList<Bytes>(columns.size());
+        for (Column column : columns) {
+            columnNames.add(Bytes.fromByteArray(column.getName()));
+        }
+
+        return columnNames;
+    }
+
+    /**
      * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
      * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
      * to fetch batches of super columns (based on the batchSize parameter).
@@ -871,11 +896,12 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the columns
      * @param reversed                       Whether the results should be returned in descending column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of columns
+     * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -884,11 +910,12 @@ public class Selector extends Operand {
 
     /**
      * Retrieve columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the columns
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of columns
+     * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
@@ -897,11 +924,12 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the columns
      * @param reversed                       Whether the results should be returned in descending column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of columns
+     * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -910,11 +938,12 @@ public class Selector extends Operand {
 
     /**
      * Retrieve columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                  The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the columns
      * @param colPredicate                   The column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of columns
+     * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
@@ -924,12 +953,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param reversed                       Whether the results should be returned in descending sub-column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map (LinkedHashMap) from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -938,12 +968,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
@@ -953,12 +984,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param reversed                       Whether the results should be returned in descending sub-column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -967,12 +999,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
@@ -982,12 +1015,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param reversed                       Whether the results should be returned in descending sub-column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -996,12 +1030,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param colPredicate                   The sub-column selector predicate
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
@@ -1011,12 +1046,13 @@ public class Selector extends Operand {
 
     /**
      * Retrieve all sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
      * @param reversed                       Whether the results should be returned in descending sub-column name order
      * @param cLevel                         The Cassandra consistency level with which to perform the operation
-     * @return                               A map from row keys to the matching lists of sub-columns
+     * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map.
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
@@ -1025,6 +1061,7 @@ public class Selector extends Operand {
 
     /**
      * Retrieve sub-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
      * @param rowKeys                        The keys of the rows containing the super columns
      * @param superColName                   The name of the super column
@@ -1065,15 +1102,15 @@ public class Selector extends Operand {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
-                Map<Bytes, List<SuperColumn>> result = new HashMap<Bytes, List<SuperColumn>>();
-                for (ByteBuffer rowKey : apiResult.keySet()) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
+                Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
+                for (Bytes rowKey : rowKeys) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
                     List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
                     for (ColumnOrSuperColumn cosc : coscList) {
                         assert cosc.super_column != null : "The super column should not be null";
                         columns.add(cosc.super_column);
                     }
-                    result.put(Bytes.fromByteBuffer(rowKey), columns);
+                    result.put(rowKey, columns);
                 }
                 return result;
             }
@@ -1125,11 +1162,11 @@ public class Selector extends Operand {
             @Override
             public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), colParent, colPredicate, cLevel);
-                Map<Bytes, List<Column>> result = new HashMap<Bytes, List<Column>>();
-                for (ByteBuffer rowKey : apiResult.keySet()) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
+                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
+                for (Bytes rowKey : rowKeys) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
                     List<Column> columns = toColumnList(coscList);
-                    result.put(Bytes.fromByteBuffer(rowKey), columns);
+                    result.put(rowKey, columns);
                 }
                 return result;
             }
@@ -1142,11 +1179,11 @@ public class Selector extends Operand {
             @Override
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), colParent, colPredicate, cLevel);
-                Map<String, List<Column>> result = new HashMap<String, List<Column>>();
-                for (ByteBuffer rowKey : apiResult.keySet()) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
+                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
+                for (String rowKey : rowKeys) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(fromUTF8(rowKey).getBytes());
                     List<Column> columns = toColumnList(coscList);
-                    result.put(toUTF8(rowKey), columns);
+                    result.put(rowKey, columns);
                 }
                 return result;
             }

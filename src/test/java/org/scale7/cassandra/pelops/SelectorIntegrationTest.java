@@ -1,5 +1,6 @@
 package org.scale7.cassandra.pelops;
 
+import com.google.common.collect.Lists;
 import org.apache.cassandra.thrift.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -77,6 +78,17 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         }
 
         return columns;
+    }
+
+    private static char[] createAlphabet() {
+        char[] letters = new char[26];
+        List<Column> columns = new ArrayList<Column>();
+        int index = 0;
+        for (char letter = 'a'; letter <= 'z'; letter++) {
+            letters[index++] = letter;
+        }
+
+        return letters;
     }
 
     @Test
@@ -381,6 +393,64 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         } catch (NoSuchElementException e) {
             // expected
         }
+    }
+
+    @Test
+    public void testGetColumnsFromRowsOrdering() {
+        List<Bytes> keys = Lists.newArrayList(fromLong(5), fromLong(6), fromLong(8), fromLong(9), fromLong(7)); // out of order on purpose
+
+        Map<Bytes, List<Column>> columnsFromRows = createSelector().getColumnsFromRows(CF, keys, false, ConsistencyLevel.ONE);
+
+        // make sure the results are in order of the provided keys
+        int index = 0;
+        for (Bytes bytes : columnsFromRows.keySet()) {
+            assertEquals("Results were not in the order of the provided keys", keys.get(index), bytes);
+
+            verifyColumns(createAlphabet(), columnsFromRows.get(bytes));
+
+            index++;
+        }
+    }
+
+    @Test
+    public void testGetColumnsFromRowsMissingKey() {
+        final Bytes missingKey = fromLong(Long.MAX_VALUE - 10);
+        List<Bytes> keys = Lists.newArrayList(fromLong(5), fromLong(6), fromLong(8), fromLong(9), fromLong(7), missingKey); // out of order on purpose
+
+        Map<Bytes, List<Column>> columnsFromRows = createSelector().getColumnsFromRows(CF, keys, false, ConsistencyLevel.ONE);
+
+        assertTrue("The missing key didn't exist in the results", columnsFromRows.containsKey(missingKey));
+        assertNotNull("The missing keys value should be an empty list", columnsFromRows.get(missingKey));
+        assertTrue("The missing keys value should be an empty list", columnsFromRows.get(missingKey).isEmpty());
+    }
+
+    @Test
+    public void testGetSubColumnsFromRowsOrdering() {
+        List<Bytes> keys = Lists.newArrayList(fromLong(5), fromLong(6), fromLong(8), fromLong(9), fromLong(7)); // out of order on purpose
+
+        Map<Bytes, List<Column>> columnsFromRows = createSelector().getSubColumnsFromRows(SCF, keys, fromChar('B'), false, ConsistencyLevel.ONE);
+
+        // make sure the results are in order of the provided keys
+        int index = 0;
+        for (Bytes bytes : columnsFromRows.keySet()) {
+            assertEquals("Results were not in the order of the provided keys", keys.get(index), bytes);
+
+            verifyColumns(createAlphabet(), columnsFromRows.get(bytes));
+
+            index++;
+        }
+    }
+
+    @Test
+    public void testGetSubColumnsFromRowsMissingKey() {
+        final Bytes missingKey = fromLong(Long.MAX_VALUE - 10);
+        List<Bytes> keys = Lists.newArrayList(fromLong(5), fromLong(6), fromLong(8), fromLong(9), fromLong(7), missingKey); // out of order on purpose
+
+        Map<Bytes, List<Column>> columnsFromRows = createSelector().getSubColumnsFromRows(SCF, keys, fromChar('B'), false, ConsistencyLevel.ONE);
+
+        assertTrue("The missing key didn't exist in the results", columnsFromRows.containsKey(missingKey));
+        assertNotNull("The missing keys value should be an empty list", columnsFromRows.get(missingKey));
+        assertTrue("The missing keys value should be an empty list", columnsFromRows.get(missingKey).isEmpty());
     }
 
 
