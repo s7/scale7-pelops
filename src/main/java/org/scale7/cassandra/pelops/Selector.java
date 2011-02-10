@@ -1146,10 +1146,9 @@ public class Selector extends Operand {
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
-                for (ByteBuffer rowKey : apiResult.keySet()) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey);
-                    List<SuperColumn> columns = toSuperColumnList(coscList);
-                    result.put(toUTF8(rowKey), columns);
+                for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> rowEntry : apiResult.entrySet()) {
+                    List<SuperColumn> columns = toSuperColumnList(rowEntry.getValue());
+                    result.put(toUTF8(rowEntry.getKey()), columns);
                 }
                 return result;
             }
