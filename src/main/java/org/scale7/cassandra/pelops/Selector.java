@@ -1139,7 +1139,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
         final List<ByteBuffer> keys = Bytes.transformUTF8ToList(rowKeys);
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
@@ -1147,9 +1147,10 @@ public class Selector extends Operand {
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
-                for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> rowEntry : apiResult.entrySet()) {
-                    List<SuperColumn> columns = toSuperColumnList(rowEntry.getValue());
-                    result.put(toUTF8(rowEntry.getKey()), columns);
+                for (String rowKey : rowKeys) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(fromUTF8(rowKey).getBytes());
+                    List<SuperColumn> columns = toSuperColumnList(coscList);
+                    result.put(rowKey, columns);
                 }
                 return result;
             }
