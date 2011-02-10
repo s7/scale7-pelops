@@ -12,8 +12,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A heavy thread safe object that maintains a list of nodes in the cluster.  It's intended that
  * one instance of the class be available in the JVM per cluster.
+ *
+ * <p><b>Note</b>: The timeout parameter on the various constructors refers to ALL thrift related operations.
+ * See: https://issues.apache.org/jira/browse/CASSANDRA-959</p>
  */
 public class Cluster {
+    /**
+     * The default number of milliseconds to wait for an operation to complete.
+     */
+    public static final int DEFAULT_TIMEOUT = 4000;
+
     private final Logger logger = SystemProxy.getLoggerFromFactory(Cluster.class);
 
 	private String[] nodes;
@@ -25,26 +33,63 @@ public class Cluster {
     private final Lock lockRead = lock.readLock();
     private final Lock lockWrite = lock.writeLock();
 
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT} with dynamic node discovery turned off.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     */
     public Cluster(String nodes, int thriftPort) {
-        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, -1), false);
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), false);
     }
 
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     */
     public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery) {
-        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, -1), dynamicNodeDiscovery);
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), dynamicNodeDiscovery);
     }
 
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param timeout the number of milliseconds thrift should wait to complete an operation (zero or less disables the timeout)
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     */
     public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout), dynamicNodeDiscovery);
     }
 
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param connectionConfig the connection config
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     */
     public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery);
     }
 
+    /**
+     * Creates a new cluster.
+     * @param nodes array of nodes
+     * @param connectionConfig the connection config
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     */
     public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery) {
         this(nodes, connectionConfig, dynamicNodeDiscovery, new AcceptAllNodeFilter());
 	}
 
+    /**
+     * Creates a new cluster.
+     * @param nodes array of nodes
+     * @param connectionConfig the connection config
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param nodeFilter used to filter nodes when dynamic node discovery is enabled
+     */
     public Cluster(String[] nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, INodeFilter nodeFilter) {
         this.connectionConfig = connectionConfig;
         this.nodeFilter = nodeFilter;
@@ -60,6 +105,13 @@ public class Cluster {
         }
 	}
 
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param connectionConfig the connection config
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param nodeFilter used to filter nodes when dynamic node discovery is enabled
+     */
     public Cluster(String nodes, IConnection.Config connectionConfig, boolean dynamicNodeDiscovery, INodeFilter nodeFilter) {
         this(splitAndTrim(nodes), connectionConfig, dynamicNodeDiscovery, nodeFilter);
 	}

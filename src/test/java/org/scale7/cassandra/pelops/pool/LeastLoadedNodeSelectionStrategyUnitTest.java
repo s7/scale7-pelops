@@ -130,7 +130,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
     @Test
     public void testNodesEqualThenLeastCorruptedSelected() {
         String leastLoadedNodeAddress = "node5";
-        final List<String> nodeAddresses = Arrays.asList(leastLoadedNodeAddress, "node2", "node3", "node4", "node5");
+        final List<String> nodeAddresses = Arrays.asList("node1", "node2", "node3", "node4", leastLoadedNodeAddress);
         CommonsBackedPool pool = Mockito.mock(CommonsBackedPool.class);
 
         // setup each pooled node to report it's number of active connections
@@ -174,7 +174,7 @@ public class LeastLoadedNodeSelectionStrategyUnitTest {
     @Test
     public void testNodesEqualThenLeastBorrowedSelected() {
         String leastLoadedNodeAddress = "node5";
-        final List<String> nodeAddresses = Arrays.asList(leastLoadedNodeAddress, "node2", "node3", "node4", "node5");
+        final List<String> nodeAddresses = Arrays.asList("node1", "node2", "node3", "node4", leastLoadedNodeAddress);
         CommonsBackedPool pool = Mockito.mock(CommonsBackedPool.class);
 
         // setup each pooled node to report it's number of active connections

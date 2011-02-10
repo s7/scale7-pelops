@@ -5,6 +5,7 @@ import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.scale7.cassandra.pelops.*;
 import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
@@ -79,7 +80,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         this.cluster = cluster;
         this.keyspace = keyspace;
         
-        this.policy = policy != null ? policy : new Policy();
+        this.policy = policy != null ? policy : new Policy(cluster);
         this.operandPolicy = operandPolicy != null ? operandPolicy : new OperandPolicy();
 
         logger.info("Initialising pool configuration policy: {}", this.policy.toString());
@@ -92,6 +93,15 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
 
         this.connectionValidator = connectionValidator != null ? connectionValidator : new DescribeVersionConnectionValidator();
         logger.info("Initialising pool connection validator: {}", this.connectionValidator);
+
+        if (cluster.getConnectionConfig().getTimeout() >= this.policy.getMaxWaitForConnection()) {
+            logger.warn(
+                    "The thrift timeout value ({}ms) is greater than the pools maxWaitForConnection value ({}ms).  " +
+                    "This could lead to errors when a node is down.  As a general rule the pools maxWaitForConnection " +
+                    "should be three times larger than the thrift timeout value.",
+                    cluster.getConnectionConfig().getTimeout(), this.policy.getMaxWaitForConnection()
+            );
+        }
 
         this.statistics = new RunningStatistics();
 
@@ -275,13 +285,19 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                 // note that if no connections are currently available for this node then the pool will sleep for
                 // DEFAULT_WAIT_PERIOD milliseconds
                 connection = (IPooledConnection) pool.borrowObject(node.getAddress());
-            } catch (NoSuchElementException e) {
-                logger.debug("No free connections available for node '{}', trying another node...", node.getAddress());
             } catch (IllegalStateException e) {
                 throw new PelopsException("The pool has been shutdown", e);
             } catch (Exception e) {
-                logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s', " +
-                        "trying another node...", node.getAddress()), e);
+                if (e instanceof NoSuchElementException)
+                    logger.debug("No free connections available for node '{}', trying another node...", node.getAddress());
+                else
+                    logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s', " +
+                            "trying another node...", node.getAddress()), e);
+
+                if (avoidNodes == null)
+                    avoidNodes = new HashSet<String>(10);
+
+                avoidNodes.add(node.getAddress());
             }
         }
 
@@ -600,11 +616,18 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         private AtomicInteger maxTotal = new AtomicInteger(-1);
         private AtomicInteger maxIdlePerNode = new AtomicInteger(10);
         private AtomicInteger minIdlePerNode = new AtomicInteger(10);
-        private AtomicInteger maxWaitForConnection = new AtomicInteger(1000);
+        private AtomicInteger maxWaitForConnection = new AtomicInteger(4000);
         private int timeBetweenScheduledMaintenanceTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
         private AtomicBoolean testConnectionsWhileIdle = new AtomicBoolean(true);
 
         public Policy() {
+        }
+
+        public Policy(Cluster cluster) {
+            if (!cluster.getConnectionConfig().isTimeoutSet())
+                maxWaitForConnection.set(Integer.MAX_VALUE);
+            else
+                maxWaitForConnection.set(cluster.getConnectionConfig().getTimeout() * 3);
         }
 
         /**
@@ -781,7 +804,12 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                     new Cluster.Node(nodeAddress, cluster.getConnectionConfig()), getKeyspace()
             );
             logger.debug("Made new connection '{}'", connection);
-            connection.open();
+            try {
+                connection.open();
+            } catch (TTransportException e) {
+                reportConnectionCorrupted(nodeAddress);
+                throw e;
+            }
 
             reportConnectionCreated(nodeAddress);
 
