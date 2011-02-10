@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
 * A pooled node class used by the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool}.
 */
-class PooledNode implements PooledNodeMBean {
+public class PooledNode implements PooledNodeMBean {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(CommonsBackedPool.class);
     private CommonsBackedPool pool;
     private String address;
