@@ -1147,10 +1147,10 @@ public class Selector extends Operand {
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
-                for (String rowKey : rowKeys) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(fromUTF8(rowKey).getBytes());
+                for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
                     List<SuperColumn> columns = toSuperColumnList(coscList);
-                    result.put(rowKey, columns);
+                    result.put(rowKeys.get(i), columns);
                 }
                 return result;
             }
@@ -1183,10 +1183,10 @@ public class Selector extends Operand {
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
                 Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
-                for (String rowKey : rowKeys) {
-                    List<ColumnOrSuperColumn> coscList = apiResult.get(fromUTF8(rowKey).getBytes());
+                for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
                     List<Column> columns = toColumnList(coscList);
-                    result.put(rowKey, columns);
+                    result.put(rowKeys.get(i), columns);
                 }
                 return result;
             }
