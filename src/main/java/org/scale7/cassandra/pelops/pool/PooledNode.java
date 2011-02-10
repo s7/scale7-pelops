@@ -153,7 +153,45 @@ public class PooledNode implements PooledNodeMBean {
         }
     }
 
+    @Override
+    public void suspendIndefinetily() {
+        setSuspensionState(TimeBasedSuspensionState.indefinetily());
+        reportSuspension();
+    }
+
+    @Override
+    public void suspendForMillis(long nodeSuspensionMillis) {
+        setSuspensionState(TimeBasedSuspensionState.millisFromNow(nodeSuspensionMillis));
+        reportSuspension();
+    }
+
+    @Override
+    public void clearSuspensionState() {
+        setSuspensionState(null);
+    }
+
     private String getMBeanName() {
-        return JMX_MBEAN_OBJ_NAME + "-" + pool.getKeyspace();
+        return JMX_MBEAN_OBJ_NAME + "-" + pool.getKeyspace() + "-" + getAddress();
+    }
+
+    public static class TimeBasedSuspensionState implements CommonsBackedPool.INodeSuspensionState {
+        private long suspendedUntil;
+
+        private TimeBasedSuspensionState(long suspendedUntil) {
+            this.suspendedUntil = suspendedUntil;
+        }
+
+        @Override
+        public boolean isSuspended() {
+            return suspendedUntil >= System.currentTimeMillis();
+        }
+
+        public static CommonsBackedPool.INodeSuspensionState millisFromNow(long millisFromNow) {
+            return new TimeBasedSuspensionState(System.currentTimeMillis() + millisFromNow);
+        }
+
+        public static CommonsBackedPool.INodeSuspensionState indefinetily() {
+            return new TimeBasedSuspensionState(Long.MAX_VALUE);
+        }
     }
 }

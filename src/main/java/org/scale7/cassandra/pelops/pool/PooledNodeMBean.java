@@ -1,7 +1,7 @@
 package org.scale7.cassandra.pelops.pool;
 
 public interface PooledNodeMBean {
-    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=CommonsBackedPoolPooledNode";
+    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=PooledNode";
 
     String getAddress();
 
@@ -22,4 +22,10 @@ public interface PooledNodeMBean {
     int getConnectionsReleasedTotal();
 
     boolean isSuspended();
+
+    void suspendIndefinetily();
+
+    void suspendForMillis(long nodeSuspensionMillis);
+
+    void clearSuspensionState();
 }

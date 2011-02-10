@@ -1,7 +1,7 @@
 package org.scale7.cassandra.pelops.pool;
 
 public interface CommonsBackedPoolMBean {
-    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=CommonsBackedPool";
+    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=Pool";
 
     /*
         RUNNING STATS
