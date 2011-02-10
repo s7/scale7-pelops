@@ -296,8 +296,7 @@ public class Selector extends Operand {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setColumn(nullSafeGet(colName));
+                ColumnPath cp = newColumnPath(columnFamily, null, colName);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
@@ -347,8 +346,7 @@ public class Selector extends Operand {
         IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
             public SuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setSuper_column(nullSafeGet(superColName));
+                ColumnPath cp = newColumnPath(columnFamily, superColName, null);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.super_column;
             }
@@ -431,9 +429,7 @@ public class Selector extends Operand {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = new ColumnPath(columnFamily);
-                cp.setSuper_column(nullSafeGet(superColName));
-                cp.setColumn(nullSafeGet(subColName));
+                ColumnPath cp = newColumnPath(columnFamily, superColName, subColName);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
@@ -1984,6 +1980,13 @@ public class Selector extends Operand {
      */
     public Selector(IThriftPool thrift) {
         super(thrift);
+    }
+
+    private static ColumnPath newColumnPath(String columnFamily, Bytes superColName, Bytes colName) {
+        ColumnPath path = new ColumnPath(columnFamily);
+        path.setSuper_column(nullSafeGet(superColName));
+        path.setColumn(nullSafeGet(colName));
+        return path;
     }
 
     private static ColumnParent newColumnParent(String columnFamily, String superColName) {
