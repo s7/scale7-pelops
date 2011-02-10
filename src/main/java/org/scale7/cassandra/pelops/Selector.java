@@ -1096,10 +1096,11 @@ public class Selector extends Operand {
      */
     public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
+        final List<ByteBuffer> keys = Bytes.transformBytesToList(rowKeys);
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), cp, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
@@ -1140,10 +1141,11 @@ public class Selector extends Operand {
      */
     public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
+        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(rowKeys);
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), cp, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> rowEntry : apiResult.entrySet()) {
                     List<SuperColumn> columns = toSuperColumnList(rowEntry.getValue());
@@ -1156,10 +1158,11 @@ public class Selector extends Operand {
     }
 
     private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final List<ByteBuffer> keys = Bytes.transformBytesToList(rowKeys);
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), colParent, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
                 Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
@@ -1173,10 +1176,11 @@ public class Selector extends Operand {
     }
 
     private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(rowKeys);
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), colParent, colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
                 Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (String rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(fromUTF8(rowKey).getBytes());
