@@ -293,10 +293,10 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Column getColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        final ColumnPath cp = newColumnPath(columnFamily, null, colName);
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = newColumnPath(columnFamily, null, colName);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
@@ -343,10 +343,10 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public SuperColumn getSuperColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        final ColumnPath cp = newColumnPath(columnFamily, superColName, null);
         IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
             public SuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = newColumnPath(columnFamily, superColName, null);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.super_column;
             }
@@ -426,10 +426,10 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Column getSubColumnFromRow(final String columnFamily, final Bytes rowKey, final Bytes superColName, final Bytes subColName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        final ColumnPath cp = newColumnPath(columnFamily, superColName, subColName);
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnPath cp = newColumnPath(columnFamily, superColName, subColName);
                 ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
                 return cosc.column;
             }
@@ -637,10 +637,11 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public List<SuperColumn> getSuperColumnsFromRow(final String columnFamily, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnParent cp = newColumnParent(columnFamily);
         IOperation<List<SuperColumn>> operation = new IOperation<List<SuperColumn>>() {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
-                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), newColumnParent(columnFamily), colPredicate, cLevel);
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), cp, colPredicate, cLevel);
                 return toSuperColumnList(apiResult);
             }
         };
@@ -1094,10 +1095,11 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnParent cp = newColumnParent(columnFamily);
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformBytesToList(rowKeys), cp, colPredicate, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
@@ -1137,10 +1139,11 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnParent cp = newColumnParent(columnFamily);
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
-                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), newColumnParent(columnFamily), colPredicate, cLevel);
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(Bytes.transformUTF8ToList(rowKeys), cp, colPredicate, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> rowEntry : apiResult.entrySet()) {
                     List<SuperColumn> columns = toSuperColumnList(rowEntry.getValue());
@@ -1421,10 +1424,11 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnParent cp = newColumnParent(columnFamily);
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
-                List<KeySlice> apiResult = conn.getAPI().get_range_slices(newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(cp, colPredicate, keyRange, cLevel);
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
@@ -1466,10 +1470,11 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(final String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final ColumnParent cp = newColumnParent(columnFamily);
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
-                List<KeySlice> apiResult = conn.getAPI().get_range_slices(newColumnParent(columnFamily), colPredicate, keyRange, cLevel);
+                List<KeySlice> apiResult = conn.getAPI().get_range_slices(cp, colPredicate, keyRange, cLevel);
                 Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
