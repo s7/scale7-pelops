@@ -12,7 +12,6 @@ import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
-import java.net.ConnectException;
 import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -130,6 +129,11 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
 
     private void configureScheduledTasks() {
         if (policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis() > 0) {
+            if (policy.isRunMaintenanceTaskDuringInit()) {
+                logger.info("Running maintenance tasks during initialization...");
+                runMaintenanceTasks();
+            }
+
             if (Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS >= policy.getTimeBetweenScheduledMaintenanceTaskRunsMillis()) {
                 logger.warn("Setting the scheduled tasks to run less than every {} milliseconds is not a good idea...", Policy.MIN_TIME_BETWEEN_SCHEDULED_TASKS);
             }
@@ -291,12 +295,11 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             } catch (Exception e) {
                 if (e instanceof NoSuchElementException) {
                     logger.debug("No free connections available for node '{}'.  Trying another node...", node.getAddress());
-                } else if (e instanceof TTransportException && e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    logger.warn(String.format("A ConnectException was thrown while attempting to create a connection to '%s'.  " +
+                } else if (e instanceof TTransportException) {
+                    logger.warn(String.format("A TTransportException was thrown while attempting to create a connection to '%s'.  " +
                             "This node will be suspended for %sms.  Trying another node...",
                             node.getAddress(), this.policy.getNodeDownSuspensionMillis()), e);
-                    node.setSuspensionState(new NodeDownSuspensionState());
-                    node.reportSuspension();
+                    node.suspendForMillis(this.policy.getNodeDownSuspensionMillis());
                 } else
                     logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s'.  " +
                             "Trying another node...", node.getAddress()), e);
@@ -608,6 +611,16 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         getPolicy().setTestConnectionsWhileIdle(testConnectionsWhileIdle);
     }
 
+    @Override
+    public int getNodeDownSuspensionMillis() {
+        return getPolicy().getNodeDownSuspensionMillis();
+    }
+
+    @Override
+    public void setNodeDownSuspensionMillis(int nodeDownSuspensionMillis) {
+        getPolicy().setNodeDownSuspensionMillis(nodeDownSuspensionMillis);
+    }
+
     private String getMBeanName() {
         return JMX_MBEAN_OBJ_NAME + "-" + keyspace;
     }
@@ -630,6 +643,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         private int timeBetweenScheduledMaintenanceTaskRunsMillis = DEFAULT_TIME_BETWEEN_SCHEDULED_TASKS;
         private AtomicBoolean testConnectionsWhileIdle = new AtomicBoolean(true);
         private AtomicInteger nodeDownSuspensionMillis = new AtomicInteger(TEN_SECONDS);
+        private AtomicBoolean runMaintenanceTaskDuringInit = new AtomicBoolean(true);
 
         public Policy() {
         }
@@ -780,6 +794,24 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             this.nodeDownSuspensionMillis.set(nodeDownSuspensionMillis);
         }
 
+        /**
+         * Determine if the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool#runMaintenanceTasks()} should be
+         * invoked during initialization.
+         * @param runMaintenanceTaskDuringInit true to run during init, otherwise false
+         */
+        public void setRunMaintenanceTaskDuringInit(boolean runMaintenanceTaskDuringInit) {
+            this.runMaintenanceTaskDuringInit.set(runMaintenanceTaskDuringInit);
+        }
+
+        /**
+         * Determine if the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool#runMaintenanceTasks()} should be
+         * invoked during initialization.
+         * @return true to run during init, otherwise false
+         */
+        public boolean isRunMaintenanceTaskDuringInit() {
+            return runMaintenanceTaskDuringInit.get();
+        }
+
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
@@ -791,21 +823,9 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             sb.append(", maxWaitForConnection=").append(maxWaitForConnection);
             sb.append(", testConnectionsWhileIdle=").append(testConnectionsWhileIdle);
             sb.append(", timeBetweenScheduledMaintenanceTaskRunsMillis=").append(timeBetweenScheduledMaintenanceTaskRunsMillis);
+            sb.append(", nodeDownSuspensionMillis=").append(nodeDownSuspensionMillis);
             sb.append('}');
             return sb.toString();
-        }
-    }
-
-    private class NodeDownSuspensionState implements INodeSuspensionState {
-        private long suspendedUntil;
-
-        private NodeDownSuspensionState() {
-            suspendedUntil = System.currentTimeMillis() + getPolicy().getNodeDownSuspensionMillis();
-        }
-
-        @Override
-        public boolean isSuspended() {
-            return suspendedUntil > System.currentTimeMillis();
         }
     }
 

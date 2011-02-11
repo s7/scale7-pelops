@@ -1,7 +1,7 @@
 package org.scale7.cassandra.pelops.pool;
 
 public interface CommonsBackedPoolMBean {
-    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=CommonsBackedPool";
+    String JMX_MBEAN_OBJ_NAME = "com.scale7.cassandra.pelops.pool:type=Pool";
 
     /*
         RUNNING STATS
@@ -27,7 +27,6 @@ public interface CommonsBackedPoolMBean {
         CONFIGURATION
      */
 
-
     public int getMaxActivePerNode();
 
     public void setMaxActivePerNode(int maxActivePerNode);
@@ -51,6 +50,10 @@ public interface CommonsBackedPoolMBean {
     public boolean isTestConnectionsWhileIdle();
 
     public void setTestConnectionsWhileIdle(boolean testConnectionsWhileIdle);
+
+    public int getNodeDownSuspensionMillis();
+
+    public void setNodeDownSuspensionMillis(int nodeDownSuspensionMillis);
 
     /*
         OPERATIONS
