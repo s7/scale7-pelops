@@ -73,7 +73,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
 
 
             for (Thread thread : getAllThreads()) {
-                if (thread.getName().startsWith("pelops-pool-watcher-")) {
+                if (thread.getName().startsWith("pelops-pool-worker-")) {
                     return;
                 }
             }
