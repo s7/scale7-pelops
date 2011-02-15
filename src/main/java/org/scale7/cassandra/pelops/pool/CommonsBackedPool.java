@@ -142,8 +142,8 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
             executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable runnable) {
-                    Thread thread = new Thread(runnable, "pelops-pool-watcher-" + getKeyspace());
-                    thread.setDaemon(false); // don't make the JVM wait for this thread to exit
+                    Thread thread = new Thread(runnable, "pelops-pool-worker-" + getKeyspace());
+                    thread.setDaemon(true); // don't make the JVM wait for this thread to exit
                     thread.setPriority(Thread.MIN_PRIORITY + 1); // try not to disrupt other threads
                     return thread;
                 }
