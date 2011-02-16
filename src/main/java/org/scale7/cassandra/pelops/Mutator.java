@@ -34,16 +34,11 @@ public class Mutator extends Operand {
      * @throws PelopsException
      */
     public void execute(final ConsistencyLevel cLevel) throws PelopsException {
-        final HashMap<ByteBuffer, Map<String, List<Mutation>>> convertedBatch = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(batch.size());
-        for (Map.Entry<Bytes, Map<String, List<Mutation>>> batchEntry : batch.entrySet()) {
-            convertedBatch.put(batchEntry.getKey().getBytes(), batchEntry.getValue());
-        }
-
         IOperation<Void> operation = new IOperation<Void>() {
             @Override
             public Void execute(IThriftPool.IPooledConnection conn) throws Exception {
                 // Send batch mutation job to Thrift connection
-                conn.getAPI().batch_mutate(convertedBatch, cLevel);
+                conn.getAPI().batch_mutate(batch, cLevel);
                 // Nothing to return
                 return null;
             }
@@ -702,14 +697,14 @@ public class Mutator extends Operand {
     @SuppressWarnings("serial")
     class MutationsByCf extends HashMap<String, List<Mutation>> {}
     @SuppressWarnings("serial")
-    class MutationsByKey extends HashMap<Bytes, Map<String, List<Mutation>>> {}
+    class MutationsByKey extends HashMap<ByteBuffer, Map<String, List<Mutation>>> {}
 
     /**
      * Used to indicate that the ttl property on column instances should not be set.
      */
     public static final int NO_TTL = -1;
 
-    private final Map<Bytes, Map<String, List<Mutation>>> batch;
+    private final Map<ByteBuffer, Map<String, List<Mutation>>> batch;
     protected final long timestamp;
     protected final boolean deleteIfNull;
     protected final int ttl;
@@ -747,15 +742,16 @@ public class Mutator extends Operand {
         batch = new MutationsByKey();
     }
     
-    protected Map<Bytes, Map<String, List<Mutation>>> getBatch() {
+    protected Map<ByteBuffer, Map<String, List<Mutation>>> getBatch() {
 		return batch;
 	}
 
     protected MutationList getMutationList(String colFamily, Bytes key) {
-        MutationsByCf mutsByCf = (MutationsByCf) batch.get(key);
+        ByteBuffer keyBuffer = key.getBytes();
+        MutationsByCf mutsByCf = (MutationsByCf) batch.get(keyBuffer);
         if (mutsByCf == null) {
             mutsByCf = new MutationsByCf();
-            batch.put(key, mutsByCf);
+            batch.put(keyBuffer, mutsByCf);
         }
         MutationList mutList = (MutationList) mutsByCf.get(colFamily);
         if (mutList == null) {
