@@ -37,7 +37,7 @@ To use Pelops with Cassandra 0.7.x use the following:
             </repository>
         </repositories>
 
-2. Add the Pelops dependency to your project (depends on Cassandra 0.7.1)):
+2. Add the Pelops dependency to your project (depends on Cassandra 0.7.2)):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
@@ -101,7 +101,7 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:apache-cassandra - version: 0.7.01 (pulled from the Datastax/Riptano Maven repo)
+* org.apache.cassandra:apache-cassandra - version: 0.7.2 (pulled from the Datastax/Riptano Maven repo)
 * libthrift:libthrift - version: 0.5
 * commons-pool:commons-pool -version:1.5.5
 
