@@ -4,7 +4,7 @@
     <groupId>org.scale7</groupId>
     <artifactId>scale7-pelops</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-RC1-0.7.x-SNAPSHOT</version>
+    <version>1.0-RC2-0.7.x-SNAPSHOT</version>
     <name>Pelops - A library for accessing the Cassandra database</name>
     <url>http://github.com/s7/pelops</url>
     <properties>
@@ -49,11 +49,6 @@
     </mailingLists>
     <dependencies>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.11</version>
-        </dependency>
-        <dependency>
             <groupId>com.eaio.uuid</groupId>
             <artifactId>uuid</artifactId>
             <version>3.2</version>
@@ -65,13 +60,46 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cassandra</groupId>
-            <artifactId>apache-cassandra</artifactId>
-            <version>0.7.1</version>
-        </dependency>
-        <dependency>
-            <groupId>libthrift</groupId>
-            <artifactId>libthrift</artifactId>
-            <version>0.5</version>
+            <artifactId>cassandra-all</artifactId>
+            <version>0.7.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-cli</groupId>
+                    <artifactId>commons-cli</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jline</groupId>
+                    <artifactId>jline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.googlecode.json-simple</groupId>
+                    <artifactId>json-simple</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.stephenc.high-scale-lib</groupId>
+                    <artifactId>high-scale-lib</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.safehaus.jug</groupId>
+                    <artifactId>jug</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>commons-pool</groupId>
@@ -134,9 +162,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.avro</groupId>
+            <groupId>org.apache.cassandra.deps</groupId>
             <artifactId>avro</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.0-cassandra-1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -182,9 +210,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.cliffc.high_scale_lib</groupId>
+            <groupId>com.github.stephenc.high-scale-lib</groupId>
             <artifactId>high-scale-lib</artifactId>
-            <version>1.0</version>
+            <version>1.1.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
