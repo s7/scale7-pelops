@@ -121,6 +121,8 @@ public class EmbeddedCassandraServer {
 			FileUtils.createDirectory(baseDirectory);
 
 			copy("/log4j.properties", baseDirectory);
+            System.setProperty("log4j.configuration",
+                    new File(baseDirectory, "log4j.properties").toURI().toString());
 
 			prepareConfiguration();
 
