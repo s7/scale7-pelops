@@ -23,11 +23,6 @@ To use Pelops with Cassandra 0.7.x use the following:
                 <url>http://repo1.maven.org/maven2</url>
             </repository>
             <repository>
-                <id>riptano</id>
-                <name>riptano</name>
-                <url>http://mvn.riptano.com/content/repositories/public/</url>
-            </repository>
-            <repository>
                 <id>maven.scale7.org</id>
                 <name>Scale7 Maven Repo</name>
                 <url>https://github.com/s7/mvnrepo/raw/master</url>
@@ -42,7 +37,7 @@ To use Pelops with Cassandra 0.7.x use the following:
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.0-RC1-0.7.x-SNAPSHOT</version>
+			<version>1.0-RC2-0.7.x-SNAPSHOT</version>
 		</dependency>
 
     Note: this version is the only one getting Pelops fixes and updates.
@@ -101,9 +96,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:apache-cassandra - version: 0.7.2 (pulled from the Datastax/Riptano Maven repo)
-* libthrift:libthrift - version: 0.5
-* commons-pool:commons-pool -version:1.5.5
+* org.apache.cassandra:cassandra-all - version: 0.7.2
+* org.apache.cassandra.deps:libthrift - version: 0.5.0
+* commons-pool:commons-pool - version: 1.5.5
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
 
