@@ -44,7 +44,7 @@ public class PooledNode implements PooledNodeMBean {
             JmxMBeanManager.getInstance().unregisterMBean(beanName);
         }
 
-        logger.warn("Registering MBean '{}'...", beanName);
+        logger.info("Registering MBean '{}'...", beanName);
         JmxMBeanManager.getInstance().registerMBean(this, beanName);
     }
 
