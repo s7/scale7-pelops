@@ -49,7 +49,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
      * @see #CommonsBackedPool(org.scale7.cassandra.pelops.Cluster, String, org.scale7.cassandra.pelops.pool.CommonsBackedPool.Policy,org.scale7.cassandra.pelops.OperandPolicy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSelectionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.INodeSuspensionStrategy, org.scale7.cassandra.pelops.pool.CommonsBackedPool.IConnectionValidator)
      */
     public CommonsBackedPool(Cluster cluster, String keyspace) {
-        this(cluster, keyspace, new Policy(), new OperandPolicy());
+        this(cluster, keyspace, new Policy(cluster), new OperandPolicy());
     }
 
     /**
