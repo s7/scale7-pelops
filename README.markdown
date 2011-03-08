@@ -32,15 +32,13 @@ To use Pelops with Cassandra 0.7.x use the following:
             </repository>
         </repositories>
 
-2. Add the Pelops dependency to your project (depends on Cassandra 0.7.2)):
+2. Add the Pelops dependency to your project (depends on Cassandra 0.7.3)):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.0-RC2-0.7.x-SNAPSHOT</version>
+			<version>1.0-0.7.x-SNAPSHOT</version>
 		</dependency>
-
-    Note: this version is the only one getting Pelops fixes and updates.
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
 
@@ -96,9 +94,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:apache-cassandra - version: 0.7.2 (pulled from the Datastax/Riptano Maven repo)
-* libthrift:libthrift - version: 0.5
-* commons-pool:commons-pool -version:1.5.5
+* org.apache.cassandra:cassandra-all - version: 0.7.3
+* org.apache.cassandra.deps:libthrift - version: 0.5.0
+* commons-pool:commons-pool - version: 1.5.5
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
 
