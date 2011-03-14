@@ -559,6 +559,27 @@ public class Bytes {
     }
 
     /**
+     * Pads a byte buffer to match a specified length
+     * @param totalLength the length to pad the buffer
+     * @param originalByteBuffer the buffer with data to pad
+     * @return the padded buffer; this may be the original buffer or a new buffer
+     */
+    private static ByteBuffer padValue(int totalLength, ByteBuffer originalByteBuffer)
+    {
+        if(originalByteBuffer.capacity() >= totalLength)
+            return originalByteBuffer;
+
+        byte[] originalByteArray = originalByteBuffer.array();
+        byte[] newByteArray = new byte[totalLength];
+        for(int i = 0; i < totalLength; i++)
+            newByteArray[i] = 0;
+        for(int i = originalByteArray.length - 1; i >= 0; i--)
+            newByteArray[(totalLength-1)-i] = originalByteArray[i];
+
+        return ByteBuffer.wrap(newByteArray);
+    }
+
+    /**
      * Converts the backing array to the appropriate object instance handling nulls.
      *
      * @param defaultIfNull the value to return is the backing array is null
@@ -580,7 +601,7 @@ public class Bytes {
     public long toLong() throws IllegalStateException {
         try {
             bytes.reset();
-            return this.bytes.getLong();
+            return padValue(8, this.bytes).getLong();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
@@ -610,7 +631,7 @@ public class Bytes {
     public int toInt() throws IllegalStateException {
         try {
             bytes.reset();
-            return this.bytes.getInt();
+            return padValue(4, this.bytes).getInt();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
@@ -640,7 +661,7 @@ public class Bytes {
     public short toShort() throws IllegalStateException {
         try {
             bytes.reset();
-            return this.bytes.getShort();
+            return padValue(2, this.bytes).getShort();
         } catch (BufferUnderflowException e) {
             throw new IllegalStateException("Failed to read value due to invalid format.  See cause for details...", e);
         } finally {
