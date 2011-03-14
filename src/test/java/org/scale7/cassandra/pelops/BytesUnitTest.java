@@ -227,6 +227,17 @@ public class BytesUnitTest {
     }
 
     @Test
+    public void testToShortWithFewerThanTwoBytes()
+    {
+        byte[] fromAsByteArray = new byte[] { Byte.MAX_VALUE };
+        Bytes fromAsBytes = Bytes.fromByteArray(fromAsByteArray);
+
+        short to = fromAsBytes.toShort();
+
+        assertEquals((short)Byte.MAX_VALUE, to);
+    }
+
+    @Test
     public void testInt() {
         int value = Integer.MAX_VALUE;
         Bytes from = Bytes.fromInt(value);
@@ -245,6 +256,17 @@ public class BytesUnitTest {
         Integer to = from.toInt(null);
 
         assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testToIntWithFewerThanFourBytes()
+    {
+        byte[] fromAsByteArray = new byte[] { Byte.MAX_VALUE };
+        Bytes fromAsBytes = Bytes.fromByteArray(fromAsByteArray);
+
+        int to = fromAsBytes.toInt();
+
+        assertEquals((int)Byte.MAX_VALUE, to);
     }
 
     @Test
@@ -275,6 +297,17 @@ public class BytesUnitTest {
         Long to = from.toLong(null);
 
         assertEquals("Conversion did not match", value, to);
+    }
+
+    @Test
+    public void testToLongWithFewerThanEightBytes()
+    {
+        byte[] fromAsByteArray = new byte[] { Byte.MAX_VALUE };
+        Bytes fromAsBytes = Bytes.fromByteArray(fromAsByteArray);
+
+        long to = fromAsBytes.toLong();
+
+        assertEquals((long)Byte.MAX_VALUE, to);
     }
 
     @Test
