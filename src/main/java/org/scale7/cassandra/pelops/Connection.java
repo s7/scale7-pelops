@@ -24,6 +24,8 @@
 
 package org.scale7.cassandra.pelops;
 
+import org.apache.cassandra.thrift.AuthenticationException;
+import org.apache.cassandra.thrift.AuthorizationException;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
@@ -42,10 +44,9 @@ public class Connection implements IConnection {
 
     private Cluster.Node node;
     private String keyspace;
-
     private TTransport transport;
     private final Cassandra.Client client;
-
+    
     public Connection(Cluster.Node node, String keyspace) throws SocketException, TException, InvalidRequestException {
         this.node = node;
         this.keyspace = keyspace;
@@ -91,6 +92,23 @@ public class Connection implements IConnection {
         if (isOpen()) return;
         
         transport.open();
+        
+        logger.debug("transport is open '{}'",transport);
+        
+        if (node.getConfig().getConnectionAuthenticator() !=null) {
+        	logger.debug("Authentication request '{}'",node.getConfig().getConnectionAuthenticator());
+ 			try {
+				getAPI().login(node.getConfig().getConnectionAuthenticator().getAuthenticationRequest());
+			} catch (AuthenticationException e) {
+				throw new TTransportException(e.getMessage(),e);
+			} catch (AuthorizationException e) {
+				throw new TTransportException(e.getMessage(),e);
+			} catch (TException e) {
+				throw new TTransportException(e.getMessage(),e);
+			}
+        }
+        
+        logger.debug("set keyspace  '{}'",keyspace);
 
         if (keyspace != null) {
             try {
