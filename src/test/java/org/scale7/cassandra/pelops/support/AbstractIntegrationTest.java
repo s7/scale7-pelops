@@ -14,6 +14,7 @@ import org.scale7.cassandra.pelops.KeyspaceManager;
 import org.scale7.cassandra.pelops.Mutator;
 import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.SimpleConnectionAuthenticator;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -32,10 +33,15 @@ public abstract class AbstractIntegrationTest {
 	public static String BASE_DIRECTORY = "target/cassandra";
 
 	public static final String KEYSPACE = "PelopsTesting";
+	
+	private static final String USERNAME = "tester";
+	
+	private static final String PASSWORD  = "password";
 
 	private static EmbeddedCassandraServer cassandraServer;
 
-	public static Cluster cluster = new Cluster(RPC_LISTEN_ADDRESS, RPC_PORT);
+	public static Cluster cluster = new Cluster(RPC_LISTEN_ADDRESS, RPC_PORT
+			, new SimpleConnectionAuthenticator(USERNAME,PASSWORD));
 
 	private static KeyspaceManager keyspaceManager;
 
