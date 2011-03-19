@@ -1,3 +1,5 @@
+NOTE: The master branch will soon be tracking Cassandra 0.8.x.
+
 Introduction
 =========
 Pelops has been created to make working with Cassandra a beautiful thing (hence the nickname "Cassandra's beautiful son").
@@ -32,12 +34,12 @@ To use Pelops with Cassandra 0.7.x use the following:
             </repository>
         </repositories>
 
-2. Add the Pelops dependency to your project (depends on Cassandra 0.7.3)):
+2a. Add the Pelops dependency to your project (depends on Cassandra 0.7.4):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.0-0.7.x</version>
+			<version>1.1-0.7.x</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
