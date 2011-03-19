@@ -1,5 +1,7 @@
 package org.scale7.cassandra.pelops;
 
+import org.apache.cassandra.auth.SimpleAuthenticator;
+import org.apache.cassandra.thrift.AuthenticationRequest;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -8,6 +10,10 @@ import static org.junit.Assert.*;
  * Tests the {@link org.scale7.cassandra.pelops.Cluster} class.
  */
 public class ClusterUnitTest {
+	
+	private static final String USERNAME = "tester";
+	private static final String PASSWORD = "password";
+	
     /**
      * Tests that if multiple nodes are provided in a single string that they it is processed correctly.
      */
@@ -33,5 +39,22 @@ public class ClusterUnitTest {
         Cluster.Node[] resultingNodes = cluster.getNodes();
         assertEquals("Incorrect wrong number of contact nodes", 1, resultingNodes.length);
         assertEquals("Node did not match", node, resultingNodes[0].getAddress());
+    }
+    
+    /**
+     * Tests that if a single node is provided in a single string that it is processed correctly.
+     */
+    @Test
+    public void testClusterNodeConnectionAuthenticator() {
+        String node = "node1";
+        Cluster cluster = new Cluster(node, 5555, false, new SimpleConnectionAuthenticator(USERNAME,PASSWORD));
+        assertNotNull("Incorrect connection authentication config",cluster.getConnectionConfig().getConnectionAuthenticator());
+        assertEquals("Incorrect connection authenticator class"
+        		,cluster.getConnectionConfig().getConnectionAuthenticator().getClass(),SimpleConnectionAuthenticator.class);
+        AuthenticationRequest request = cluster.getConnectionConfig().getConnectionAuthenticator().getAuthenticationRequest();
+        assertNotNull("Invalid authentication request",request);
+        assertNotNull("Invalid authentication request credentials",request.getCredentials());
+        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.USERNAME_KEY),USERNAME);
+        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.PASSWORD_KEY),PASSWORD);
     }
 }
