@@ -123,14 +123,6 @@ public class EmbeddedCassandraServer {
 			copy("/log4j.properties", baseDirectory);
             System.setProperty("log4j.configuration",
                     new File(baseDirectory, "log4j.properties").toURI().toString());
-            
-            copy("/access.properties", baseDirectory);
-            System.setProperty("access.properties",
-                    new File(baseDirectory, "access.properties").getCanonicalPath());
-            
-            copy("/passwd.properties", baseDirectory);
-            System.setProperty("passwd.properties",
-                    new File(baseDirectory, "passwd.properties").getCanonicalPath());
 
 			prepareConfiguration();
 

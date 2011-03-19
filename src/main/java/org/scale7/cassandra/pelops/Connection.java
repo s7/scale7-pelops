@@ -24,8 +24,8 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.AuthenticationException;
-import org.apache.cassandra.thrift.AuthorizationException;
+import java.net.SocketException;
+
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
@@ -34,10 +34,9 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.scale7.cassandra.pelops.exceptions.IExceptionTranslator;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import java.net.SocketException;
 
 public class Connection implements IConnection {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(Connection.class);
@@ -99,13 +98,9 @@ public class Connection implements IConnection {
         	logger.debug("Authentication request '{}'",node.getConfig().getConnectionAuthenticator());
  			try {
 				getAPI().login(node.getConfig().getConnectionAuthenticator().getAuthenticationRequest());
-			} catch (AuthenticationException e) {
-				throw new TTransportException(e.getMessage(),e);
-			} catch (AuthorizationException e) {
-				throw new TTransportException(e.getMessage(),e);
-			} catch (TException e) {
-				throw new TTransportException(e.getMessage(),e);
-			}
+			} catch (Exception e) {
+				throw new IExceptionTranslator.ExceptionTranslator().translate(e);
+			} 
         }
         
         logger.debug("set keyspace  '{}'",keyspace);
