@@ -57,4 +57,14 @@ public class ClusterUnitTest {
         assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.USERNAME_KEY),USERNAME);
         assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.PASSWORD_KEY),PASSWORD);
     }
+    
+    /**
+     * Tests that if a single node is provided in a single string that it is processed correctly.
+     */
+    @Test
+    public void testClusterNodeWithoutConnectionAuthenticator() {
+        String node = "node1";
+        Cluster cluster = new Cluster(node, 5555, false);
+        assertNull("Connection authentication should be null",cluster.getConnectionConfig().getConnectionAuthenticator());
+    }
 }
