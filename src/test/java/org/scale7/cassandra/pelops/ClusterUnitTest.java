@@ -42,7 +42,7 @@ public class ClusterUnitTest {
     }
     
     /**
-     * Tests that if a single node is provided in a single string that it is processed correctly.
+     * Tests that a connection authenticator on a cluster is configured correctly
      */
     @Test
     public void testClusterNodeConnectionAuthenticator() {
@@ -59,7 +59,7 @@ public class ClusterUnitTest {
     }
     
     /**
-     * Tests that if a single node is provided in a single string that it is processed correctly.
+     * Tests that a cluster without a connection authenticator returns a null authenticator
      */
     @Test
     public void testClusterNodeWithoutConnectionAuthenticator() {
