@@ -1128,11 +1128,7 @@ public class Selector extends Operand {
                 Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
-                    List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-                    for (ColumnOrSuperColumn cosc : coscList) {
-                        assert cosc.super_column != null : "The super column should not be null";
-                        columns.add(cosc.super_column);
-                    }
+                    List<SuperColumn> columns = toSuperColumnList(coscList);
                     result.put(rowKey, columns);
                 }
                 return result;
