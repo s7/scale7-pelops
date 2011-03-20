@@ -1,3 +1,5 @@
+NOTE: The master branch will soon be tracking Cassandra 0.8.x.  For the 0.7.0 codebase please refer to https://github.com/s7/scale7-pelops/tree/0.7.x.
+
 Introduction
 =========
 Pelops has been created to make working with Cassandra a beautiful thing (hence the nickname "Cassandra's beautiful son").
