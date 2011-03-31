@@ -1,4 +1,4 @@
-NOTE: The master branch will soon be tracking Cassandra 0.8.x.
+NOTE: The master branch will soon be tracking Cassandra 0.8.x.  Cassandra 0.7.x users should be looking at the [0.7.x](https://github.com/s7/scale7-pelops/tree/0.7.x) branch.
 
 Introduction
 =========
@@ -14,7 +14,7 @@ Pelops is provided under the [MIT licence](http://www.opensource.org/licenses/mi
 
 Using Pelops in a Maven project
 ========================
-To use Pelops with Cassandra 0.7.x use the following:
+To use Pelops with Cassandra 0.8.x use the following:
 
 1. Add the following repository to your project repositories:
 
@@ -25,12 +25,17 @@ To use Pelops with Cassandra 0.7.x use the following:
                 <url>http://repo1.maven.org/maven2</url>
             </repository>
             <repository>
+                <id>riptano</id>
+                <name>riptano</name>
+                <url>http://mvn.riptano.com/content/repositories/public</url>
+            </repository>
+            <repository>
                 <id>maven.scale7.org</id>
                 <name>Scale7 Maven Repo</name>
                 <url>https://github.com/s7/mvnrepo/raw/master</url>
                 <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+                    <enabled>true</enabled>
+                </snapshots>
             </repository>
         </repositories>
 
@@ -39,7 +44,7 @@ To use Pelops with Cassandra 0.7.x use the following:
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.1-0.7.x</version>
+			<version>1.1-0.8.x</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).

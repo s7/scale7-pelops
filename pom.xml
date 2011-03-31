@@ -59,8 +59,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-all</artifactId>
-            <version>0.7.4</version>
+            <artifactId>apache-cassandra</artifactId>
+            <version>0.8.0-20110317</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-cli</groupId>
@@ -199,7 +199,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>r06</version>
+            <version>r08</version>
             <scope>test</scope>
         </dependency>
         <dependency>
