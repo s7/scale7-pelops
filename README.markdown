@@ -1,4 +1,4 @@
-NOTE: The master branch will soon be tracking Cassandra 0.8.x.
+NOTE: The master branch is now tracking Cassandra 0.8.x.
 
 Introduction
 =========
