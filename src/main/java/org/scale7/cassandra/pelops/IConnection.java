@@ -66,6 +66,7 @@ public interface IConnection {
         private final int thriftPort;
         private final boolean framedTransportRequired;
         private final int timeout;
+        private IConnectionAuthenticator connectionAuthenticator;
 
         /**
          * Config used when opening connections.
@@ -77,6 +78,21 @@ public interface IConnection {
             this.thriftPort = thriftPort;
             this.framedTransportRequired = framedTransportRequired;
             this.timeout = timeout;
+            this.connectionAuthenticator = null;
+        }
+        
+        /**
+         * Config used when opening connections.
+         * @param thriftPort the port to connect to
+         * @param framedTransportRequired is framed transport required
+         * @param timeout the timeout (0 or less to use thrift default)
+         * @param connection authenticator
+         */
+        public Config(int thriftPort, boolean framedTransportRequired, int timeout,IConnectionAuthenticator connectionAuthenticator) {
+            this.thriftPort = thriftPort;
+            this.framedTransportRequired = framedTransportRequired;
+            this.timeout = timeout;
+            this.connectionAuthenticator = connectionAuthenticator;
         }
 
         public int getThriftPort() {
@@ -90,6 +106,10 @@ public interface IConnection {
         public int getTimeout() {
             return timeout;
         }
+        
+        public IConnectionAuthenticator getConnectionAuthenticator() {
+        	return connectionAuthenticator;
+        }
 
         /**
          * Determines if a timeout should be set on the thrift connection.
@@ -98,5 +118,6 @@ public interface IConnection {
         public boolean isTimeoutSet() {
             return getTimeout() > 0;
         }
+       
     }
 }

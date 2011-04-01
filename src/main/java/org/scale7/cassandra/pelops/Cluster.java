@@ -65,6 +65,16 @@ public class Cluster {
     public Cluster(String nodes, int thriftPort) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), false);
     }
+    
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT} with dynamic node discovery turned off.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param connectionAuthenticator for node connection authentication
+     */
+    public Cluster(String nodes, int thriftPort,IConnectionAuthenticator connectionAuthenticator) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator), false);
+    }
 
     /**
      * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
@@ -74,6 +84,17 @@ public class Cluster {
      */
     public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), dynamicNodeDiscovery);
+    }
+    
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param connectionAuthenticator for node connection authentication
+     */
+    public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator), dynamicNodeDiscovery);
     }
 
     /**
@@ -85,6 +106,18 @@ public class Cluster {
      */
     public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout), dynamicNodeDiscovery);
+    }
+    
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param timeout the number of milliseconds thrift should wait to complete an operation (zero or less disables the timeout)
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param connectionAuthenticator for node connection authentication
+     */
+    public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout,connectionAuthenticator), dynamicNodeDiscovery);
     }
 
     /**
