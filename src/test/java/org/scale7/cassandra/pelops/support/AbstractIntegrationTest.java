@@ -28,8 +28,6 @@ public abstract class AbstractIntegrationTest {
 	public static final String RPC_LISTEN_ADDRESS = "localhost";
 
 	public static final int RPC_PORT = 19160;
-	
-	public static String BASE_DIRECTORY = "target/cassandra";
 
 	public static final String KEYSPACE = "PelopsTesting";
 
@@ -70,8 +68,7 @@ public abstract class AbstractIntegrationTest {
 	 */
 	public static void setup(List<CfDef> columnDefinitions) throws Exception {
 		if (cassandraServer == null) {
-			cassandraServer = new EmbeddedCassandraServer(RPC_LISTEN_ADDRESS,
-					RPC_PORT, BASE_DIRECTORY);
+			cassandraServer = new EmbeddedCassandraServer();
 			cassandraServer.start();
 
 			// wait until cassandra server starts up. could wait less time, but
