@@ -1,4 +1,4 @@
-NOTE: The master branch is now tracking Cassandra 0.8.x (and currently doesn't compile).  For the 0.7.0 code base please refer to [0.7.x](https://github.com/s7/scale7-pelops/tree/0.7.x).
+NOTE: The master branch is now tracking Cassandra 0.8.x.  For the 0.7.0 code base please refer to [0.7.x](https://github.com/s7/scale7-pelops/tree/0.7.x).
 
 Introduction
 =========
