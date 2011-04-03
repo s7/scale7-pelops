@@ -44,7 +44,7 @@ To use Pelops with Cassandra 0.8.x use the following:
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.1-0.8.x</version>
+			<version>1.1-0.8.x-SNAPSHOT</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
