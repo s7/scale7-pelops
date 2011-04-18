@@ -81,19 +81,8 @@ public class Operand {
                 // Return result!
 				return operation.execute(conn);
 			} catch (Exception e) {
-				// Is this a logic/application error?
-				if (e instanceof NotFoundException ||
-					e instanceof InvalidRequestException ||
-					e instanceof TApplicationException ||
-					e instanceof AuthenticationException ||
-                    e instanceof TProtocolException ||
-					e instanceof AuthorizationException) {
-
-                    // Re-throw application-level exceptions immediately.
-					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
-				}
                 // Should we try again?
-                else if (e instanceof TimedOutException ||
+                if (e instanceof TimedOutException ||
                     e instanceof TTransportException ||
                     e instanceof UnavailableException) {
 
@@ -109,11 +98,16 @@ public class Operand {
 
 					retries++;
 					lastException = e;
+				} else if (e instanceof NotFoundException) {
+                    // Re-throw application-level exceptions immediately.
+					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
+                } else {
+                    // This connection is "broken" by network timeout or other problem.
+                    conn.corrupted();
+
+                    // Re-throw application-level exceptions immediately.
+					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
 				}
-                // nope, throw
-                else {
-                    throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
-                }
 			} finally {
                 conn.release();
             }

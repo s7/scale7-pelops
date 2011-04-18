@@ -8,6 +8,7 @@ import org.apache.cassandra.thrift.KsDef;
 import org.junit.Before;
 import org.scale7.cassandra.pelops.Cluster;
 import org.scale7.cassandra.pelops.ColumnFamilyManager;
+import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
 import org.scale7.cassandra.pelops.pool.DebuggingPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.KeyspaceManager;
@@ -43,8 +44,7 @@ public abstract class AbstractIntegrationTest {
 
 	private static List<CfDef> colFamilyDefs;
 
-	private IThriftPool pool = new DebuggingPool(cluster, KEYSPACE,
-			new OperandPolicy());
+	private IThriftPool pool = new DebuggingPool(cluster, KEYSPACE, new OperandPolicy());
 
 	public KeyspaceManager getKeyspaceManager() {
 		return keyspaceManager;

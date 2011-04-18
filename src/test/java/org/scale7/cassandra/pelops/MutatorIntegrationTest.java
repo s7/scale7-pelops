@@ -258,6 +258,41 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    public void testTProtocolExceptionDoesNotBreakPooledConnection() throws Exception {
+        Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
+
+        Mutator mutator = createMutator();
+
+        assertFalse("Mutator is not in a valid state for this test", mutator.deleteIfNull);
+
+        try {
+            mutator.writeColumn(CF, rowKey, mutator.newColumn(Bytes.fromInt(1), (Bytes) null));
+            mutator.execute(ConsistencyLevel.ONE);
+        } catch (Exception e) {
+            // do nothing
+        }
+
+        createSelector().getColumnsFromRow(CF, rowKey, false, ConsistencyLevel.ONE);
+    }
+
+    @Test
+    public void testNotFoundExceptionDoesNotBreakPooledConnection() throws Exception {
+        Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
+
+        Mutator mutator = createMutator();
+
+        assertFalse("Mutator is not in a valid state for this test", mutator.deleteIfNull);
+
+        try {
+            createSelector().getColumnsFromRow(CF, rowKey, false, ConsistencyLevel.ONE);
+        } catch (Exception e) {
+            // do nothing
+        }
+
+        createSelector().getColumnsFromRow(CF, rowKey, false, ConsistencyLevel.ONE);
+    }
+
     private void verifyColumns(List<Column> expectedColumns, List<Column> actualColumns) {
         assertEquals("Wrong number of columns", expectedColumns.size(), actualColumns.size());
         for (int i = 0; i < expectedColumns.size(); i++) {
