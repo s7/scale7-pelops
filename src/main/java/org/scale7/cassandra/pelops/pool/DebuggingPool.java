@@ -39,7 +39,7 @@ import static java.lang.String.format;
 
 /**
  * A basic non-pooled pool impl. A new connection is opened each time the {@link #getConnection()} or
- * {@link IThriftPool#getConnectionExcept(java.util.Set} is called.
+ * {@link IThriftPool#getConnectionExcept(java.util.Set)} is called.
  *
  * This class is useful for diagnostics.
  */
@@ -50,6 +50,8 @@ public class DebuggingPool extends ThriftPoolBase {
     private String keyspace;
     private OperandPolicy generalPolicy;
     private Random random;
+
+    PooledConnection connection = null;
 
     public DebuggingPool(Cluster cluster, String keyspace, OperandPolicy generalPolicy) {
         this.cluster = cluster;
@@ -66,7 +68,8 @@ public class DebuggingPool extends ThriftPoolBase {
 
         logger.debug("Using node '{}'", nodes[index]);
 
-        PooledConnection connection = null;
+        if (connection != null && connection.isOpen()) return connection;
+        
         try {
             connection = new PooledConnection(nodes[index], keyspace);
             connection.open();
@@ -104,12 +107,11 @@ public class DebuggingPool extends ThriftPoolBase {
 
         @Override
         public void release() {
-            close();
         }
 
         @Override
         public void corrupted() {
-            // do nothing (closing anyway)
+            close();
         }
     }
 }
