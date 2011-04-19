@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -117,7 +118,7 @@ public class Mutator extends Operand {
     }
 
     private void writeColumnInternal(String colFamily, Bytes rowKey, Column column) {
-    	validateRowKey(rowKey);
+    	safeGetRowKey(rowKey);
     	validateColumn(column);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setColumn(column);
@@ -290,7 +291,7 @@ public class Mutator extends Operand {
     }
 
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
-    	validateRowKey(rowKey);
+    	safeGetRowKey(rowKey);
     	validateColumnName(colName);
     	validateColumns(subColumns);
         SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
@@ -388,7 +389,7 @@ public class Mutator extends Operand {
      * @param colNames                  The column and/or super column names to delete
      */
     public Mutator deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
-    	validateRowKey(rowKey);
+    	safeGetRowKey(rowKey);
     	validateColumnNames(colNames);
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
@@ -555,7 +556,7 @@ public class Mutator extends Operand {
      * @param subColNames               The sub-column names to delete
      */
     public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
-    	validateRowKey(rowKey);
+    	safeGetRowKey(rowKey);
     	validateColumnName(colName);
     	validateColumnNames(subColNames);
         Deletion deletion = new Deletion(timestamp);
@@ -795,29 +796,4 @@ public class Mutator extends Operand {
         }
         return mutList;
     }
-
-    private void validateRowKey(Bytes rowKey) {
-    	if (rowKey == null || rowKey.isNull())
-    		throw new ModelException("Row Key is null");
-    }
-
-    private void validateColumn(Column column) {
-    	if (!column.isSetName())
-    		throw new ModelException("Column name is null");
-    	if (!column.isSetValue())
-    		throw new ModelException("Column value is null");
-	}
-
-    private void validateColumns(List<Column> columns) {
-    	for (Column c : columns) validateColumn(c);
-	}
-
-    private void validateColumnNames(List<Bytes> names) {
-    	for (Bytes n : names) validateColumnName(n);
-	}
-
-	private void validateColumnName(Bytes name) {
-		if (name.isNull())
-			throw new ModelException("Column name is null");
-	}
 }

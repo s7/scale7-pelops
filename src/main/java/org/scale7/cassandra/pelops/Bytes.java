@@ -28,6 +28,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
+import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Wraps a {@link java.nio.ByteBuffer} and provides useful methods to operate on it.
