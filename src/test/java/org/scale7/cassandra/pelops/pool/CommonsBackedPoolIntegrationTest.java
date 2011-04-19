@@ -102,11 +102,7 @@ public class CommonsBackedPoolIntegrationTest extends AbstractIntegrationTest {
                     @Override
                     public void run() {
                         Selector selector = pool.createSelector();
-                        try {
-                            selector.getColumnCount(COLUMN_FAMILY, "a", ConsistencyLevel.ONE);
-                        } catch (Exception e) {
-                            // do nothing
-                        }
+                        selector.getColumnCount(COLUMN_FAMILY, "a", ConsistencyLevel.ONE);
                     }
                 });
             }

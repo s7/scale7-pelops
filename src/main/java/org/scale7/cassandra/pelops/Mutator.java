@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
+import org.scale7.cassandra.pelops.exceptions.ModelException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -116,6 +118,8 @@ public class Mutator extends Operand {
     }
 
     private void writeColumnInternal(String colFamily, Bytes rowKey, Column column) {
+    	safeGetRowKey(rowKey);
+    	validateColumn(column);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setColumn(column);
         Mutation mutation = new Mutation();
@@ -123,7 +127,7 @@ public class Mutator extends Operand {
         getMutationList(colFamily, rowKey).add(mutation);
     }
 
-    /**
+	/**
      * Write a list of columns to a key
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -287,6 +291,9 @@ public class Mutator extends Operand {
     }
 
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
+    	safeGetRowKey(rowKey);
+    	validateColumnName(colName);
+    	validateColumns(subColumns);
         SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setSuper_column(scol);
@@ -295,7 +302,7 @@ public class Mutator extends Operand {
         getMutationList(colFamily, rowKey).add(mutation);
     }
 
-    /**
+	/**
      * Delete a column or super column
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -382,6 +389,8 @@ public class Mutator extends Operand {
      * @param colNames                  The column and/or super column names to delete
      */
     public Mutator deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
+    	safeGetRowKey(rowKey);
+    	validateColumnNames(colNames);
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
         Deletion deletion = new Deletion();
@@ -548,6 +557,9 @@ public class Mutator extends Operand {
      * @param subColNames               The sub-column names to delete
      */
     public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
+    	safeGetRowKey(rowKey);
+    	validateColumnName(colName);
+    	validateColumnNames(subColNames);
         Deletion deletion = new Deletion();
         deletion.setTimestamp(timestamp);
         deletion.setSuper_column(nullSafeGet(colName));
@@ -562,7 +574,7 @@ public class Mutator extends Operand {
         return this;
     }
 
-    /**
+	/**
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
@@ -767,7 +779,7 @@ public class Mutator extends Operand {
         this.ttl = ttl;
         batch = new MutationsByKey();
     }
-    
+
     protected Map<ByteBuffer, Map<String, List<Mutation>>> getBatch() {
 		return batch;
 	}

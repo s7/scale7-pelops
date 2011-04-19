@@ -34,7 +34,7 @@ import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
-import static org.scale7.cassandra.pelops.Bytes.toUTF8;
+import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.<p/>
@@ -272,7 +272,7 @@ public class Selector extends Operand {
         IOperation<Integer> operation = new IOperation<Integer>() {
             @Override
             public Integer execute(IPooledConnection conn) throws Exception {
-                return conn.getAPI().get_count(nullSafeGet(rowKey), colParent, predicate, cLevel);
+                return conn.getAPI().get_count(safeGetRowKey(rowKey), colParent, predicate, cLevel);
             }
         };
         return (Integer) tryOperation(operation);
@@ -321,7 +321,7 @@ public class Selector extends Operand {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
+                ColumnOrSuperColumn cosc = conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel);
                 return cosc.column;
             }
         };
@@ -371,7 +371,7 @@ public class Selector extends Operand {
         IOperation<SuperColumn> operation = new IOperation<SuperColumn>() {
             @Override
             public SuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
+                ColumnOrSuperColumn cosc = conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel);
                 return cosc.super_column;
             }
         };
@@ -454,7 +454,7 @@ public class Selector extends Operand {
         IOperation<Column> operation = new IOperation<Column>() {
             @Override
             public Column execute(IThriftPool.IPooledConnection conn) throws Exception {
-                ColumnOrSuperColumn cosc = conn.getAPI().get(nullSafeGet(rowKey), cp, cLevel);
+                ColumnOrSuperColumn cosc = conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel);
                 return cosc.column;
             }
         };
@@ -605,7 +605,7 @@ public class Selector extends Operand {
         IOperation<List<Column>> operation = new IOperation<List<Column>>() {
             @Override
             public List<Column> execute(IPooledConnection conn) throws Exception {
-                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), colParent, colPredicate, cLevel);
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel);
                 return toColumnList(apiResult);
             }
         };
@@ -665,7 +665,7 @@ public class Selector extends Operand {
         IOperation<List<SuperColumn>> operation = new IOperation<List<SuperColumn>>() {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
-                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(nullSafeGet(rowKey), cp, colPredicate, cLevel);
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), cp, colPredicate, cLevel);
                 return toSuperColumnList(apiResult);
             }
         };
@@ -1120,7 +1120,7 @@ public class Selector extends Operand {
      */
     public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
-        final List<ByteBuffer> keys = Bytes.transformBytesToList(rowKeys);
+        final List<ByteBuffer> keys = Bytes.transformBytesToList(validateRowKeys(rowKeys));
         IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
             @Override
             public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
@@ -1161,7 +1161,7 @@ public class Selector extends Operand {
      */
     public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
-        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(rowKeys);
+        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(validateRowKeysUtf8(rowKeys));
         IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
             @Override
             public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
@@ -1179,7 +1179,7 @@ public class Selector extends Operand {
     }
 
     private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        final List<ByteBuffer> keys = Bytes.transformBytesToList(rowKeys);
+        final List<ByteBuffer> keys = Bytes.transformBytesToList(validateRowKeys(rowKeys));
         IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
             @Override
             public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -1197,7 +1197,7 @@ public class Selector extends Operand {
     }
 
     private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(rowKeys);
+        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(validateRowKeysUtf8(rowKeys));
         IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
             @Override
             public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
