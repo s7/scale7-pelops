@@ -101,7 +101,7 @@
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>apache-cassandra-thrift</artifactId>
-			<version>0.8.0-20110317</version>
+			<version>0.8.0-20110415</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-pool</groupId>

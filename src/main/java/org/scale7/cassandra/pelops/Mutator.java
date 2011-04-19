@@ -384,7 +384,8 @@ public class Mutator extends Operand {
     public Mutator deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
-        Deletion deletion = new Deletion(timestamp);
+        Deletion deletion = new Deletion();
+        deletion.setTimestamp(timestamp);
         deletion.setPredicate(pred);
         Mutation mutation = new Mutation();
         mutation.setDeletion(deletion);
@@ -547,7 +548,8 @@ public class Mutator extends Operand {
      * @param subColNames               The sub-column names to delete
      */
     public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
-        Deletion deletion = new Deletion(timestamp);
+        Deletion deletion = new Deletion();
+        deletion.setTimestamp(timestamp);
         deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
         deletion.setPredicate(

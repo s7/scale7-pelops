@@ -1,8 +1,11 @@
 package org.scale7.cassandra.pelops.support;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.KsDef;
 import org.junit.Before;
@@ -87,9 +90,10 @@ public abstract class AbstractIntegrationTest {
 				keyspaceManager.dropKeyspace(KEYSPACE);
 			}
 
-		KsDef keyspaceDefinition = new KsDef(KEYSPACE,
-				KeyspaceManager.KSDEF_STRATEGY_SIMPLE, 1,
-				new ArrayList<CfDef>());
+		KsDef keyspaceDefinition = new KsDef(KEYSPACE, KeyspaceManager.KSDEF_STRATEGY_SIMPLE, new ArrayList<CfDef>());
+        Map<String, String> strategyOptions = new HashMap<String, String>();
+        strategyOptions.put("replication_factor", "1");
+        keyspaceDefinition.setStrategy_options(strategyOptions);
 
 		for (CfDef colFamilyDef : colFamilyDefs) {
 			keyspaceDefinition.addToCf_defs(colFamilyDef);
