@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.*;
+import org.scale7.cassandra.pelops.exceptions.ModelException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
@@ -116,6 +117,8 @@ public class Mutator extends Operand {
     }
 
     private void writeColumnInternal(String colFamily, Bytes rowKey, Column column) {
+    	validateRowKey(rowKey);
+    	validateColumn(column);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setColumn(column);
         Mutation mutation = new Mutation();
@@ -123,7 +126,7 @@ public class Mutator extends Operand {
         getMutationList(colFamily, rowKey).add(mutation);
     }
 
-    /**
+	/**
      * Write a list of columns to a key
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -287,6 +290,9 @@ public class Mutator extends Operand {
     }
 
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
+    	validateRowKey(rowKey);
+    	validateColumnName(colName);
+    	validateColumns(subColumns);
         SuperColumn scol = new SuperColumn(nullSafeGet(colName), subColumns);
         ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
         cosc.setSuper_column(scol);
@@ -295,7 +301,7 @@ public class Mutator extends Operand {
         getMutationList(colFamily, rowKey).add(mutation);
     }
 
-    /**
+	/**
      * Delete a column or super column
      * @param colFamily                 The column family
      * @param rowKey                    The key of the row to modify
@@ -382,6 +388,8 @@ public class Mutator extends Operand {
      * @param colNames                  The column and/or super column names to delete
      */
     public Mutator deleteColumns(String colFamily, Bytes rowKey, List<Bytes> colNames) {
+    	validateRowKey(rowKey);
+    	validateColumnNames(colNames);
         SlicePredicate pred = new SlicePredicate();
         pred.setColumn_names(Bytes.transformBytesToList(colNames));
         Deletion deletion = new Deletion(timestamp);
@@ -547,6 +555,9 @@ public class Mutator extends Operand {
      * @param subColNames               The sub-column names to delete
      */
     public Mutator deleteSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Bytes> subColNames) {
+    	validateRowKey(rowKey);
+    	validateColumnName(colName);
+    	validateColumnNames(subColNames);
         Deletion deletion = new Deletion(timestamp);
         deletion.setSuper_column(nullSafeGet(colName));
         // CASSANDRA-1027 allows for a null predicate
@@ -560,7 +571,7 @@ public class Mutator extends Operand {
         return this;
     }
 
-    /**
+	/**
      * Create new Column object with the time stamp passed to the constructor
      * @param colName                    The column name
      * @param colValue                   The column value
@@ -765,7 +776,7 @@ public class Mutator extends Operand {
         this.ttl = ttl;
         batch = new MutationsByKey();
     }
-    
+
     protected Map<ByteBuffer, Map<String, List<Mutation>>> getBatch() {
 		return batch;
 	}
@@ -784,4 +795,29 @@ public class Mutator extends Operand {
         }
         return mutList;
     }
+
+    private void validateRowKey(Bytes rowKey) {
+    	if (rowKey == null || rowKey.isNull())
+    		throw new ModelException("Row Key is null");
+    }
+
+    private void validateColumn(Column column) {
+    	if (!column.isSetName())
+    		throw new ModelException("Column name is null");
+    	if (!column.isSetValue())
+    		throw new ModelException("Column value is null");
+	}
+
+    private void validateColumns(List<Column> columns) {
+    	for (Column c : columns) validateColumn(c);
+	}
+
+    private void validateColumnNames(List<Bytes> names) {
+    	for (Bytes n : names) validateColumnName(n);
+	}
+
+	private void validateColumnName(Bytes name) {
+		if (name.isNull())
+			throw new ModelException("Column name is null");
+	}
 }
