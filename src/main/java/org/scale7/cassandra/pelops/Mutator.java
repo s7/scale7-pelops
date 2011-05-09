@@ -693,8 +693,12 @@ public class Mutator extends Operand {
      * @return                           An appropriate <code>Column</code> object
      */
     public Column newColumn(Bytes colName, Bytes colValue, int ttl) {
-        Column column = new Column(nullSafeGet(colName), nullSafeGet(colValue), timestamp);
+        Column column = new Column(nullSafeGet(colName));
+        column.setValue(nullSafeGet(colValue));
+        column.setTimestamp(timestamp);
+
         if (ttl != NO_TTL) column.setTtl(ttl);
+        
         return column;
     }
 

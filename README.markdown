@@ -101,9 +101,11 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:apache-cassandra - version: 0.8.0-20110317
-* org.apache.cassandra:apache-cassandra-thrift - version: 0.8.0-20110317
-* org.apache.cassandra.deps:libthrift - version: 0.5.0
+* org.apache.cassandra:cassandra-all - version: 0.8.0-beta2
+*   -> log4j:log4j - version: 1.2.16
+*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.0-beta2
+*   -> org.apache.thrift.libthrift - version: 0.6.1
+*   -> com.github.stephenc.jamm - version: 0.2.0
 * commons-pool:commons-pool - version: 1.5.5
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
