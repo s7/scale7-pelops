@@ -58,7 +58,7 @@ To use Pelops with Cassandra 0.8.x use the following:
 
         /*
           NOTE: This example uses the static Pelops methods because they are more concise.  If you'd prefer not
-                to work with static methods you can construct an instance of IThriftPool and use it's instance
+                to work with static methods you can construct an instance of IThriftPool and use its instance
                 methods instead.
                 e.g. IThriftPool pool = new CommonsBackedPool(cluster, keyspace)
         */
