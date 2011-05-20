@@ -10,6 +10,7 @@ import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 import java.util.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.scale7.cassandra.pelops.Bytes.*;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 
@@ -19,6 +20,7 @@ import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 public class SelectorIntegrationTest extends AbstractIntegrationTest {
 
     public static final String CF = "SEL_CF";
+    public static final String CF_KEY_ITERATOR = "SEL_CF_KI";
     public static final String CF_INDEXED = "SEL_I_CF";
     public static final String SCF = "SEL_SCF";
     
@@ -41,6 +43,9 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         new CfDef(KEYSPACE, CF)
                 .setColumn_type(CFDEF_TYPE_STANDARD)
                 .setComparator_type(CFDEF_COMPARATOR_BYTES),
+        new CfDef(KEYSPACE, CF_KEY_ITERATOR)
+                .setColumn_type(CFDEF_TYPE_STANDARD)
+                .setComparator_type(CFDEF_COMPARATOR_BYTES),
         new CfDef(KEYSPACE, SCF)
                 .setColumn_type(CFDEF_TYPE_SUPER)
                 .setComparator_type(CFDEF_COMPARATOR_BYTES)
@@ -55,6 +60,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         // prep the column family data
         for (long i = 0; i < 100; i++) {
             mutator.writeColumns(CF, fromLong(i), createAlphabetColumns(mutator));
+            mutator.writeColumns(CF_KEY_ITERATOR, fromLong(i), createAlphabetColumns(mutator));
 
             // prep the super column family data
             for (char letter = 'A'; letter <= 'Z'; letter++) {
@@ -392,6 +398,43 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
             fail("The iterator should have thrown a NoSuchElementException exception");
         } catch (NoSuchElementException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testIterateColumnsFromRows() {
+        Iterator<Map.Entry<Bytes, List<Column>>> iterator = createSelector().iterateColumnsFromRows(CF_KEY_ITERATOR, 10, ConsistencyLevel.ONE);
+
+        int count = 0;
+        Set<Bytes> keys = new HashSet<Bytes>(100);
+        while (iterator.hasNext()) {
+            Map.Entry<Bytes, List<Column>> row = iterator.next();
+            keys.add(row.getKey());
+            count++;
+        }
+
+        assertEquals("Not all rows were processed", 100, count);
+
+        for (long i = 0; i < 100; i++) {
+            final Bytes key = Bytes.fromLong(i);
+            assertTrue(String.format("Key %s was missing from the results", i), keys.contains(key));
+        }
+    }
+
+    @Test
+    public void testIterateColumnsFromRowsOnlyUsingNext() {
+        Iterator<Map.Entry<Bytes, List<Column>>> iterator = createSelector().iterateColumnsFromRows(CF_KEY_ITERATOR, 10, ConsistencyLevel.ONE);
+
+        Set<Bytes> keys = new HashSet<Bytes>(100);
+
+        for (int i = 0; i < 100; i++) {
+            Map.Entry<Bytes, List<Column>> row = iterator.next();
+            keys.add(row.getKey());
+        }
+
+        for (long i = 0; i < 100; i++) {
+            final Bytes key = Bytes.fromLong(i);
+            assertTrue(String.format("Key %s was missing from the results", i), keys.contains(key));
         }
     }
 

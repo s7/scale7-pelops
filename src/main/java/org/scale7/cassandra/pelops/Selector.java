@@ -773,16 +773,16 @@ public class Selector extends Operand {
     }
 
     /**
-     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
-     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
-     * to fetch batches of super columns (based on the batchSize parameter).
-     * @param columnFamily                  The name of the column family containing the super columns
+     * Returns an iterator that can be used to iterate over columns.  The returned iterator delegates to
+     * {@link #getPageOfColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the columns
      * @param rowKey                        The key of the row
-     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param reversed                      Whether the scan should proceed in descending super column name order
-     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param startBeyondName               The sequence of columns must begin with the smallest  column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param batchSize                     The maximum number of columns that can be retrieved per invocation to {@link #getPageOfColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of columns to be held in memory at any one time
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of super columns
+     * @return                              An iterator of columns
      * @throws PelopsException if an error occurs
      */
     public Iterator<Column> iterateColumnsFromRow(String columnFamily, Bytes rowKey, Bytes startBeyondName, boolean reversed, int batchSize, ConsistencyLevel cLevel) {
@@ -790,20 +790,65 @@ public class Selector extends Operand {
     }
 
     /**
-     * Returns an iterator that can be used to iterate over super columns.  The returned iterator delegates to
-     * {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
-     * to fetch batches of super columns (based on the batchSize parameter).
-     * @param columnFamily                  The name of the column family containing the super columns
+     * Returns an iterator that can be used to iterate over columns.  The returned iterator delegates to
+     * {@link #getPageOfColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of columns (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the columns
      * @param rowKey                        The key of the row
-     * @param startBeyondName               The sequence of super columns must begin with the smallest super column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
-     * @param reversed                      Whether the scan should proceed in descending super column name order
-     * @param batchSize                     The maximum number of super columns that can be retrieved per invocation to {@link #getPageOfSuperColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of super columns to be held in memory at any one time
+     * @param startBeyondName               The sequence of columns must begin with the smallest  column name greater than this value. Pass <code>null</code> to start at the beginning of the sequence.
+     * @param reversed                      Whether the scan should proceed in descending column name order
+     * @param batchSize                     The maximum number of columns that can be retrieved per invocation to {@link #getPageOfColumnsFromRow(String, String, Bytes, boolean, int, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of columns to be held in memory at any one time
      * @param cLevel                        The Cassandra consistency level with which to perform the operation
-     * @return                              A page of super columns
+     * @return                              An iterator of columns
      * @throws PelopsException if an error occurs
      */
     public Iterator<Column> iterateColumnsFromRow(String columnFamily, String rowKey, String startBeyondName, boolean reversed, int batchSize, ConsistencyLevel cLevel) {
         return iterateColumnsFromRow(columnFamily, Bytes.fromUTF8(rowKey), Bytes.fromUTF8(startBeyondName), reversed, batchSize, cLevel);
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over rows.  The returned iterator delegates to
+     * {@link #getColumnsFromRows(String, org.apache.cassandra.thrift.KeyRange, boolean, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of rows (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the columns
+     * @param batchSize                     The maximum number of columns that can be retrieved per invocation to {@link #getColumnsFromRows(java.lang.String, java.util.List, boolean, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of rows to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              An iterator of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<Map.Entry<Bytes, List<Column>>> iterateColumnsFromRows(String columnFamily, int batchSize, final ConsistencyLevel cLevel) {
+        return iterateColumnsFromRows(columnFamily, Bytes.EMPTY, batchSize, Selector.newColumnsPredicateAll(false), cLevel);
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over rows.  The returned iterator delegates to
+     * {@link #getColumnsFromRows(String, org.apache.cassandra.thrift.KeyRange, boolean, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of rows (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the columns
+     * @param startBeyondKey                The sequence of row keys must begin with the smallest row key greater than this value. Pass <code>{@link Bytes#EMPTY}</code> to start at the beginning of the sequence.  NOTE: this parameter only really makes sense when using an Order Preserving Partishioner.
+     * @param batchSize                     The maximum number of columns that can be retrieved per invocation to {@link #getColumnsFromRows(java.lang.String, java.util.List, boolean, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of rows to be held in memory at any one time
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              An iterator of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<Map.Entry<Bytes, List<Column>>> iterateColumnsFromRows(String columnFamily, Bytes startBeyondKey, int batchSize, final ConsistencyLevel cLevel) {
+        return iterateColumnsFromRows(columnFamily, startBeyondKey, batchSize, Selector.newColumnsPredicateAll(false), cLevel);
+    }
+
+    /**
+     * Returns an iterator that can be used to iterate over rows.  The returned iterator delegates to
+     * {@link #getColumnsFromRows(String, org.apache.cassandra.thrift.KeyRange, boolean, org.apache.cassandra.thrift.ConsistencyLevel)}
+     * to fetch batches of rows (based on the batchSize parameter).
+     * @param columnFamily                  The name of the column family containing the columns
+     * @param startBeyondKey                The sequence of row keys must begin with the smallest row key greater than this value. Pass <code>{@link Bytes#EMPTY}</code> to start at the beginning of the sequence.  NOTE: this parameter only really makes sense when using an Order Preserving Partishioner.
+     * @param batchSize                     The maximum number of columns that can be retrieved per invocation to {@link #getColumnsFromRows(java.lang.String, java.util.List, boolean, org.apache.cassandra.thrift.ConsistencyLevel)} and dictates the number of rows to be held in memory at any one time
+     * @param colPredicate                  Dictates the columns to include
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              An iterator of columns
+     * @throws PelopsException if an error occurs
+     */
+    public Iterator<Map.Entry<Bytes, List<Column>>> iterateColumnsFromRows(String columnFamily, Bytes startBeyondKey, int batchSize, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) {
+        return new ColumnRowIterator(this, columnFamily, startBeyondKey, batchSize, colPredicate, cLevel);
     }
 
     /**
@@ -1178,13 +1223,13 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    private LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final List<ByteBuffer> keys = Bytes.transformBytesToList(validateRowKeys(rowKeys));
-        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+        IOperation<LinkedHashMap<Bytes, List<Column>>> operation = new IOperation<LinkedHashMap<Bytes, List<Column>>>() {
             @Override
-            public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
+            public LinkedHashMap<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
-                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
+                LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
                     List<Column> columns = toColumnList(coscList);
@@ -1196,13 +1241,13 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    private LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final List<ByteBuffer> keys = Bytes.transformUTF8ToList(validateRowKeysUtf8(rowKeys));
-        IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
+        IOperation<LinkedHashMap<String, List<Column>>> operation = new IOperation<LinkedHashMap<String, List<Column>>>() {
             @Override
-            public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<String, List<Column>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
-                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
+                LinkedHashMap<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
                     List<Column> columns = toColumnList(coscList);
@@ -1226,7 +1271,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1242,7 +1287,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
     }
@@ -1259,7 +1304,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1275,7 +1320,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), keyRange, colPredicate, cLevel);
     }
@@ -1293,7 +1338,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1310,7 +1355,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -1345,7 +1390,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -1363,7 +1408,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1380,7 +1425,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -1398,7 +1443,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1415,7 +1460,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), keyRange, colPredicate, cLevel);
     }
@@ -1432,7 +1477,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnsFromRows(columnFamily, keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1448,13 +1493,13 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
-        IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
+        IOperation<LinkedHashMap<Bytes, List<SuperColumn>>> operation = new IOperation<LinkedHashMap<Bytes, List<SuperColumn>>>() {
             @Override
-            public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(cp, colPredicate, keyRange, cLevel);
-                Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
+                LinkedHashMap<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<SuperColumn> colList = toSuperColumnList(coscList);
@@ -1478,7 +1523,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, KeyRange keyRange, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnsFromRowsUtf8Keys(columnFamily, keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1494,13 +1539,13 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
-        IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
+        IOperation<LinkedHashMap<String, List<SuperColumn>>> operation = new IOperation<LinkedHashMap<String, List<SuperColumn>>>() {
             @Override
-            public Map<String, List<SuperColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
+            public LinkedHashMap<String, List<SuperColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(cp, colPredicate, keyRange, cLevel);
-                Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
+                LinkedHashMap<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<SuperColumn> colList = toSuperColumnList(coscList);
@@ -1512,12 +1557,12 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+    private LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        IOperation<LinkedHashMap<Bytes, List<Column>>> operation = new IOperation<LinkedHashMap<Bytes, List<Column>>>() {
             @Override
-            public Map<Bytes, List<Column>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<Bytes, List<Column>> execute(IPooledConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(colParent, colPredicate, keyRange, cLevel);
-                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
+                LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<Column> colList = toColumnList(coscList);
@@ -1529,12 +1574,12 @@ public class Selector extends Operand {
         return tryOperation(operation);
     }
 
-    private Map<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        IOperation<Map<String, List<Column>>> operation = new IOperation<Map<String, List<Column>>>() {
+    private LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        IOperation<LinkedHashMap<String, List<Column>>> operation = new IOperation<LinkedHashMap<String, List<Column>>>() {
             @Override
-            public Map<String, List<Column>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<String, List<Column>> execute(IPooledConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_range_slices(colParent, colPredicate, keyRange, cLevel);
-                Map<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
+                LinkedHashMap<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<Column> colList = toColumnList(coscList);
@@ -1558,7 +1603,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause,boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause,boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
     	return getIndexedColumns(newColumnParent(colParent), indexClause, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1574,7 +1619,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getIndexedColumns(String colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
     	return getIndexedColumns(newColumnParent(colParent), indexClause, colPredicate, cLevel);
     }
 
@@ -1590,7 +1635,7 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(ColumnParent colParent, IndexClause indexClause, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getIndexedColumns(ColumnParent colParent, IndexClause indexClause, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getIndexedColumns(colParent, indexClause, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1606,12 +1651,12 @@ public class Selector extends Operand {
      * @return                                A map from row keys to the matching lists of columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        IOperation<Map<Bytes, List<Column>>> operation = new IOperation<Map<Bytes, List<Column>>>() {
+    public LinkedHashMap<Bytes, List<Column>> getIndexedColumns(final ColumnParent colParent, final IndexClause indexClause, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        IOperation<LinkedHashMap<Bytes, List<Column>>> operation = new IOperation<LinkedHashMap<Bytes, List<Column>>>() {
             @Override
-            public Map<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
+            public LinkedHashMap<Bytes, List<Column>> execute(IThriftPool.IPooledConnection conn) throws Exception {
                 List<KeySlice> apiResult = conn.getAPI().get_indexed_slices(colParent, indexClause, colPredicate, cLevel);
-                Map<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
+                LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
                     List<Column> colList = toColumnList(coscList);
