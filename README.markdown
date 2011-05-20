@@ -39,12 +39,12 @@ To use Pelops with Cassandra 0.8.x use the following:
             </repository>
         </repositories>
 
-2a. Add the Pelops dependency to your project (depends on Cassandra 0.8.0-20110317):
+2a. Add the Pelops dependency to your project (depends on Cassandra 0.8.0-rc1):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.1-0.8.x-SNAPSHOT</version>
+			<version>1.2-0.8.x-SNAPSHOT</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
@@ -101,9 +101,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:cassandra-all - version: 0.8.0-beta2
+* org.apache.cassandra:cassandra-all - version: 0.8.0-rc1
 *   -> log4j:log4j - version: 1.2.16
-*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.0-beta2
+*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.0-rc1
 *   -> org.apache.thrift.libthrift - version: 0.6.1
 *   -> com.github.stephenc.jamm - version: 0.2.0
 * commons-pool:commons-pool - version: 1.5.5
