@@ -322,7 +322,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                 } else if (e instanceof TTransportException) {
                     logger.warn(String.format("A TTransportException was thrown while attempting to create a connection to '%s'.  " +
                             "This node will be suspended for %sms.  Trying another node...",
-                            node.getAddress(), this.policy.getNodeDownSuspensionMillis()), e);
+                            node.getAddress(), this.policy.getNodeDownSuspensionMillis()));
                     node.suspendForMillis(this.policy.getNodeDownSuspensionMillis());
                 } else
                     logger.warn(String.format("An exception was thrown while attempting to create a connection to '%s'.  " +
