@@ -1006,7 +1006,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1019,7 +1019,7 @@ public class Selector extends Operand {
      * @return
      * @throws PelopsException
      */
-    public Map<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1033,7 +1033,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -1046,7 +1046,7 @@ public class Selector extends Operand {
      * @return
      * @throws PelopsException
      */
-    public Map<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -1060,7 +1060,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1074,7 +1074,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -1089,7 +1089,7 @@ public class Selector extends Operand {
      * @return                               A map (LinkedHashMap) from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1162,7 +1162,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
     	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -1178,7 +1178,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1192,7 +1192,7 @@ public class Selector extends Operand {
      * @return
      * @throws PelopsException
      */
-    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1207,7 +1207,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
@@ -1221,7 +1221,7 @@ public class Selector extends Operand {
      * @return
      * @throws PelopsException
      */
-    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
@@ -1236,7 +1236,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of sub-columns.  If no value corresponding to a key is present, the key will still be in the map.
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1251,7 +1251,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of sub-columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
@@ -1265,7 +1265,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnsFromRows(columnFamily, rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1278,14 +1278,14 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
         final List<ByteBuffer> keys = Bytes.transformBytesToList(validateRowKeys(rowKeys));
-        IOperation<Map<Bytes, List<SuperColumn>>> operation = new IOperation<Map<Bytes, List<SuperColumn>>>() {
+        IOperation<LinkedHashMap<Bytes, List<SuperColumn>>> operation = new IOperation<LinkedHashMap<Bytes, List<SuperColumn>>>() {
             @Override
-            public Map<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<Bytes, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
-                Map<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
+                LinkedHashMap<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
                     List<SuperColumn> columns = toSuperColumnList(coscList);
@@ -1306,7 +1306,7 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getSuperColumnsFromRowsUtf8Keys(columnFamily, rowKeys, columnsPredicateAll(reversed), cLevel);
     }
 
@@ -1319,14 +1319,14 @@ public class Selector extends Operand {
      * @return                               A map from row keys to the matching lists of super columns
      * @throws PelopsException if an error occurs
      */
-    public Map<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public LinkedHashMap<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         final ColumnParent cp = newColumnParent(columnFamily);
         final List<ByteBuffer> keys = Bytes.transformUTF8ToList(validateRowKeysUtf8(rowKeys));
-        IOperation<Map<String, List<SuperColumn>>> operation = new IOperation<Map<String, List<SuperColumn>>>() {
+        IOperation<LinkedHashMap<String, List<SuperColumn>>> operation = new IOperation<LinkedHashMap<String, List<SuperColumn>>>() {
             @Override
-            public Map<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
+            public LinkedHashMap<String, List<SuperColumn>> execute(IPooledConnection conn) throws Exception {
                 Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, cp, colPredicate, cLevel);
-                Map<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
+                LinkedHashMap<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
                     List<SuperColumn> columns = toSuperColumnList(coscList);
