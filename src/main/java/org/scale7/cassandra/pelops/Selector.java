@@ -649,6 +649,43 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve all counter columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param reversed                      Whether the results should be returned in descending column name order
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<CounterColumn> getCounterColumnsFromRow(String columnFamily, Bytes rowKey, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRow(newColumnParent(columnFamily), rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
+     * Retrieve counter columns from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param colPredicate                  The column selector predicate
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              A list of matching columns
+     * @throws PelopsException if an error occurs
+     */
+    public List<CounterColumn> getCounterColumnsFromRow(String columnFamily, Bytes rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRow(newColumnParent(columnFamily), rowKey, colPredicate, cLevel);
+    }
+
+    private List<CounterColumn> getCounterColumnsFromRow(final ColumnParent colParent, final Bytes rowKey, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        IOperation<List<CounterColumn>> operation = new IOperation<List<CounterColumn>>() {
+            @Override
+            public List<CounterColumn> execute(IPooledConnection conn) throws Exception {
+                List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel);
+                return toCounterColumnList(apiResult);
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    /**
      * Retrieve all super columns from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row containing the super columns
@@ -2072,6 +2109,32 @@ public class Selector extends Operand {
     }
 
     /**
+     * Get the value of a counter column in a list of columns
+     * @param columns                        The list of columns
+     * @param colName                        The name of the column from which to retrieve the value
+     * @param defaultValue                   A default value to return if a column with the specified name is not present in the list
+     * @return                                The column value
+     */
+    public static long getCountColumnValue(List<CounterColumn> columns, Bytes colName, Long defaultValue) {
+        for (CounterColumn column : columns)
+            if (column.name.equals(nullSafeGet(colName)))
+                return column.value;
+        
+        return defaultValue;
+    }
+
+    /**
+     * Get the value of a counter column in a list of columns
+     * @param columns                        The list of columns
+     * @param colName                        The name of the column from which to retrieve the value
+     * @param defaultValue                   A default value to return if a column with the specified name is not present in the list
+     * @return                                The column value
+     */
+    public static long getCountColumnValue(List<CounterColumn> columns, String colName, Long defaultValue) {
+        return getCountColumnValue(columns, fromUTF8(colName), defaultValue);
+    }
+
+    /**
      * Get the value of a column in a list of columns
      * @param columns                        The list of columns
      * @param colName                        The name of the column from which to retrieve the value
@@ -2237,5 +2300,4 @@ public class Selector extends Operand {
         }
         return columns;
     }
-
 }

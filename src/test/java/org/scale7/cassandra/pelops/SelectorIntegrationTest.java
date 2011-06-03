@@ -69,6 +69,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
             mutator.writeColumns(CF, fromLong(i), createAlphabetColumns(mutator));
             mutator.writeColumns(CF_KEY_ITERATOR, fromLong(i), createAlphabetColumns(mutator));
             mutator.writeCounterColumn(CF_COUNTER, fromLong(i), fromLong(i), i);
+            mutator.writeCounterColumn(CF_COUNTER, fromLong(i), fromLong(i + 1), i);
 
             // prep the super column family data
             for (char letter = 'A'; letter <= 'Z'; letter++) {
@@ -105,9 +106,26 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testGetCounterColumn() {
+    public void testGetCounterColumnFromRow() {
         CounterColumn counterColumn = createSelector().getCounterColumnFromRow(CF_COUNTER, fromLong(50), fromLong(50), ConsistencyLevel.QUORUM);
         assertEquals("Wrong counter column value returned", 50, counterColumn.getValue());
+    }
+
+    @Test
+    public void testGetCounterColumnsFromRow() {
+        List<CounterColumn> columns = createSelector().getCounterColumnsFromRow(CF_COUNTER, fromLong(50), false, ConsistencyLevel.QUORUM);
+        assertEquals("Wrong number of columns returned", 2, columns.size());
+        assertEquals("Wrong counter column value returned", 50, Selector.getCountColumnValue(columns, fromLong(50), null));
+        assertEquals("Wrong counter column value returned", 50, Selector.getCountColumnValue(columns, fromLong(51), null));
+    }
+
+    @Test
+    public void testGetCounterColumnsFromRows() {
+        LinkedHashMap<Bytes, List<CounterColumn>> columnsFromRows = createSelector().getCounterColumnsFromRows(CF_COUNTER, Arrays.asList(fromLong(50), fromLong(51)), false, ConsistencyLevel.QUORUM);
+        assertEquals("Wrong number of rows returned", 2, columnsFromRows.size());
+
+        assertEquals("Wrong number of columns returned", 2, columnsFromRows.get(fromLong(50)).size());
+        assertEquals("Wrong number of columns returned", 2, columnsFromRows.get(fromLong(51)).size());
     }
 
     @Test
