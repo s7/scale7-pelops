@@ -329,6 +329,42 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieve a counter column from a row.
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param colName                       The name of the column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The requested <code>Column</code>
+     * @throws NotFoundException            If no value is present
+     * @throws PelopsException if an error occurs
+     */
+    public CounterColumn getCounterColumnFromRow(String columnFamily, final Bytes rowKey, Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        final ColumnPath cp = newColumnPath(columnFamily, null, colName);
+        IOperation<CounterColumn> operation = new IOperation<CounterColumn>() {
+            @Override
+            public CounterColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
+                ColumnOrSuperColumn cosc = conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel);
+                return cosc.counter_column;
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    /**
+     * TODO
+     * @param columnFamily
+     * @param rowKey
+     * @param colName
+     * @param cLevel
+     * @return
+     * @throws NotFoundException
+     * @throws PelopsException
+     */
+    public long getCounterColumnValueFromRow(String columnFamily, final Bytes rowKey, Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        return getCounterColumnFromRow(columnFamily, rowKey, colName, cLevel).getValue();
+    }
+
+    /**
      * Retrieve a super column from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
@@ -975,6 +1011,19 @@ public class Selector extends Operand {
     }
 
     /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param reversed
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve columns from a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                  The column family containing the rows
@@ -986,6 +1035,19 @@ public class Selector extends Operand {
      */
     public Map<Bytes, List<Column>> getColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param colPredicate
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
     /**
@@ -1013,7 +1075,6 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<String, List<Column>> getColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
-
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
     }
 
@@ -1033,6 +1094,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param superColName
+     * @param reversed
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
@@ -1044,8 +1119,21 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
-
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param superColName
+     * @param colPredicate
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
@@ -1095,6 +1183,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param superColName
+     * @param reversed
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
@@ -1106,8 +1208,21 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public Map<Bytes, List<Column>> getSubColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
-
         return getColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * TODO
+     * @param columnFamily
+     * @param rowKeys
+     * @param superColName
+     * @param colPredicate
+     * @param cLevel
+     * @return
+     * @throws PelopsException
+     */
+    public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
@@ -1233,6 +1348,24 @@ public class Selector extends Operand {
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
                     List<Column> columns = toColumnList(coscList);
+                    result.put(rowKey, columns);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    private LinkedHashMap<Bytes, List<CounterColumn>> getCounterColumnsFromRows(final ColumnParent colParent, final List<Bytes> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final List<ByteBuffer> keys = Bytes.transformBytesToList(validateRowKeys(rowKeys));
+        IOperation<LinkedHashMap<Bytes, List<CounterColumn>>> operation = new IOperation<LinkedHashMap<Bytes, List<CounterColumn>>>() {
+            @Override
+            public LinkedHashMap<Bytes, List<CounterColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
+                LinkedHashMap<Bytes, List<CounterColumn>> result = new LinkedHashMap<Bytes, List<CounterColumn>>();
+                for (Bytes rowKey : rowKeys) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
+                    List<CounterColumn> columns = toCounterColumnList(coscList);
                     result.put(rowKey, columns);
                 }
                 return result;
@@ -2083,6 +2216,15 @@ public class Selector extends Operand {
         for (ColumnOrSuperColumn cosc : coscList) {
             assert cosc.column != null : "The column should not be null";
             columns.add(cosc.column);
+        }
+        return columns;
+    }
+
+    private static List<CounterColumn> toCounterColumnList(List<ColumnOrSuperColumn> coscList) {
+        List<CounterColumn> columns = new ArrayList<CounterColumn>(coscList.size());
+        for (ColumnOrSuperColumn cosc : coscList) {
+            assert cosc.counter_column != null : "The column should not be null";
+            columns.add(cosc.counter_column);
         }
         return columns;
     }

@@ -290,6 +290,13 @@ public class Mutator extends Operand {
         return this;
     }
 
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param colName
+     * @param subColumns
+     */
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
     	safeGetRowKey(rowKey);
     	validateColumnName(colName);
@@ -300,6 +307,86 @@ public class Mutator extends Operand {
         Mutation mutation = new Mutation();
         mutation.setColumn_or_supercolumn(cosc);
         getMutationList(colFamily, rowKey).add(mutation);
+    }
+
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param columns
+     * @return
+     */
+    public Mutator writeCounterColumns(String colFamily, Bytes rowKey, List<CounterColumn> columns) {
+        for (CounterColumn column : columns) {
+            writeCounterColumn(colFamily, rowKey, column);
+        }
+
+        return this;
+    }
+
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param colName
+     * @param value
+     * @return
+     */
+    public Mutator writeCounterColumn(String colFamily, Bytes rowKey, Bytes colName, long value) {
+        return writeCounterColumn(colFamily, rowKey, newCounterColumn(colName, value));
+    }
+
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param column
+     * @return
+     */
+    public Mutator writeCounterColumn(String colFamily, Bytes rowKey, CounterColumn column) {
+    	safeGetRowKey(rowKey);
+    	validateColumn(column);
+        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
+        cosc.setCounter_column(column);
+        Mutation mutation = new Mutation();
+        mutation.setColumn_or_supercolumn(cosc);
+        getMutationList(colFamily, rowKey).add(mutation);
+
+        return this;
+    }
+
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param colName
+     * @param subColumn
+     * @return
+     */
+    public Mutator writeSubCounterColumn(String colFamily, Bytes rowKey, Bytes colName, CounterColumn subColumn) {
+        writeSubCounterColumns(colFamily, rowKey, colName, Arrays.asList(subColumn));
+        return this;
+    }
+
+    /**
+     * TODO
+     * @param colFamily
+     * @param rowKey
+     * @param colName
+     * @param subColumns
+     * @return
+     */
+    public Mutator writeSubCounterColumns(String colFamily, Bytes rowKey, Bytes colName, List<CounterColumn> subColumns) {
+        safeGetRowKey(rowKey);
+    	validateColumnName(colName);
+    	validateCounterColumns(subColumns);
+        CounterSuperColumn scol = new CounterSuperColumn(nullSafeGet(colName), subColumns);
+        ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
+        cosc.setCounter_super_column(scol);
+        Mutation mutation = new Mutation();
+        mutation.setColumn_or_supercolumn(cosc);
+        getMutationList(colFamily, rowKey).add(mutation);
+        return this;
     }
 
 	/**
@@ -712,6 +799,16 @@ public class Mutator extends Operand {
         for (Column column : columns)
             list.add(column);
         return list;
+    }
+
+    /**
+     * Create a new counter column.
+     * @param colName               The column name.
+     * @param value                 The value to increment/decrement the counter by.
+     * @return                      An appropriate <code>CounterColumn</code> object
+     */
+    public CounterColumn newCounterColumn(Bytes colName, long value) {
+        return new CounterColumn(colName.getBytes(), value);
     }
 
     /**

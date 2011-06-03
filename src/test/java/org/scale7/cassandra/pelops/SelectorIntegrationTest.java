@@ -22,35 +22,42 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
     public static final String CF = "SEL_CF";
     public static final String CF_KEY_ITERATOR = "SEL_CF_KI";
     public static final String CF_INDEXED = "SEL_I_CF";
+    public static final String CF_COUNTER = "SEL_C_CF";
     public static final String SCF = "SEL_SCF";
     
 	@BeforeClass
 	public static void setup() throws Exception {
-		setup(Arrays.asList(
-                new CfDef(KEYSPACE, CF_INDEXED)
-				.setColumn_type(CFDEF_TYPE_STANDARD)
-				.setComparator_type(CFDEF_COMPARATOR_BYTES)
-				.setDefault_validation_class(CFDEF_COMPARATOR_BYTES)
-				.setColumn_metadata(Arrays.asList(
-						new ColumnDef(Bytes.fromUTF8("name").getBytes(), CFDEF_COMPARATOR_BYTES)
-							// using default CF validation class (CFDEF_COMPARATOR_BYTES)
-							.setIndex_name("NameIndex")
-							.setIndex_type(IndexType.KEYS),
-						new ColumnDef(Bytes.fromUTF8("age").getBytes(), CFDEF_COMPARATOR_LONG)
-							.setValidation_class(CFDEF_COMPARATOR_LONG)
-							.setIndex_name("AgeIndex")
-							.setIndex_type(IndexType.KEYS))),
-        new CfDef(KEYSPACE, CF)
-                .setColumn_type(CFDEF_TYPE_STANDARD)
-                .setComparator_type(CFDEF_COMPARATOR_BYTES),
-        new CfDef(KEYSPACE, CF_KEY_ITERATOR)
-                .setColumn_type(CFDEF_TYPE_STANDARD)
-                .setComparator_type(CFDEF_COMPARATOR_BYTES),
-        new CfDef(KEYSPACE, SCF)
-                .setColumn_type(CFDEF_TYPE_SUPER)
-                .setComparator_type(CFDEF_COMPARATOR_BYTES)
-                .setSubcomparator_type(CFDEF_COMPARATOR_BYTES)
-    	));
+		setup(
+                Arrays.asList(
+                        new CfDef(KEYSPACE, CF_INDEXED)
+                                .setColumn_type(CFDEF_TYPE_STANDARD)
+                                .setComparator_type(CFDEF_COMPARATOR_BYTES)
+                                .setDefault_validation_class(CFDEF_COMPARATOR_BYTES)
+                                .setColumn_metadata(Arrays.asList(
+                                        new ColumnDef(Bytes.fromUTF8("name").getBytes(), CFDEF_COMPARATOR_BYTES)
+                                                // using default CF validation class (CFDEF_COMPARATOR_BYTES)
+                                                .setIndex_name("NameIndex")
+                                                .setIndex_type(IndexType.KEYS),
+                                        new ColumnDef(Bytes.fromUTF8("age").getBytes(), CFDEF_COMPARATOR_LONG)
+                                                .setValidation_class(CFDEF_COMPARATOR_LONG)
+                                                .setIndex_name("AgeIndex")
+                                                .setIndex_type(IndexType.KEYS))),
+                        new CfDef(KEYSPACE, CF)
+                                .setColumn_type(CFDEF_TYPE_STANDARD)
+                                .setComparator_type(CFDEF_COMPARATOR_BYTES),
+                        new CfDef(KEYSPACE, CF_KEY_ITERATOR)
+                                .setColumn_type(CFDEF_TYPE_STANDARD)
+                                .setComparator_type(CFDEF_COMPARATOR_BYTES),
+                        new CfDef(KEYSPACE, CF_COUNTER)
+                                .setColumn_type(CFDEF_TYPE_STANDARD)
+                                .setComparator_type(CFDEF_COMPARATOR_BYTES)
+                                .setDefault_validation_class(CFDEF_VALIDATION_CLASS_COUNTER),
+                        new CfDef(KEYSPACE, SCF)
+                                .setColumn_type(CFDEF_TYPE_SUPER)
+                                .setComparator_type(CFDEF_COMPARATOR_BYTES)
+                                .setSubcomparator_type(CFDEF_COMPARATOR_BYTES)
+                )
+        );
 	}    
     
     @Override
@@ -61,6 +68,7 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
         for (long i = 0; i < 100; i++) {
             mutator.writeColumns(CF, fromLong(i), createAlphabetColumns(mutator));
             mutator.writeColumns(CF_KEY_ITERATOR, fromLong(i), createAlphabetColumns(mutator));
+            mutator.writeCounterColumn(CF_COUNTER, fromLong(i), fromLong(i), i);
 
             // prep the super column family data
             for (char letter = 'A'; letter <= 'Z'; letter++) {
@@ -88,13 +96,18 @@ public class SelectorIntegrationTest extends AbstractIntegrationTest {
 
     private static char[] createAlphabet() {
         char[] letters = new char[26];
-        List<Column> columns = new ArrayList<Column>();
         int index = 0;
         for (char letter = 'a'; letter <= 'z'; letter++) {
             letters[index++] = letter;
         }
 
         return letters;
+    }
+
+    @Test
+    public void testGetCounterColumn() {
+        CounterColumn counterColumn = createSelector().getCounterColumnFromRow(CF_COUNTER, fromLong(50), fromLong(50), ConsistencyLevel.QUORUM);
+        assertEquals("Wrong counter column value returned", 50, counterColumn.getValue());
     }
 
     @Test

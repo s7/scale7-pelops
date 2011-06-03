@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.CounterColumn;
 import org.scale7.cassandra.pelops.exceptions.ModelException;
 
 public class Validation {
@@ -40,8 +41,19 @@ public class Validation {
     		throw new ModelException("Column value is null");
 	}
 
+    public static void validateColumn(CounterColumn column) {
+    	if (!column.isSetName())
+    		throw new ModelException("Column name is null");
+    	if (!column.isSetValue())
+    		throw new ModelException("Column value is null");
+	}
+
     public static void validateColumns(List<Column> columns) {
     	for (Column c : columns) validateColumn(c);
+	}
+
+    public static void validateCounterColumns(List<CounterColumn> columns) {
+    	for (CounterColumn c : columns) validateColumn(c);
 	}
 
     public static void validateColumnNames(List<Bytes> names) {

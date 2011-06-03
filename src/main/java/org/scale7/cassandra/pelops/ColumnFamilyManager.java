@@ -40,6 +40,8 @@ public class ColumnFamilyManager extends ManagerOperand {
     public static final String CFDEF_COMPARATOR_TIME_UUID = "TimeUUIDType";
     public static final String CFDEF_COMPARATOR_INTEGER = "IntegerType";
 
+    public static final String CFDEF_VALIDATION_CLASS_COUNTER = "CounterColumnType";
+
     public ColumnFamilyManager(Cluster cluster, String keyspace) {
         super(cluster, keyspace);
     }
