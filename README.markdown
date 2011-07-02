@@ -1,5 +1,3 @@
-NOTE: The master branch is now tracking Cassandra 0.8.x.  For the 0.7.0 code base please refer to [0.7.x](https://github.com/s7/scale7-pelops/tree/0.7.x).
-
 Introduction
 =========
 Pelops has been created to make working with Cassandra a beautiful thing (hence the nickname "Cassandra's beautiful son").
@@ -39,7 +37,7 @@ To use Pelops with Cassandra 0.8.x use the following:
             </repository>
         </repositories>
 
-2a. Add the Pelops dependency to your project (depends on Cassandra 0.8.0-rc1):
+2a. Add the Pelops dependency to your project (depends on Cassandra 0.8.1):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
@@ -101,9 +99,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:cassandra-all - version: 0.8.0-rc1
+* org.apache.cassandra:cassandra-all - version: 0.8.1
 *   -> log4j:log4j - version: 1.2.16
-*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.0-rc1
+*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.1
 *   -> org.apache.thrift.libthrift - version: 0.6.1
 *   -> com.github.stephenc.jamm - version: 0.2.0
 * commons-pool:commons-pool - version: 1.5.5
