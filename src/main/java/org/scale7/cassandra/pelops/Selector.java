@@ -329,6 +329,36 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieves a counter column from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param colName             The name of the column to retrieve
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    The requested <code>Column</code>
+     * @throws NotFoundException  If no value is present
+     * @throws PelopsException    If an error occurs
+     */
+    public CounterColumn getCounterColumnFromRow(String columnFamily, String rowKey, String colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        return getCounterColumnFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(colName), cLevel);
+    }
+
+    /**
+     * Retrieves a counter column from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param colName             The name of the column to retrieve
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    The requested <code>Column</code>
+     * @throws NotFoundException  If no value is present
+     * @throws PelopsException    If an error occurs
+     */
+    public CounterColumn getCounterColumnFromRow(String columnFamily, String rowKey, Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        return getCounterColumnFromRow(columnFamily, fromUTF8(rowKey), colName, cLevel);
+    }
+
+    /**
      * Retrieve a counter column from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
@@ -351,14 +381,45 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKey
-     * @param colName
-     * @param cLevel
-     * @return
-     * @throws NotFoundException
-     * @throws PelopsException
+     * Retrieves the value of a counter column from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param colName             The name of the column to retrieve
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    The value of the requested counter column
+     * @throws NotFoundException  If no value is present
+     * @throws PelopsException    If an error occurs
+     */
+    public long getCounterColumnValueFromRow(String columnFamily, String rowKey, String colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        return getCounterColumnValueFromRow(columnFamily, fromUTF8(rowKey), fromUTF8(colName), cLevel);
+    }
+
+    /**
+     * Retrieves the value of a counter column from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param colName             The name of the column to retrieve
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    The value of the requested counter column
+     * @throws NotFoundException  If no value is present
+     * @throws PelopsException    If an error occurs
+     */
+    public long getCounterColumnValueFromRow(String columnFamily, String rowKey, Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
+        return getCounterColumnValueFromRow(columnFamily, fromUTF8(rowKey), colName, cLevel);
+    }
+
+    /**
+     * Retrieves the value of a counter column from a row.
+     *
+     * @param columnFamily                  The column family containing the row
+     * @param rowKey                        The key of the row
+     * @param colName                       The name of the column to retrieve
+     * @param cLevel                        The Cassandra consistency level with which to perform the operation
+     * @return                              The value of the requested counter column
+     * @throws NotFoundException            If no value is present
+     * @throws PelopsException if an error occurs
      */
     public long getCounterColumnValueFromRow(String columnFamily, final Bytes rowKey, Bytes colName, final ConsistencyLevel cLevel) throws NotFoundException, PelopsException {
         return getCounterColumnFromRow(columnFamily, rowKey, colName, cLevel).getValue();
@@ -649,6 +710,20 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieves all counter columns from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param reversed            Whether the results should be returned in descending column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A list of matching columns
+     * @throws PelopsException    If an error occurs
+     */
+    public List<CounterColumn> getCounterColumnsFromRow(String columnFamily, String rowKey, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRow(columnFamily, fromUTF8(rowKey), reversed, cLevel);
+    }
+
+    /**
      * Retrieve all counter columns from a row.
      * @param columnFamily                  The column family containing the row
      * @param rowKey                        The key of the row
@@ -659,6 +734,20 @@ public class Selector extends Operand {
      */
     public List<CounterColumn> getCounterColumnsFromRow(String columnFamily, Bytes rowKey, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRow(newColumnParent(columnFamily), rowKey, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
+     * Retrieves counter columns from a row.
+     *
+     * @param columnFamily        The column family containing the row
+     * @param rowKey              The key of the row
+     * @param colPredicate        The column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A list of matching columns
+     * @throws PelopsException    If an error occurs
+     */
+    public List<CounterColumn> getCounterColumnsFromRow(String columnFamily, String rowKey, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRow(columnFamily, fromUTF8(rowKey), colPredicate, cLevel);
     }
 
     /**
@@ -1048,13 +1137,15 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param reversed
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves all counter columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the counter columns
+     * @param reversed            Whether the results should be returned in descending counter column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of counter columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public LinkedHashMap<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
@@ -1075,13 +1166,15 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param colPredicate
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves counter columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the counter columns
+     * @param colPredicate        The counter column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of counter columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public LinkedHashMap<Bytes, List<CounterColumn>> getCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
@@ -1116,6 +1209,36 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieves all counter columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the counter columns
+     * @param reversed            Whether the results should be returned in descending counter column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    If an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
+     * Retrieve counter columns from a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the counter columns
+     * @param colPredicate        The counter column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    If an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
      * Retrieve all sub-columns from a super column in a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
@@ -1131,14 +1254,16 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param superColName
-     * @param reversed
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves all sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param reversed            Whether the results should be returned in descending sub-counter-column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map (LinkedHashMap) from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
@@ -1160,14 +1285,16 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param superColName
-     * @param colPredicate
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param colPredicate        The sub-column-column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public Map<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
@@ -1189,6 +1316,22 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieves all sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param reversed            Whether the results should be returned in descending sub-counter-column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getSubCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
@@ -1202,6 +1345,22 @@ public class Selector extends Operand {
     public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
     	return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieves sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param colPredicate        The sub-counter-column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getSubCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, String superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
@@ -1220,14 +1379,16 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param superColName
-     * @param reversed
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves all sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param reversed            Whether the results should be returned in descending sub-counter-column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public LinkedHashMap<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
@@ -1249,14 +1410,16 @@ public class Selector extends Operand {
     }
 
     /**
-     * TODO
-     * @param columnFamily
-     * @param rowKeys
-     * @param superColName
-     * @param colPredicate
-     * @param cLevel
-     * @return
-     * @throws PelopsException
+     * Retrieves sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param colPredicate        The sub-counter-column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
      */
     public LinkedHashMap<Bytes, List<CounterColumn>> getSubCounterColumnsFromRows(String columnFamily, List<Bytes> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
         return getCounterColumnsFromRows(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
@@ -1278,6 +1441,22 @@ public class Selector extends Operand {
     }
 
     /**
+     * Retrieves all sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param reversed            Whether the results should be returned in descending sub-counter-column name order
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getSubCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, boolean reversed, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, columnsPredicateAll(reversed), cLevel);
+    }
+
+    /**
      * Retrieve sub-columns from a super column in a set of rows.
      * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
      * @param columnFamily                   The column family containing the rows
@@ -1291,6 +1470,22 @@ public class Selector extends Operand {
     public LinkedHashMap<String, List<Column>> getSubColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
 
         return getColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
+    }
+
+    /**
+     * Retrieves sub-counter-columns from a super column in a set of rows.
+     * Note that the returned map is insertion-order-preserving and populated based on the provided list of rowKeys.
+     *
+     * @param columnFamily        The column family containing the rows
+     * @param rowKeys             The keys of the rows containing the super columns
+     * @param superColName        The name of the super column
+     * @param colPredicate        The sub-counter-column selector predicate
+     * @param cLevel              The Cassandra consistency level with which to perform the operation
+     * @return                    A map from row keys to the matching lists of sub-counter-columns.  If no value corresponding to a key is present, the key will still be in the map but with an empty list as it's value.
+     * @throws PelopsException    if an error occurs
+     */
+    public LinkedHashMap<String, List<CounterColumn>> getSubCounterColumnsFromRowsUtf8Keys(String columnFamily, List<String> rowKeys, Bytes superColName, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
+        return getCounterColumnsFromRowsUtf8Keys(newColumnParent(columnFamily, superColName), rowKeys, colPredicate, cLevel);
     }
 
     /**
@@ -1421,6 +1616,24 @@ public class Selector extends Operand {
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
                     List<Column> columns = toColumnList(coscList);
+                    result.put(rowKeys.get(i), columns);
+                }
+                return result;
+            }
+        };
+        return tryOperation(operation);
+    }
+
+    private LinkedHashMap<String, List<CounterColumn>> getCounterColumnsFromRowsUtf8Keys(final ColumnParent colParent, final List<String> rowKeys, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+        final List<ByteBuffer> keys = Bytes.transformUTF8ToList(validateRowKeysUtf8(rowKeys));
+        IOperation<LinkedHashMap<String, List<CounterColumn>>> operation = new IOperation<LinkedHashMap<String, List<CounterColumn>>>() {
+            @Override
+            public LinkedHashMap<String, List<CounterColumn>> execute(IThriftPool.IPooledConnection conn) throws Exception {
+                Map<ByteBuffer, List<ColumnOrSuperColumn>> apiResult = conn.getAPI().multiget_slice(keys, colParent, colPredicate, cLevel);
+                LinkedHashMap<String, List<CounterColumn>> result = new LinkedHashMap<String, List<CounterColumn>>();
+                for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
+                    List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
+                    List<CounterColumn> columns = toCounterColumnList(coscList);
                     result.put(rowKeys.get(i), columns);
                 }
                 return result;
@@ -2286,7 +2499,7 @@ public class Selector extends Operand {
     private static List<CounterColumn> toCounterColumnList(List<ColumnOrSuperColumn> coscList) {
         List<CounterColumn> columns = new ArrayList<CounterColumn>(coscList.size());
         for (ColumnOrSuperColumn cosc : coscList) {
-            assert cosc.counter_column != null : "The column should not be null";
+            assert cosc.counter_column != null : "The counter column should not be null";
             columns.add(cosc.counter_column);
         }
         return columns;
