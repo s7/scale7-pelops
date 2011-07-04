@@ -291,11 +291,12 @@ public class Mutator extends Operand {
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param colName
-     * @param subColumns
+     * Writes multiple sub-column values to a super column.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param colName          The name of the super column
+     * @param subColumns       A list of the sub-columns to write
      */
     private void writeSubColumnsInternal(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns) {
     	safeGetRowKey(rowKey);
@@ -310,11 +311,11 @@ public class Mutator extends Operand {
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param columns
-     * @return
+     * Writes a list of counter columns to a key.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param columns          The list of counter columns to write
      */
     public Mutator writeCounterColumns(String colFamily, Bytes rowKey, List<CounterColumn> columns) {
         for (CounterColumn column : columns) {
@@ -325,23 +326,23 @@ public class Mutator extends Operand {
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param colName
-     * @param value
-     * @return
+     * Writes a counter column.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param colName          The name of the counter column
+     * @param value            The value to increment/decrement the counter by.
      */
     public Mutator writeCounterColumn(String colFamily, Bytes rowKey, Bytes colName, long value) {
         return writeCounterColumn(colFamily, rowKey, newCounterColumn(colName, value));
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param column
-     * @return
+     * Writes a counter column.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param column           The counter column
      */
     public Mutator writeCounterColumn(String colFamily, Bytes rowKey, CounterColumn column) {
     	safeGetRowKey(rowKey);
@@ -356,12 +357,12 @@ public class Mutator extends Operand {
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param colName
-     * @param subColumn
-     * @return
+     * Writes a sub-counter-column.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param colName          The name of the counter column
+     * @param subColumn        The sub-counter-column
      */
     public Mutator writeSubCounterColumn(String colFamily, Bytes rowKey, Bytes colName, CounterColumn subColumn) {
         writeSubCounterColumns(colFamily, rowKey, colName, Arrays.asList(subColumn));
@@ -369,12 +370,12 @@ public class Mutator extends Operand {
     }
 
     /**
-     * TODO
-     * @param colFamily
-     * @param rowKey
-     * @param colName
-     * @param subColumns
-     * @return
+     * Writes multiple sub-counter-column values to a super column.
+     *
+     * @param colFamily        The column family
+     * @param rowKey           The key of the row to modify
+     * @param colName          The name of the super column
+     * @param subColumns       A list of the sub-counter-columns to write
      */
     public Mutator writeSubCounterColumns(String colFamily, Bytes rowKey, Bytes colName, List<CounterColumn> subColumns) {
         safeGetRowKey(rowKey);
