@@ -34,6 +34,7 @@ import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 
 import static org.scale7.cassandra.pelops.Bytes.*;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.*;
 import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
@@ -703,7 +704,7 @@ public class Selector extends Operand {
             @Override
             public List<Column> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel);
-                return toColumnList(apiResult);
+                return toList(apiResult, COLUMN);
             }
         };
         return tryOperation(operation);
@@ -768,7 +769,7 @@ public class Selector extends Operand {
             @Override
             public List<CounterColumn> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel);
-                return toCounterColumnList(apiResult);
+                return toList(apiResult, COUNTER_COLUMN);
             }
         };
         return tryOperation(operation);
@@ -828,7 +829,7 @@ public class Selector extends Operand {
             @Override
             public List<SuperColumn> execute(IPooledConnection conn) throws Exception {
                 List<ColumnOrSuperColumn> apiResult = conn.getAPI().get_slice(safeGetRowKey(rowKey), cp, colPredicate, cLevel);
-                return toSuperColumnList(apiResult);
+                return toList(apiResult, SUPER_COLUMN);
             }
         };
         return tryOperation(operation);
@@ -1520,7 +1521,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
-                    List<SuperColumn> columns = toSuperColumnList(coscList);
+                    List<SuperColumn> columns = toList(coscList, SUPER_COLUMN);
                     result.put(rowKey, columns);
                 }
                 return result;
@@ -1561,7 +1562,7 @@ public class Selector extends Operand {
                 LinkedHashMap<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
-                    List<SuperColumn> columns = toSuperColumnList(coscList);
+                    List<SuperColumn> columns = toList(coscList, SUPER_COLUMN);
                     result.put(rowKeys.get(i), columns);
                 }
                 return result;
@@ -1579,7 +1580,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
-                    List<Column> columns = toColumnList(coscList);
+                    List<Column> columns = toList(coscList, COLUMN);
                     result.put(rowKey, columns);
                 }
                 return result;
@@ -1597,7 +1598,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<CounterColumn>> result = new LinkedHashMap<Bytes, List<CounterColumn>>();
                 for (Bytes rowKey : rowKeys) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(rowKey.getBytes());
-                    List<CounterColumn> columns = toCounterColumnList(coscList);
+                    List<CounterColumn> columns = toList(coscList, COUNTER_COLUMN);
                     result.put(rowKey, columns);
                 }
                 return result;
@@ -1615,7 +1616,7 @@ public class Selector extends Operand {
                 LinkedHashMap<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
-                    List<Column> columns = toColumnList(coscList);
+                    List<Column> columns = toList(coscList, COLUMN);
                     result.put(rowKeys.get(i), columns);
                 }
                 return result;
@@ -1633,7 +1634,7 @@ public class Selector extends Operand {
                 LinkedHashMap<String, List<CounterColumn>> result = new LinkedHashMap<String, List<CounterColumn>>();
                 for (int i = 0, rowKeysSize = rowKeys.size(); i < rowKeysSize; i++) {
                     List<ColumnOrSuperColumn> coscList = apiResult.get(keys.get(i));
-                    List<CounterColumn> columns = toCounterColumnList(coscList);
+                    List<CounterColumn> columns = toList(coscList, COUNTER_COLUMN);
                     result.put(rowKeys.get(i), columns);
                 }
                 return result;
@@ -1885,7 +1886,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<SuperColumn>> result = new LinkedHashMap<Bytes, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = toSuperColumnList(coscList);
+                    List<SuperColumn> colList = toList(coscList, SUPER_COLUMN);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1931,7 +1932,7 @@ public class Selector extends Operand {
                 LinkedHashMap<String, List<SuperColumn>> result = new LinkedHashMap<String, List<SuperColumn>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<SuperColumn> colList = toSuperColumnList(coscList);
+                    List<SuperColumn> colList = toList(coscList, SUPER_COLUMN);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
@@ -1948,7 +1949,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = toColumnList(coscList);
+                    List<Column> colList = toList(coscList, COLUMN);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -1965,7 +1966,7 @@ public class Selector extends Operand {
                 LinkedHashMap<String, List<Column>> result = new LinkedHashMap<String, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = toColumnList(coscList);
+                    List<Column> colList = toList(coscList, COLUMN);
                     result.put(toUTF8(ks.key), colList);
                 }
                 return result;
@@ -2042,7 +2043,7 @@ public class Selector extends Operand {
                 LinkedHashMap<Bytes, List<Column>> result = new LinkedHashMap<Bytes, List<Column>>();
                 for (KeySlice ks : apiResult) {
                     List<ColumnOrSuperColumn> coscList = ks.columns;
-                    List<Column> colList = toColumnList(coscList);
+                    List<Column> colList = toList(coscList, COLUMN);
                     result.put(fromByteBuffer(ks.key), colList);
                 }
                 return result;
@@ -2485,32 +2486,5 @@ public class Selector extends Operand {
 
     public static ColumnParent newColumnParent(String columnFamily) {
         return new ColumnParent(columnFamily);
-    }
-
-    private static List<Column> toColumnList(List<ColumnOrSuperColumn> coscList) {
-        List<Column> columns = new ArrayList<Column>(coscList.size());
-        for (ColumnOrSuperColumn cosc : coscList) {
-            assert cosc.column != null : "The column should not be null";
-            columns.add(cosc.column);
-        }
-        return columns;
-    }
-
-    private static List<CounterColumn> toCounterColumnList(List<ColumnOrSuperColumn> coscList) {
-        List<CounterColumn> columns = new ArrayList<CounterColumn>(coscList.size());
-        for (ColumnOrSuperColumn cosc : coscList) {
-            assert cosc.counter_column != null : "The counter column should not be null";
-            columns.add(cosc.counter_column);
-        }
-        return columns;
-    }
-
-    private static List<SuperColumn> toSuperColumnList(List<ColumnOrSuperColumn> coscList) {
-        List<SuperColumn> columns = new ArrayList<SuperColumn>(coscList.size());
-        for (ColumnOrSuperColumn cosc : coscList) {
-            assert cosc.super_column != null : "The super column should not be null";
-            columns.add(cosc.super_column);
-        }
-        return columns;
     }
 }
