@@ -65,7 +65,7 @@ public class ColumnOrSuperColumnHelper {
         public CounterSuperColumn getValue(ColumnOrSuperColumn cosc) { return cosc.counter_super_column;}
     };
 
-    public static <T> List<T> toList(List<ColumnOrSuperColumn> coscList, FieldAdapter<T> fieldAdapter) {
+    public static <T> List<T> transform(List<ColumnOrSuperColumn> coscList, FieldAdapter<T> fieldAdapter) {
         List<T> result = new ArrayList<T>(coscList.size());
         for (ColumnOrSuperColumn cosc : coscList) {
             T element = fieldAdapter.getValue(cosc);
