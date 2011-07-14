@@ -26,10 +26,15 @@ package org.scale7.cassandra.pelops;
 
 import org.apache.cassandra.thrift.*;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.cassandra.thrift.ColumnOrSuperColumn._Fields;
+import static org.scale7.cassandra.pelops.Bytes.fromByteBuffer;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
 
 /**
  * Contains helper methods for dealing with ColumnOrSuperColumn objects.
@@ -75,4 +80,31 @@ public class ColumnOrSuperColumnHelper {
         return result;
     }
 
+    public static <T> LinkedHashMap<Bytes, List<T>> transform(Map<ByteBuffer, List<ColumnOrSuperColumn>> map, List<Bytes> keyOrder, FieldAdapter<T> fieldAdapter) {
+        LinkedHashMap<Bytes, List<T>> result = new LinkedHashMap<Bytes, List<T>>();
+        for (Bytes rowKey : keyOrder)
+            result.put(rowKey, transform(map.get(rowKey.getBytes()), fieldAdapter));
+        return result;
+    }
+
+    public static <T> LinkedHashMap<String, List<T>> transformUtf8(Map<ByteBuffer, List<ColumnOrSuperColumn>> map, List<String> keyOrder, List<ByteBuffer> keyOrderRaw, FieldAdapter<T> fieldAdapter) {
+        LinkedHashMap<String, List<T>> result = new LinkedHashMap<String, List<T>>();
+        for (int i = 0, rowKeysSize = keyOrder.size(); i < rowKeysSize; i++)
+            result.put(keyOrder.get(i), transform(map.get(keyOrderRaw.get(i)), fieldAdapter));
+        return result;
+    }
+
+    public static <T> LinkedHashMap<Bytes, List<T>> transform(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
+        LinkedHashMap<Bytes, List<T>> result = new LinkedHashMap<Bytes, List<T>>();
+        for (KeySlice ks : keySlices)
+            result.put(fromByteBuffer(ks.key), transform(ks.columns, fieldAdapter));
+        return result;
+    }
+
+    public static <T> LinkedHashMap<String, List<T>> transformUtf8(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
+        LinkedHashMap<String, List<T>> result = new LinkedHashMap<String, List<T>>();
+        for (KeySlice ks : keySlices)
+            result.put(toUTF8(ks.key), transform(ks.columns, fieldAdapter));
+        return result;
+    }
 }
