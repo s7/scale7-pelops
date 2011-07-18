@@ -105,14 +105,10 @@ public class Mutator extends Operand {
      *                                  {@link #deleteColumn(String, Bytes, Bytes) delete} instead.
      */
     public Mutator writeColumn(String colFamily, Bytes rowKey, Column column, boolean deleteIfNullValue) {
-        if (!deleteIfNullValue) {
+        if (!deleteIfNullValue || column.isSetValue()) {
             writeColumnInternal(colFamily, rowKey, column);
         } else {
-            if (column.isSetValue()) {
-                writeColumnInternal(colFamily, rowKey, column);
-            } else {
-                deleteColumn(colFamily, rowKey, Bytes.fromByteArray(column.getName()));
-            }
+            deleteColumn(colFamily, rowKey, Bytes.fromByteArray(column.getName()));
         }
         return this;
     }
@@ -257,9 +253,7 @@ public class Mutator extends Operand {
      *                                  have no values.
      */
     public Mutator writeSubColumns(String colFamily, Bytes rowKey, Bytes colName, List<Column> subColumns, boolean deleteIfNullValue) {
-        if (!deleteIfNullValue) {
-            writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
-        } else {
+        if (deleteIfNullValue) {
             // figure out if we need to worry about columns with empty values
             boolean isEmptyColumnPresent = false;
             for (Column subColumn : subColumns) {
@@ -269,9 +263,7 @@ public class Mutator extends Operand {
                 }
             }
 
-            if (!isEmptyColumnPresent) {
-                writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
-            } else {
+            if (isEmptyColumnPresent) {
                 // separate out the columns that have a value from those that don't
                 List<Column> subColumnsWithValue = new ArrayList<Column>(subColumns.size());
                 List<Bytes> subColumnsWithoutValue = new ArrayList<Bytes>(subColumns.size());
@@ -283,10 +275,11 @@ public class Mutator extends Operand {
                     }
                 }
 
-                writeSubColumnsInternal(colFamily, rowKey, colName, subColumnsWithValue);
                 deleteSubColumns(colFamily, rowKey, colName, subColumnsWithoutValue);
+                subColumns = subColumnsWithValue;
             }
         }
+        writeSubColumnsInternal(colFamily, rowKey, colName, subColumns);
         return this;
     }
 

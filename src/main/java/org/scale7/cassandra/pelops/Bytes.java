@@ -560,22 +560,20 @@ public class Bytes {
     }
 
     /**
-     * Pads a byte buffer to match a specified length
+     * Pads a byte buffer to match a specified length.
+     *
      * @param totalLength the length to pad the buffer
      * @param originalByteBuffer the buffer with data to pad
      * @return the padded buffer; this may be the original buffer or a new buffer
      */
-    private static ByteBuffer padValue(int totalLength, ByteBuffer originalByteBuffer)
-    {
-        if(originalByteBuffer.capacity() >= totalLength)
+    private static ByteBuffer padValue(int totalLength, ByteBuffer originalByteBuffer) {
+        if (originalByteBuffer.capacity() >= totalLength)
             return originalByteBuffer;
 
         byte[] originalByteArray = originalByteBuffer.array();
         byte[] newByteArray = new byte[totalLength];
-        for(int i = 0; i < totalLength; i++)
-            newByteArray[i] = 0;
-        for(int i = originalByteArray.length - 1; i >= 0; i--)
-            newByteArray[(totalLength-1)-i] = originalByteArray[i];
+        for (int i = originalByteArray.length - 1; i >= 0; i--)
+            newByteArray[(totalLength - 1) - i] = originalByteArray[i];
 
         return ByteBuffer.wrap(newByteArray);
     }
