@@ -24,38 +24,19 @@
 
 package org.scale7.cassandra.pelops;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.cassandra.auth.SimpleAuthenticator;
+import org.junit.Test;
 
-import org.apache.cassandra.thrift.AuthenticationRequest;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-public class SimpleConnectionAuthenticator implements IConnectionAuthenticator {
-    public static final java.lang.String USERNAME_KEY = "username";
-    public static final java.lang.String PASSWORD_KEY = "password";
-
-	private String username;
-	private String password;
-	
-	public SimpleConnectionAuthenticator() {
-		
-	}
-	
-	public SimpleConnectionAuthenticator(String username,String password) {
-		this.username = username;
-		this.password = password;
-	}
-
-	@Override
-	public AuthenticationRequest getAuthenticationRequest() {
-	  Map<String, String> params = new HashMap<String, String>();
-	  params.put(USERNAME_KEY, username);
-	  params.put(PASSWORD_KEY, password);
-	  return new AuthenticationRequest(params);
-	}
-
-	@Override
-	public String toString() {
-		return "SimpleConnectionAuthenticator [username=" + username
-				+ ", password=" + password + "]";
-	}
+/**
+ * Tests the {@link Bytes} class.
+ */
+public class SimpleConnectionAuthenticatorUnitTest {
+    @Test
+    public void testEquals() {
+        assertEquals("Username key changed in Cassandra JAR", SimpleAuthenticator.USERNAME_KEY, SimpleConnectionAuthenticator.USERNAME_KEY);
+        assertEquals("Password key changed in Cassandra JAR", SimpleAuthenticator.PASSWORD_KEY, SimpleConnectionAuthenticator.PASSWORD_KEY);
+    }
 }
