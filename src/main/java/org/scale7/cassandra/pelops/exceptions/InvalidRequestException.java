@@ -25,8 +25,8 @@
 package org.scale7.cassandra.pelops.exceptions;
 
 public class InvalidRequestException extends PelopsException {
-    public InvalidRequestException(Exception e) {
-        super(e.getMessage(), e);
+    public InvalidRequestException(org.apache.cassandra.thrift.InvalidRequestException e) {
+        super(e.getWhy(), e);
     }
 
     /**
