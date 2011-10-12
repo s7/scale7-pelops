@@ -25,7 +25,7 @@
 package org.scale7.cassandra.pelops.exceptions;
 
 public class AuthenticationException extends PelopsException {
-    public AuthenticationException(Exception e) {
-        super(e.getMessage(), e);
+    public AuthenticationException(org.apache.cassandra.thrift.AuthenticationException e) {
+        super(e.getWhy(), e);
     }
 }
