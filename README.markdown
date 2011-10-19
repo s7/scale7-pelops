@@ -12,11 +12,11 @@ Pelops is provided under the [MIT licence](http://www.opensource.org/licenses/mi
 
 Releases
 =====================
-The latest stable release is 1.2-0.8.x and can be downloaded (along with all versions) from: https://github.com/s7/mvnrepo/tree/master/org/scale7/scale7-pelops
+The latest stable release is 1.2-0.8.x, the latest SNAPSHOT is 1.3-1.0.x and can be downloaded (along with all versions) from: https://github.com/s7/mvnrepo/tree/master/org/scale7/scale7-pelops
 
 Using Pelops in a Maven project
 ========================
-To use Pelops with Cassandra 0.8.x use the following:
+To use Pelops with Cassandra 1.0.x use the following:
 
 1. Add the following repository to your project repositories:
 
@@ -41,12 +41,12 @@ To use Pelops with Cassandra 0.8.x use the following:
             </repository>
         </repositories>
 
-2a. Add the Pelops dependency to your project (depends on Cassandra 0.8.4):
+2a. Add the Pelops dependency to your project (depends on Cassandra 1.0.0-rc2):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.2-0.8.x-SNAPSHOT</version>
+			<version>1.3-1.0.x-SNAPSHOT</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
@@ -103,11 +103,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:cassandra-all - version: 0.8.1
-*   -> log4j:log4j - version: 1.2.16
-*   -> org.apache.cassandra:cassandra-thrift - version: 0.8.1
+* org.apache.cassandra:cassandra-thrift - version: 1.0.0-rc2
+*   -> org.apache.cassandra:cassandra-thrift - version: 1.0.0-rc2
 *   -> org.apache.thrift.libthrift - version: 0.6.1
-*   -> com.github.stephenc.jamm - version: 0.2.0
 * commons-pool:commons-pool - version: 1.5.5
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
