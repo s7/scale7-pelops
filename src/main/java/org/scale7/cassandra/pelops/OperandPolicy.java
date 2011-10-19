@@ -57,8 +57,9 @@ public class OperandPolicy {
      * Default to 2.
      * @param maxOpRetries the value
      */
-    public void setMaxOpRetries(int maxOpRetries) {
+    public OperandPolicy setMaxOpRetries(int maxOpRetries) {
         this.maxOpRetries = maxOpRetries;
+        return this;
     }
 
     /**
@@ -73,8 +74,9 @@ public class OperandPolicy {
      * Dictates if pelops should issue deletes when it detects null values being written in a mutation batch.
      * @param deleteIfNull true if deletes should be issued by default
      */
-    public void setDeleteIfNull(boolean deleteIfNull) {
+    public OperandPolicy setDeleteIfNull(boolean deleteIfNull) {
         this.deleteIfNull = deleteIfNull;
+        return this;
     }
 
     /**
@@ -90,7 +92,16 @@ public class OperandPolicy {
      * <p>Note: by default {@link org.scale7.cassandra.pelops.exceptions.IExceptionTranslator.ExceptionTranslator} is used.
      * @param exceptionTranslator the translator
      */
-    public void setExceptionTranslator(IExceptionTranslator exceptionTranslator) {
+    public OperandPolicy setExceptionTranslator(IExceptionTranslator exceptionTranslator) {
         this.exceptionTranslator = exceptionTranslator;
+        return this;
+    }
+
+    /**
+     * Returns a shallow copy of this object.
+     * @return a copy of this
+     */
+    public OperandPolicy copy() {
+        return new OperandPolicy(this.getMaxOpRetries(), this.isDeleteIfNull(), getExceptionTranslator());
     }
 }

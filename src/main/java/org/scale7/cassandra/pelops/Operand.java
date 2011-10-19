@@ -63,6 +63,10 @@ public class Operand {
 	}
 
 	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation) throws PelopsException {
+        return tryOperation(operation, thrift.getOperandPolicy());
+    }
+
+	protected <ReturnType> ReturnType tryOperation(IOperation<ReturnType> operation, OperandPolicy operandPolicy) throws PelopsException {
         Set<String> avoidNodes = null;
 		Exception lastException = null;
 		int retries = 0;
@@ -73,7 +77,7 @@ public class Operand {
                 conn = thrift.getConnectionExcept(avoidNodes);
             } catch (Exception e) {
                 // the pool is responsible for blocking and waiting for a connection, so don't retry
-                throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
+                throw operandPolicy.getExceptionTranslator().translate(e);
             }
 
 			try {
@@ -100,19 +104,19 @@ public class Operand {
 					lastException = e;
 				} else if (e instanceof NotFoundException) {
                     // Re-throw application-level exceptions immediately.
-					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
+					throw operandPolicy.getExceptionTranslator().translate(e);
                 } else {
                     // This connection is "broken" by network timeout or other problem.
                     conn.corrupted();
 
                     // Re-throw application-level exceptions immediately.
-					throw thrift.getOperandPolicy().getExceptionTranslator().translate(e);
+					throw operandPolicy.getExceptionTranslator().translate(e);
 				}
 			} finally {
                 conn.release();
             }
-		} while (retries < thrift.getOperandPolicy().getMaxOpRetries());
+		} while (retries < operandPolicy.getMaxOpRetries());
 
-		throw thrift.getOperandPolicy().getExceptionTranslator().translate(lastException);
+		throw operandPolicy.getExceptionTranslator().translate(lastException);
 	}
 }
