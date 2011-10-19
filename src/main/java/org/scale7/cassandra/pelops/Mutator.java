@@ -60,6 +60,16 @@ public class Mutator extends Operand {
      * @throws PelopsException
      */
     public void execute(final ConsistencyLevel cLevel) throws PelopsException {
+        execute(cLevel, thrift.getOperandPolicy());
+    }
+
+    /**
+     * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
+     * @param cLevel                    The Cassandra consistency level to be used
+     * @param operandPolicy             The policy to use for this operation
+     * @throws PelopsException
+     */
+    public void execute(final ConsistencyLevel cLevel, OperandPolicy operandPolicy) throws PelopsException {
         IOperation<Void> operation = new IOperation<Void>() {
             @Override
             public Void execute(IThriftPool.IPooledConnection conn) throws Exception {
@@ -69,7 +79,7 @@ public class Mutator extends Operand {
                 return null;
             }
         };
-        tryOperation(operation);
+        tryOperation(operation, operandPolicy);
     }
 
     /**
