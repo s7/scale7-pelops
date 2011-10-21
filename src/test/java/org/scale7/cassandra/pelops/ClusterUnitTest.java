@@ -1,6 +1,5 @@
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.auth.SimpleAuthenticator;
 import org.apache.cassandra.thrift.AuthenticationRequest;
 import org.junit.Test;
 
@@ -54,8 +53,8 @@ public class ClusterUnitTest {
         AuthenticationRequest request = cluster.getConnectionConfig().getConnectionAuthenticator().getAuthenticationRequest();
         assertNotNull("Invalid authentication request",request);
         assertNotNull("Invalid authentication request credentials",request.getCredentials());
-        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.USERNAME_KEY),USERNAME);
-        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleAuthenticator.PASSWORD_KEY),PASSWORD);
+        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleConnectionAuthenticator.USERNAME_KEY),USERNAME);
+        assertEquals("Invalid authentication username",request.getCredentials().get(SimpleConnectionAuthenticator.PASSWORD_KEY),PASSWORD);
     }
     
     /**
