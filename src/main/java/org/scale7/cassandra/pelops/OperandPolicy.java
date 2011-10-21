@@ -24,6 +24,7 @@
 
 package org.scale7.cassandra.pelops;
 
+import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.scale7.cassandra.pelops.exceptions.IExceptionTranslator;
 
 /**
@@ -32,6 +33,7 @@ import org.scale7.cassandra.pelops.exceptions.IExceptionTranslator;
 public class OperandPolicy {
     int maxOpRetries = 3;
     boolean deleteIfNull = false;
+    ConsistencyLevel consistencyLevel = ConsistencyLevel.QUORUM;
     IExceptionTranslator exceptionTranslator = new IExceptionTranslator.ExceptionTranslator();
 
     public OperandPolicy() {
@@ -45,6 +47,13 @@ public class OperandPolicy {
     public OperandPolicy(int maxOpRetries, boolean deleteIfNull, IExceptionTranslator exceptionTranslator) {
         this.maxOpRetries = maxOpRetries;
         this.deleteIfNull = deleteIfNull;
+        this.exceptionTranslator = exceptionTranslator;
+    }
+
+    public OperandPolicy(int maxOpRetries, boolean deleteIfNull, ConsistencyLevel consistencyLevel, IExceptionTranslator exceptionTranslator) {
+        this.maxOpRetries = maxOpRetries;
+        this.deleteIfNull = deleteIfNull;
+        this.consistencyLevel = consistencyLevel;
         this.exceptionTranslator = exceptionTranslator;
     }
 
@@ -80,6 +89,25 @@ public class OperandPolicy {
     }
 
     /**
+     * The default consistency level to use for mutations.
+     * Note: the default is {@link ConsistencyLevel#QUORUM}.
+     * @return the default consistency level to use for mutations
+     */
+    public ConsistencyLevel getConsistencyLevel() {
+        return consistencyLevel;
+    }
+
+    /**
+     * The default consistency level to use for mutations.<br />
+     * Note: the default is {@link ConsistencyLevel#QUORUM}.
+     * @param consistencyLevel default consistency level to use for mutations
+     */
+    public OperandPolicy setConsistencyLevel(ConsistencyLevel consistencyLevel) {
+        this.consistencyLevel = consistencyLevel;
+        return this;
+    }
+
+    /**
      * The translater used to convert checked Thirft/Cassandra exceptions into unchecked PelopsExceptions.
      * @return the translator
      */
@@ -102,6 +130,6 @@ public class OperandPolicy {
      * @return a copy of this
      */
     public OperandPolicy copy() {
-        return new OperandPolicy(this.getMaxOpRetries(), this.isDeleteIfNull(), getExceptionTranslator());
+        return new OperandPolicy(this.getMaxOpRetries(), this.isDeleteIfNull(), this.getConsistencyLevel(), getExceptionTranslator());
     }
 }
