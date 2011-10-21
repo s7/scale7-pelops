@@ -55,12 +55,32 @@ public class Mutator extends Operand {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
+     * Execute the mutations that have been specified by sending them to Cassandra in a single batch using the
+     * consistency level specified on the {@link OperandPolicy}.
+     * @throws PelopsException
+     */
+    public void execute() throws PelopsException {
+        execute(thrift.getOperandPolicy().getConsistencyLevel(), thrift.getOperandPolicy());
+    }
+
+    /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
      * @param cLevel                    The Cassandra consistency level to be used
      * @throws PelopsException
      */
     public void execute(final ConsistencyLevel cLevel) throws PelopsException {
         execute(cLevel, thrift.getOperandPolicy());
+    }
+    /**
+     * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
+     * @param cLevel                    The Cassandra consistency level to be used
+     * @param maxOpRetries              The max number of times to attempt to the op before giving up (min 1)
+     * @throws PelopsException
+     */
+    public void execute(final ConsistencyLevel cLevel, int maxOpRetries) throws PelopsException {
+        OperandPolicy operandPolicy = thrift.getOperandPolicy().copy().setMaxOpRetries(maxOpRetries);
+
+        execute(cLevel, operandPolicy);
     }
 
     /**
@@ -81,6 +101,7 @@ public class Mutator extends Operand {
         };
         tryOperation(operation, operandPolicy);
     }
+
 
     /**
      * Write a column value.
