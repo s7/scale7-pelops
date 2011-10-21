@@ -55,15 +55,6 @@ public class Mutator extends Operand {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
-     * Execute the mutations that have been specified by sending them to Cassandra in a single batch using the
-     * consistency level specified on the {@link OperandPolicy}.
-     * @throws PelopsException
-     */
-    public void execute() throws PelopsException {
-        execute(thrift.getOperandPolicy().getConsistencyLevel(), thrift.getOperandPolicy());
-    }
-
-    /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
      * @param cLevel                    The Cassandra consistency level to be used
      * @throws PelopsException

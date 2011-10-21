@@ -74,7 +74,7 @@ public class ColumnOrSuperColumnHelper {
         List<T> result = new ArrayList<T>(coscList.size());
         for (ColumnOrSuperColumn cosc : coscList) {
             T element = fieldAdapter.getValue(cosc);
-            assert element != null : "The " + fieldAdapter.description + " should not be null";
+            assert element != null : "The " + fieldAdapter.description + " value should not be null";
             result.add(element);
         }
         return result;
