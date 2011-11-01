@@ -1782,7 +1782,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public LinkedHashMap<Bytes, List<SuperColumn>> getSuperColumnsFromRows(String columnFamily, KeyRange keyRange, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
-        return transform(getKeySlices(newColumnParent(columnFamily), keyRange, colPredicate, cLevel), SUPER_COLUMN);
+        return transformKeySlices(getKeySlices(newColumnParent(columnFamily), keyRange, colPredicate, cLevel), SUPER_COLUMN);
     }
 
     /**
@@ -1814,15 +1814,15 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public LinkedHashMap<String, List<SuperColumn>> getSuperColumnsFromRowsUtf8Keys(String columnFamily, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        return transformUtf8(getKeySlices(newColumnParent(columnFamily), keyRange, colPredicate, cLevel), SUPER_COLUMN);
+        return transformKeySlicesUtf8(getKeySlices(newColumnParent(columnFamily), keyRange, colPredicate, cLevel), SUPER_COLUMN);
     }
 
     private LinkedHashMap<Bytes, List<Column>> getColumnsFromRows(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        return transform(getKeySlices(colParent, keyRange, colPredicate, cLevel), COLUMN);
+        return transformKeySlices(getKeySlices(colParent, keyRange, colPredicate, cLevel), COLUMN);
     }
 
     private LinkedHashMap<String, List<Column>> getColumnsFromRowsUtf8Keys(final ColumnParent colParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
-        return transformUtf8(getKeySlices(colParent, keyRange, colPredicate, cLevel), COLUMN);
+        return transformKeySlicesUtf8(getKeySlices(colParent, keyRange, colPredicate, cLevel), COLUMN);
     }
 
     /**
@@ -1895,7 +1895,7 @@ public class Selector extends Operand {
      * @throws PelopsException if an error occurs
      */
     public LinkedHashMap<Bytes, List<Column>> getIndexedColumns(ColumnParent colParent, IndexClause indexClause, SlicePredicate colPredicate, ConsistencyLevel cLevel) throws PelopsException {
-        return transform(getKeySlices(colParent, indexClause, colPredicate, cLevel), COLUMN);
+        return transformKeySlices(getKeySlices(colParent, indexClause, colPredicate, cLevel), COLUMN);
     }
 
     /**
