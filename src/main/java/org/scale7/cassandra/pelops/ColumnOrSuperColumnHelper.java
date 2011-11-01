@@ -94,14 +94,14 @@ public class ColumnOrSuperColumnHelper {
         return result;
     }
 
-    public static <T> LinkedHashMap<Bytes, List<T>> transform(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
+    public static <T> LinkedHashMap<Bytes, List<T>> transformKeySlices(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
         LinkedHashMap<Bytes, List<T>> result = new LinkedHashMap<Bytes, List<T>>();
         for (KeySlice ks : keySlices)
             result.put(fromByteBuffer(ks.key), transform(ks.columns, fieldAdapter));
         return result;
     }
 
-    public static <T> LinkedHashMap<String, List<T>> transformUtf8(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
+    public static <T> LinkedHashMap<String, List<T>> transformKeySlicesUtf8(List<KeySlice> keySlices, FieldAdapter<T> fieldAdapter) {
         LinkedHashMap<String, List<T>> result = new LinkedHashMap<String, List<T>>();
         for (KeySlice ks : keySlices)
             result.put(toUTF8(ks.key), transform(ks.columns, fieldAdapter));
