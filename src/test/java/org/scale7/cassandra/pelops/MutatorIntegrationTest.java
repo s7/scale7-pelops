@@ -16,6 +16,8 @@ import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
 
@@ -249,6 +251,45 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
         try {
             mutator.writeSubColumns(SCF, rowKey, columnName, columns);
             fail("Should not reach here...");
+        } catch (ModelException e) {
+        }
+    }
+
+    @Test
+    public void testDeleteSubColumns() throws Exception {
+        Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
+        Bytes columnName = Bytes.fromShort(Short.MAX_VALUE);
+
+        // write out the value to be deleted
+        Mutator mutator = createMutator();
+        List<Column> columns = mutator.newColumnList(
+                mutator.newColumn(Bytes.fromInt(1), Bytes.fromChar('a')),
+                mutator.newColumn(Bytes.fromInt(2), Bytes.fromChar('b')),
+                mutator.newColumn(Bytes.fromInt(3), Bytes.fromChar('c'))
+        );
+        mutator.writeSubColumns(SCF, rowKey, columnName, columns);
+        mutator.execute(ConsistencyLevel.ONE);
+
+        // delete all the sub columns
+        mutator = createMutator();
+        mutator.deleteSubColumns(SCF, rowKey, null);
+        mutator.execute(ConsistencyLevel.ONE);
+
+        // verify sub columns deleted
+        List<Column> subColumnsFromRow = createSelector().getSubColumnsFromRow(SCF, rowKey, columnName, false, ConsistencyLevel.ONE);
+        assertThat("Sub columns were not deleted", subColumnsFromRow.size(), is(equalTo(0)));
+    }
+
+    @Test
+    public void testDeleteSubColumnsWithNullColumnNameThrowsCorrectException() throws Exception {
+        Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
+        Bytes columnName = Bytes.fromShort(Short.MAX_VALUE);
+
+        // delete all the sub columns
+        Mutator mutator = createMutator();
+        try {
+            mutator.deleteSubColumns(SCF, rowKey, null);
+            fail("A ModelException exception should have been thrown");
         } catch (ModelException e) {
         }
     }

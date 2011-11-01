@@ -61,7 +61,7 @@ public class Validation {
 	}
 
     public static void validateColumnName(Bytes name) {
-		if (name.isNull())
+		if (name == null || name.isNull())
 			throw new ModelException("Column name is null");
 	}
 }
