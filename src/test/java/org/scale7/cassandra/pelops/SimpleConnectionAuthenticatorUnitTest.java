@@ -24,7 +24,7 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.auth.SimpleAuthenticator;
+import org.apache.cassandra.auth.AllowAllAuthenticator;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 public class SimpleConnectionAuthenticatorUnitTest {
     @Test
     public void testEquals() {
-        assertEquals("Username key changed in Cassandra JAR", SimpleAuthenticator.USERNAME_KEY, SimpleConnectionAuthenticator.USERNAME_KEY);
-        assertEquals("Password key changed in Cassandra JAR", SimpleAuthenticator.PASSWORD_KEY, SimpleConnectionAuthenticator.PASSWORD_KEY);
+        assertEquals("Username key changed in Cassandra JAR", AllowAllAuthenticator.USERNAME_KEY, SimpleConnectionAuthenticator.USERNAME_KEY);
+        assertEquals("Password key changed in Cassandra JAR", AllowAllAuthenticator.PASSWORD_KEY, SimpleConnectionAuthenticator.PASSWORD_KEY);
     }
 }
