@@ -272,7 +272,7 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
 
         // delete all the sub columns
         mutator = createMutator();
-        mutator.deleteSubColumns(SCF, rowKey, null);
+        mutator.deleteSubColumns(SCF, rowKey, columnName);
         mutator.execute(ConsistencyLevel.ONE);
 
         // verify sub columns deleted
@@ -283,7 +283,6 @@ public class MutatorIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testDeleteSubColumnsWithNullColumnNameThrowsCorrectException() throws Exception {
         Bytes rowKey = Bytes.fromLong(Long.MAX_VALUE);
-        Bytes columnName = Bytes.fromShort(Short.MAX_VALUE);
 
         // delete all the sub columns
         Mutator mutator = createMutator();
