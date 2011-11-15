@@ -99,6 +99,7 @@ public class Connection implements IConnection {
  			try {
 				getAPI().login(node.getConfig().getConnectionAuthenticator().getAuthenticationRequest());
 			} catch (Exception e) {
+				logger.warn("Failed to login on client for node {}.  Cause is {}", node.getAddress(),  e);
 				throw new IExceptionTranslator.ExceptionTranslator().translate(e);
 			} 
         }
@@ -109,7 +110,8 @@ public class Connection implements IConnection {
             try {
                 client.set_keyspace(keyspace);
             } catch (Exception e) {
-                logger.warn("Failed to set keyspace on client.  See cause for details...", e);
+                logger.warn("Failed to set keyspace on client for node {}.  Cause is {}", node.getAddress(),  e);
+                throw new IExceptionTranslator.ExceptionTranslator().translate(e);
             }
         }
     }
