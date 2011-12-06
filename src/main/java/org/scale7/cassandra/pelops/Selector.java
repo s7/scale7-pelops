@@ -1760,7 +1760,7 @@ public class Selector extends Operand {
         return getSuperColumnsFromRows(columnFamily, keyRange, columnsPredicateAll(reversed), cLevel);
     }
 
-    private List<KeySlice> getKeySlices(final ColumnParent columnParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
+    public List<KeySlice> getKeySlices(final ColumnParent columnParent, final KeyRange keyRange, final SlicePredicate colPredicate, final ConsistencyLevel cLevel) throws PelopsException {
         return tryOperation(new IOperation<List<KeySlice>>() {
             @Override
             public List<KeySlice> execute(IPooledConnection conn) throws Exception {
