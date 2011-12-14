@@ -110,7 +110,7 @@ public class CompositeTypeIntegrationTest {
         long first = 1l;
         String second = "a";
         for (Column column : columns) {
-            bytes = CompositeType.parseCompositeType(column.getName());
+            bytes = CompositeType.parse(column.getName());
             assertArrayEquals(bytes.get(0), Bytes.fromLong(first).toByteArray());
             assertArrayEquals(bytes.get(1), Bytes.fromUTF8(second).toByteArray());
 
@@ -137,7 +137,7 @@ public class CompositeTypeIntegrationTest {
         assertEquals(4, bytes.size());
 
         for (Bytes b : bytes) {
-            List<byte[]> bb = CompositeType.parseCompositeType(b.toByteArray());
+            List<byte[]> bb = CompositeType.parse(b);
             System.out.println("=> first: " + Bytes.fromByteArray(bb.get(0)).toLong() + " second: " + Bytes.fromByteArray(bb.get(1)).toUTF8());
         }
     }

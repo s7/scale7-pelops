@@ -57,7 +57,7 @@ public class CompositeTypeTest {
         builder.addUuid(uuid);
         Bytes bytes = builder.build();
 
-        List<byte[]> parsedBytes = CompositeType.parseCompositeType(bytes);
+        List<byte[]> parsedBytes = CompositeType.parse(bytes);
 
         assertNotNull(parsedBytes);
         assertEquals(13, parsedBytes.size());

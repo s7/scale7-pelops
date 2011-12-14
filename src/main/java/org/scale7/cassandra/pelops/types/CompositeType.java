@@ -51,7 +51,6 @@ public class CompositeType {
         /**
          * Creates a new builder. Assumes that there will be 2 elements in the composite type
          *
-         * @param partsCount - CompositeType parts count
          * @return CompositeType builder
          */
         public static Builder newBuilder() {
