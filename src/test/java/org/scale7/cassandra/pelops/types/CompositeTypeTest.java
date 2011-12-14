@@ -38,7 +38,7 @@ public class CompositeTypeTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() {
         final CompositeType.Builder builder = CompositeType.Builder.newBuilder(13);
 
         builder.addBoolean(true);

@@ -101,7 +101,7 @@ public class CompositeTypeIntegrationTest {
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         List<Column> columns = Pelops.createSelector(POOL).getColumnsFromRow(CF, Bytes.fromLong(1l), false, ConsistencyLevel.ONE);
         assertNotNull(columns);
         assertEquals(columns.size(), KEYS.size());
@@ -128,7 +128,7 @@ public class CompositeTypeIntegrationTest {
     }
 
     @Test
-    public void testSlice() throws Exception {
+    public void testSlice() {
         final CompositeType.Builder builder = CompositeType.Builder.newBuilder(2);
         builder.addLong(3l).addUTF8("b");
 

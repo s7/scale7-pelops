@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CompositeType {
 
+    private static final byte COMPONENT_END = (byte) 0;
     private static final Logger LOGGER = LoggerFactory.getLogger(CompositeType.class);
 
     //Utility class
@@ -26,7 +27,7 @@ public class CompositeType {
     }
 
     /**
-     * A composite that's used to create instance of composite keys.
+     * A Builder class that creates a CompositeType.
      */
     public static class Builder {
 
@@ -43,7 +44,7 @@ public class CompositeType {
          * @return CompositeType builder
          */
         public static Builder newBuilder(int partsCount) {
-            if (partsCount < 1) throw new RuntimeException("Invalid parts count. Should be 2 or more.");
+            if (partsCount < 1) throw new IllegalArgumentException("Invalid parts count. Should be 2 or more.");
             return new Builder(partsCount);
         }
 
@@ -161,12 +162,18 @@ public class CompositeType {
             parts.clear();
         }
 
-        public Bytes build() throws Exception {
+        /**
+         * Build the CompositeType using the added parts.
+         *
+         * @return CompositeType as Bytes
+         */
+        public Bytes build() {
             if (parts == null || parts.isEmpty()) return null;
 
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             for (ByteBuffer part : parts) {
-                if (!part.hasArray()) throw new Exception("Invalid composite byte part encountered");
+                if (!part.hasArray())
+                    throw new IllegalStateException("Connot build CompositeType. Invalid composite byte part encountered");
 
                 bos.write((byte) ((part.array().length >> (7 + 1)) & 0xFF));
                 bos.write((byte) (part.array().length & 0xFF));
@@ -174,7 +181,7 @@ public class CompositeType {
                     bos.write(partByte & 0xFF);
                 }
 
-                bos.write((byte) 0);
+                bos.write(COMPONENT_END);
             }
 
             final Bytes bytes = Bytes.fromByteArray(bos.toByteArray());
@@ -190,45 +197,46 @@ public class CompositeType {
     }
 
     /**
-     * Parses the composite key
+     * Parses the CompositeType
      *
      * @param compositeKey - composite key as Bytes
      * @return list of the composite key elements
-     * @throws Exception
      */
-    public static List<byte[]> parseCompositeType(Bytes compositeKey) throws Exception {
+    public static List<byte[]> parse(Bytes compositeKey) {
         if (compositeKey == null) return null;
-        return parseCompositeType(compositeKey.toByteArray());
+        return parse(compositeKey.toByteArray());
     }
 
     /**
-     * Parses the composite key
+     * Parses the CompositeType
      *
      * @param compositeKey - composite key as byte array
      * @return list of the composite key elements
-     * @throws Exception
      */
-    public static List<byte[]> parseCompositeType(byte[] compositeKey) throws Exception {
+    public static List<byte[]> parse(byte[] compositeKey) {
         if (compositeKey == null) return null;
 
-        int ndx = 0;
         //Validate the array length
-        if (compositeKey.length < (ndx + 2)) throw new Exception("Invalid Composite type structure");
+        if (compositeKey.length < 2) throw new IllegalArgumentException("Invalid Composite type structure");
 
         final List<byte[]> list = new ArrayList<byte[]>(3);//Default to 3
-        while (compositeKey.length > (ndx + 2)) {
+        int ndx = 0;
+        int componentStartNdx = 0;
+        int componentEndNdx = 0;
+        short componentLength = 0;
+        while (compositeKey.length > (componentStartNdx = (ndx + 2))) {
             // Value length is a 2 bytes short
-            short length = ByteBuffer.wrap(Arrays.copyOfRange(compositeKey, ndx, (ndx + 2))).getShort();
-            int componentEndNdx = (ndx + 2 + length);
+            componentLength = ByteBuffer.wrap(Arrays.copyOfRange(compositeKey, ndx, componentStartNdx)).getShort();
+            componentEndNdx = componentStartNdx + componentLength;
 
             // Check if the component legth is valid
-            if (compositeKey.length < componentEndNdx + 1) throw new Exception("Invalid Composite type structure");
+            if (compositeKey.length < componentEndNdx + 1) throw new IllegalStateException("Invalid Composite type structure");
             // If the value is not properly terminated throw an exception
-            if (compositeKey[componentEndNdx] != (byte) 0)
-                throw new Exception("Invalid Composite type structure: Not properly terminated, should be 0 byte terminated, found " + compositeKey[componentEndNdx]);
+            if (compositeKey[componentEndNdx] != COMPONENT_END)
+                throw new IllegalStateException("Invalid Composite type structure: Not properly terminated, should be 0 byte terminated, found " + compositeKey[componentEndNdx]);
 
             // Get the value
-            list.add(Arrays.copyOfRange(compositeKey, (ndx + 2), componentEndNdx));
+            list.add(Arrays.copyOfRange(compositeKey, componentStartNdx, componentEndNdx));
 
             // Update the value of the index
             ndx = componentEndNdx + 1;
