@@ -980,6 +980,7 @@ public class Bytes {
     /**
      * Creates an instance of {@link CompositeBuilder} and assumes that the composite will be made up of two parts.
      * @return the composite composite
+     * @deprecated Deprecated in {@link org.scale7.cassandra.pelops.types.CompositeType}. NOTE: This method generates composites that are not compatible with the official Cassandra {@link org.scale7.cassandra.pelops.types.CompositeType composite type}.
      */
     public static CompositeBuilder composite() {
         return new CompositeBuilder(2);
@@ -989,13 +990,15 @@ public class Bytes {
      * Creates an instance of {@link CompositeBuilder} with a specified number of parts.
      * @param parts the number of parts the composite will be created from
      * @return the composite
-     */
+     * @deprecated Deprecated in {@link org.scale7.cassandra.pelops.types.CompositeType}. NOTE: This method generates composites that are not compatible with the official Cassandra {@link org.scale7.cassandra.pelops.types.CompositeType composite type}.
+     * */
     public static CompositeBuilder composite(int parts) {
         return new CompositeBuilder(parts);
     }
 
     /**
      * A composite that's used to create instance of composite keys.
+     * @deprecated Deprecated in {@link org.scale7.cassandra.pelops.types.CompositeType}. NOTE: This class generates composites that are not compatible with the official Cassandra {@link org.scale7.cassandra.pelops.types.CompositeType composite type}.
      */
     public static class CompositeBuilder {
         private List<ByteBuffer> parts;
