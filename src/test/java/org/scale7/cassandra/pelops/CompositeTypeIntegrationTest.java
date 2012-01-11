@@ -36,38 +36,31 @@ import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.junit.*;
 import static org.junit.Assert.*;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
+
+import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 import org.scale7.cassandra.pelops.types.CompositeType;
 
 /**
  *
  * @author Ali Serghini
  */
-public class CompositeTypeIntegrationTest {
+public class CompositeTypeIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String KS = "SUPER_TEST_KEY_SPACE";
     private static final String CF = "CF_CompositeKey";
-    private static final String POOL = "CompositeKeyIntegrationTestPool";
-    private static final Cluster CLUSTER = new Cluster("localhost", 9160);
     private static final List<Bytes> KEYS = new ArrayList<Bytes>(12);
 
     public CompositeTypeIntegrationTest() {
     }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        if (Pelops.getDbConnPool(POOL) != null) {
-            Pelops.removePool(POOL);
-        }
-        Pelops.addPool(POOL, CLUSTER, KS);
-
-        final ColumnFamilyManager columnFamilyManager = Pelops.createColumnFamilyManager(CLUSTER, KS);
-        final CfDef columnFamilyDef = new CfDef(KS, CF);
-        columnFamilyDef.setComparator_type("CompositeType(LongType,UTF8Type)");
-        columnFamilyDef.setKey_validation_class("LongType");
-        //columnFamilyDef.setColumn_type(columnType);
-        columnFamilyManager.addColumnFamily(columnFamilyDef);
-
-
+    
+	@BeforeClass
+	public static void setup() throws Exception {
+        setup(Arrays.asList(new CfDef(KEYSPACE, CF)
+                .setComparator_type("CompositeType(LongType,UTF8Type)")
+                .setKey_validation_class("LongType")));
+        
         final CompositeType.Builder builder = CompositeType.Builder.newBuilder(2);
         KEYS.add(builder.addLong(1l).addUTF8("a").build());
         builder.clear();
@@ -93,25 +86,11 @@ public class CompositeTypeIntegrationTest {
         builder.clear();
         KEYS.add(builder.addLong(4l).addUTF8("c").build());
         builder.clear();
-    }
+	}
 
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        final ColumnFamilyManager columnFamilyManager = Pelops.createColumnFamilyManager(CLUSTER, KS);
-        columnFamilyManager.dropColumnFamily(CF);
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    }
-
-    @Test
-    public void testAdd() {
-        final Mutator mutator = Pelops.createMutator(POOL);
+    @Override
+    public void prepareData() throws Exception {
+        final Mutator mutator = createMutator();
         final List<Column> columns = new ArrayList<Column>(KEYS.size());
         for (Bytes bytes : KEYS) {
             columns.add(mutator.newColumn(bytes));
@@ -119,14 +98,18 @@ public class CompositeTypeIntegrationTest {
 
         mutator.writeColumns(CF, Bytes.fromLong(1l), columns);
         mutator.execute(ConsistencyLevel.ONE);
+    }
 
-        int count = Pelops.createSelector(POOL).getColumnCount(CF, Bytes.fromLong(1l), ConsistencyLevel.ONE);
-        assertEquals(columns.size(), count);
+    @Test
+    public void testAdd() {
+        // data is setup in the prepareData method...
+        int count = createSelector().getColumnCount(CF, Bytes.fromLong(1l), ConsistencyLevel.ONE);
+        assertEquals(KEYS.size(), count);
     }
 
     @Test
     public void testGet() {
-        List<Column> columns = Pelops.createSelector(POOL).getColumnsFromRow(CF, Bytes.fromLong(1l), false, ConsistencyLevel.ONE);
+        List<Column> columns = createSelector().getColumnsFromRow(CF, Bytes.fromLong(1l), false, ConsistencyLevel.ONE);
         assertNotNull(columns);
         assertEquals(columns.size(), KEYS.size());
 
@@ -156,7 +139,7 @@ public class CompositeTypeIntegrationTest {
         final CompositeType.Builder builder = CompositeType.Builder.newBuilder(2);
         builder.addLong(3l).addUTF8("b");
 
-        List<Bytes> bytes = Pelops.createSelector(POOL).getPageOfColumnNamesFromRow(CF, Bytes.fromLong(1l), builder.build(), false, 20, ConsistencyLevel.ONE);
+        List<Bytes> bytes = createSelector().getPageOfColumnNamesFromRow(CF, Bytes.fromLong(1l), builder.build(), false, 20, ConsistencyLevel.ONE);
         assertNotNull(bytes);
         assertEquals(4, bytes.size());
 
