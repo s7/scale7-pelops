@@ -1134,7 +1134,7 @@ public class Bytes {
     /**
      * Encapsulates ByteBuffer allocation.
      */
-    static class BufferHelper {
+    public static class BufferHelper {
 
         static final int SIZEOF_BYTE = Byte.SIZE / Byte.SIZE;
         static final int SIZEOF_BOOLEAN = SIZEOF_BYTE;
@@ -1149,6 +1149,9 @@ public class Bytes {
         static final int SIZEOF_UUID = SIZEOF_LONG + SIZEOF_LONG;
 
         public static final Charset UTF8 = Charset.forName("UTF-8");
+        
+        // Utility class
+        private BufferHelper(){}
 
         public static ByteBuffer fromByteArray(byte[] value) {
             return ByteBuffer.wrap(value);
