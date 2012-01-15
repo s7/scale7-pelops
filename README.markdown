@@ -106,7 +106,7 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.apache.cassandra:cassandra-thrift - version: 1.0.6
 *   -> org.apache.cassandra:cassandra-thrift - version: 1.0.6
 *   -> org.apache.thrift.libthrift - version: 0.6.1
-* commons-pool:commons-pool - version: 1.5.5
+* commons-pool:commons-pool - version: 1.6
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
 
