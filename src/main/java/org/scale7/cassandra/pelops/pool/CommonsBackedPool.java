@@ -58,7 +58,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
     private final IConnectionValidator connectionValidator;
 
     private final Map<String, PooledNode> nodes = new ConcurrentHashMap<String, PooledNode>();
-    private GenericKeyedObjectPool pool;
+    private GenericKeyedObjectPool<String, PooledConnection> pool;
 
     private ScheduledExecutorService executorService;
     private final Object scheduledTasksLock = new Object();
@@ -313,7 +313,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
                 logger.debug("Attempting to borrow free connection for node '{}'", node.getAddress());
                 // note that if no connections are currently available for this node then the pool will sleep for
                 // DEFAULT_WAIT_PERIOD milliseconds
-                connection = (IPooledConnection) pool.borrowObject(node.getAddress());
+                connection = pool.borrowObject(node.getAddress());
             } catch (IllegalStateException e) {
                 throw new PelopsException("The pool has been shutdown", e);
             } catch (Exception e) {
@@ -370,7 +370,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
     }
 
     protected void configureBackingPool() {
-        pool = new GenericKeyedObjectPool(new ConnectionFactory());
+        pool = new GenericKeyedObjectPool<String, PooledConnection>(new ConnectionFactory());
         pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
         pool.setMaxWait(DEFAULT_WAIT_PERIOD);
         pool.setLifo(true);
@@ -880,10 +880,9 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         }
     }
 
-    private class ConnectionFactory extends BaseKeyedPoolableObjectFactory {
+    private class ConnectionFactory extends BaseKeyedPoolableObjectFactory<String, PooledConnection> {
         @Override
-        public Object makeObject(Object key) throws Exception {
-            String nodeAddress = (String) key;
+        public PooledConnection makeObject(String nodeAddress) throws Exception {
             PooledConnection connection = new PooledConnection(
                     new Cluster.Node(nodeAddress, cluster.getConnectionConfig()), getKeyspace()
             );
@@ -896,10 +895,7 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         }
 
         @Override
-        public void destroyObject(Object key, Object obj) throws Exception {
-            String nodeAddress = (String) key;
-            PooledConnection connection = (PooledConnection) obj;
-
+        public void destroyObject(String nodeAddress, PooledConnection connection) throws Exception {
             logger.debug("Destroying connection '{}'", connection);
 
             connection.close();
@@ -908,21 +904,18 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
         }
 
         @Override
-        public boolean validateObject(Object key, Object obj) {
-            String nodeAddress = (String) key;
-            PooledConnection connection = (PooledConnection) obj;
-
+        public boolean validateObject(String nodeAddress, PooledConnection connection) {
             logger.debug("Validating connection '{}'", connection);
 
             return connectionValidator.validate(connection);
         }
 
         @Override
-        public void activateObject(Object key, Object obj) throws Exception {
+        public void activateObject(String nodeAddress, PooledConnection connection) throws Exception {
         }
 
         @Override
-        public void passivateObject(Object key, Object obj) throws Exception {
+        public void passivateObject(String nodeAddress, PooledConnection connection) throws Exception {
         }
     }
 
