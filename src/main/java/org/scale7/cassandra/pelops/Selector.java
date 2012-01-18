@@ -24,18 +24,47 @@
 
 package org.scale7.cassandra.pelops;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import static org.scale7.cassandra.pelops.Bytes.fromByteBuffer;
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.COUNTER_COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.SUPER_COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transform;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformKeySlices;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformKeySlicesUtf8;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformUtf8;
+import static org.scale7.cassandra.pelops.Validation.safeGetRowKey;
+import static org.scale7.cassandra.pelops.Validation.validateRowKeys;
+import static org.scale7.cassandra.pelops.Validation.validateRowKeysUtf8;
 
-import org.apache.cassandra.thrift.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ColumnParent;
+import org.apache.cassandra.thrift.ColumnPath;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.IndexClause;
+import org.apache.cassandra.thrift.IndexExpression;
+import org.apache.cassandra.thrift.IndexOperator;
+import org.apache.cassandra.thrift.KeyRange;
+import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SliceRange;
+import org.apache.cassandra.thrift.SuperColumn;
+import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
-import org.scale7.cassandra.pelops.exceptions.NotFoundException;
-
-import static org.scale7.cassandra.pelops.Bytes.*;
-import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.*;
-import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.<p/>

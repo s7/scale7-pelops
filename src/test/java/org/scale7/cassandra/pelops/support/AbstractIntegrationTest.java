@@ -5,19 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.KsDef;
 import org.junit.Before;
 import org.scale7.cassandra.pelops.Cluster;
 import org.scale7.cassandra.pelops.ColumnFamilyManager;
-import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
-import org.scale7.cassandra.pelops.pool.DebuggingPool;
-import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.KeyspaceManager;
 import org.scale7.cassandra.pelops.Mutator;
 import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.pool.DebuggingPool;
+import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 

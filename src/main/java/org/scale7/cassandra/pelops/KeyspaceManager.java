@@ -24,13 +24,13 @@
 
 package org.scale7.cassandra.pelops;
 
+import java.util.List;
+
+import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
-import org.apache.cassandra.thrift.Cassandra.Client;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 /**
  * Management operations need to be applied to a single node.

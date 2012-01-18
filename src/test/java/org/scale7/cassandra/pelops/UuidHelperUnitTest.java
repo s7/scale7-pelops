@@ -1,12 +1,12 @@
 package org.scale7.cassandra.pelops;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.scale7.cassandra.pelops.UuidHelper.millisFromTimeUuid;
+import static org.scale7.cassandra.pelops.UuidHelper.nonUniqueTimeUuidForDate;
 
 import java.util.UUID;
 
-import static org.junit.Assert.*;
-import static org.scale7.cassandra.pelops.UuidHelper.millisFromTimeUuid;
-import static org.scale7.cassandra.pelops.UuidHelper.nonUniqueTimeUuidForDate;
+import org.junit.Test;
 
 public class UuidHelperUnitTest {
     @Test

@@ -24,8 +24,8 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.cassandra.thrift.CfDef;
 
 public class ColumnFamilyManager extends ManagerOperand {
 

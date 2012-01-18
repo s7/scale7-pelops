@@ -24,6 +24,15 @@
 
 package org.scale7.cassandra.pelops;
 
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Validation.safeGetRowKey;
+import static org.scale7.cassandra.pelops.Validation.validateColumn;
+import static org.scale7.cassandra.pelops.Validation.validateColumnName;
+import static org.scale7.cassandra.pelops.Validation.validateColumnNames;
+import static org.scale7.cassandra.pelops.Validation.validateColumns;
+import static org.scale7.cassandra.pelops.Validation.validateCounterColumns;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,16 +40,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.thrift.*;
-import org.scale7.cassandra.pelops.exceptions.ModelException;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.CounterSuperColumn;
+import org.apache.cassandra.thrift.Deletion;
+import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SuperColumn;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
-import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
-import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by

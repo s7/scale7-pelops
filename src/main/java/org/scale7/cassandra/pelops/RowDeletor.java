@@ -24,14 +24,14 @@
 
 package org.scale7.cassandra.pelops;
 
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
-import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
-
-import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
-import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 
 /**
  * Facilitates the removal of data at a key-level.

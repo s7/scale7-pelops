@@ -24,10 +24,14 @@
 
 package org.scale7.cassandra.pelops.pool;
 
-import org.scale7.cassandra.pelops.*;
-import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
-
 import java.util.Set;
+
+import org.scale7.cassandra.pelops.IConnection;
+import org.scale7.cassandra.pelops.Mutator;
+import org.scale7.cassandra.pelops.OperandPolicy;
+import org.scale7.cassandra.pelops.RowDeletor;
+import org.scale7.cassandra.pelops.Selector;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 
 /**
  * The contract for connection pools used by pelops.

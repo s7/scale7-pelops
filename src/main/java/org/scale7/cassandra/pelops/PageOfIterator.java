@@ -24,11 +24,11 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import org.apache.cassandra.thrift.ConsistencyLevel;
 
 public abstract class PageOfIterator<E> implements Iterator<E> {
     protected final Selector selector;

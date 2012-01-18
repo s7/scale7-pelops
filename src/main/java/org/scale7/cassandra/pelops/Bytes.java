@@ -27,8 +27,13 @@ package org.scale7.cassandra.pelops;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
-import static org.scale7.cassandra.pelops.Validation.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Wraps a {@link java.nio.ByteBuffer} and provides useful methods to operate on it.

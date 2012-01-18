@@ -24,7 +24,8 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.*;
+import static org.scale7.cassandra.pelops.Bytes.fromByteBuffer;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -32,9 +33,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.cassandra.thrift.ColumnOrSuperColumn._Fields;
-import static org.scale7.cassandra.pelops.Bytes.fromByteBuffer;
-import static org.scale7.cassandra.pelops.Bytes.toUTF8;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn._Fields;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.CounterSuperColumn;
+import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.SuperColumn;
 
 /**
  * Contains helper methods for dealing with ColumnOrSuperColumn objects.

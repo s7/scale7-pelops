@@ -24,11 +24,12 @@
 
 package org.scale7.cassandra.pelops.spring;
 
-import org.scale7.cassandra.pelops.*;
+import java.util.Arrays;
+
+import org.scale7.cassandra.pelops.Cluster;
+import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
-import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy;
-import org.scale7.cassandra.pelops.pool.NoOpNodeSuspensionStrategy;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.DisposableBean;
@@ -36,8 +37,6 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.Assert;
-
-import java.util.Arrays;
 
 /**
  * <p>Used to initialize a Pelops pool that honors Spring's context life cycle.  Using this class ensures that the
