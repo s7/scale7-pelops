@@ -12,13 +12,13 @@ Pelops is provided under the [MIT licence](http://www.opensource.org/licenses/mi
 
 Releases
 =====================
-The latest stable release is 1.2-0.8.x, the latest SNAPSHOT is 1.3-1.0.x and can be downloaded (along with all versions) from: https://github.com/s7/mvnrepo/tree/master/org/scale7/scale7-pelops
+The latest stable release is 1.3-1.0.x, the latest SNAPSHOT is 1.4-1.0.x and can be downloaded (along with all versions) from: https://github.com/s7/mvnrepo/tree/master/org/scale7/scale7-pelops
 
 Using Pelops in a Maven project
 ========================
 To use Pelops with Cassandra 1.0.x use the following:
 
-1. Add the following repository to your project repositories:
+1. Add the following repository to your project repositories (note, the maven.scale7.org repo isn't nexus friendly):
 
         <repositories>
             <repository>
@@ -46,7 +46,7 @@ To use Pelops with Cassandra 1.0.x use the following:
 		<dependency>
 			<groupId>org.scale7</groupId>
 			<artifactId>scale7-pelops</artifactId>
-			<version>1.3-1.0.x-SNAPSHOT</version>
+			<version>1.3-1.0.x</version>
 		</dependency>
 
 3. Create your keyspace and column families using [cassandra-cli](http://wiki.apache.org/cassandra/CassandraCli).
