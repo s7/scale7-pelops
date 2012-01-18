@@ -24,12 +24,12 @@
 
 package org.scale7.cassandra.pelops;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.SlicePredicate;
-
-import java.util.LinkedHashMap;
-import java.util.List;
 
 public class ColumnRowIterator extends RowIterator<Column> {
     public ColumnRowIterator(Selector selector, String columnFamily, Bytes startBeyondKey, int batchSize, SlicePredicate colPredicate, ConsistencyLevel cLevel) {

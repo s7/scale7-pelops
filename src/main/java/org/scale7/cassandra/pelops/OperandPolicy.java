@@ -24,7 +24,6 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.scale7.cassandra.pelops.exceptions.IExceptionTranslator;
 
 /**

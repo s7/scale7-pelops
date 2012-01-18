@@ -1,12 +1,15 @@
 package org.scale7.cassandra.pelops;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link Bytes} class.

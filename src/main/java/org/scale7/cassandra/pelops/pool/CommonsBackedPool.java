@@ -24,23 +24,34 @@
 
 package org.scale7.cassandra.pelops.pool;
 
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
-import org.scale7.cassandra.pelops.*;
+import org.scale7.cassandra.pelops.Cluster;
+import org.scale7.cassandra.pelops.Connection;
+import org.scale7.cassandra.pelops.JmxMBeanManager;
+import org.scale7.cassandra.pelops.OperandPolicy;
 import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import java.net.SocketException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPoolMBean {
     private static final Logger logger = SystemProxy.getLoggerFromFactory(CommonsBackedPool.class);

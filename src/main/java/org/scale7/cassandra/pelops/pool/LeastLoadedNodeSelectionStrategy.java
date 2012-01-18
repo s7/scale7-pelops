@@ -24,10 +24,13 @@
 
 package org.scale7.cassandra.pelops.pool;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import java.util.*;
 
 /**
  * Selects a node based on the number of connections a node currently has in use.  The node that has the least active

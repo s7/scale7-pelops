@@ -1,10 +1,11 @@
 package org.scale7.cassandra.pelops.exceptions;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.net.SocketException;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link IExceptionTranslator.ExceptionTranslator} class.

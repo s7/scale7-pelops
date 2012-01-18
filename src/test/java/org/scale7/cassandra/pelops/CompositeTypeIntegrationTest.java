@@ -28,18 +28,20 @@
  */
 package org.scale7.cassandra.pelops;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.junit.*;
-import static org.junit.Assert.*;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
-
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 import org.scale7.cassandra.pelops.types.CompositeType;
 

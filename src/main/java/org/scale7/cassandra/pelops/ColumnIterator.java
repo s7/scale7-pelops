@@ -24,10 +24,10 @@
 
 package org.scale7.cassandra.pelops;
 
+import java.util.List;
+
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-
-import java.util.List;
 
 /**
  * Encapsulates the logic required to iterate over columns.  See
