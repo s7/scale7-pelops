@@ -522,6 +522,7 @@ public class BytesUnitTest {
     public void testBuilder() {
         final String utf8Part = "foo";
         final int intPart = 123;
+        @SuppressWarnings("deprecation")
         Bytes bytes = Bytes.composite().addUTF8(utf8Part).addInt(intPart).build();
 
         final ByteBuffer byteBuffer = bytes.getBytes();
