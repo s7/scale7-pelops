@@ -24,8 +24,13 @@
 
 package org.scale7.cassandra.pelops;
 
+import org.apache.cassandra.thrift.Cassandra.AsyncClient;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.system_add_column_family_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.system_drop_column_family_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.system_update_column_family_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.truncate_call;
 import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 public class ColumnFamilyManager extends ManagerOperand {
 
@@ -47,10 +52,17 @@ public class ColumnFamilyManager extends ManagerOperand {
     }
 
     public void truncateColumnFamily(final String columnFamily) throws Exception {
-    	IManagerOperation<Void> operation = new IManagerOperation<Void>() {
+    	IManagerOperation<truncate_call, Void> operation = new IManagerOperation<truncate_call, Void>() {
+
             @Override
-            public Void execute(Client conn) throws Exception {
-                conn.truncate(columnFamily);
+            public void execute(AsyncClient conn, AsyncMethodCallback<truncate_call> callback)
+                    throws Exception {
+                conn.truncate(columnFamily, callback);
+            }
+
+            @Override
+            public Void getResult(truncate_call call) throws Exception {
+                call.getResult();
                 return null;
             }
         };
@@ -58,30 +70,54 @@ public class ColumnFamilyManager extends ManagerOperand {
     }
 
     public String addColumnFamily(final CfDef columnFamilyDefinition) throws Exception {
-    	IManagerOperation<String> operation = new IManagerOperation<String>() {
+    	IManagerOperation<system_add_column_family_call, String> operation = new IManagerOperation<system_add_column_family_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_add_column_family(columnFamilyDefinition);
+            public void execute(AsyncClient conn, AsyncMethodCallback<system_add_column_family_call> callback)
+                    throws Exception {
+                conn.system_add_column_family(columnFamilyDefinition, callback);
+            }
+
+            @Override
+            public String getResult(system_add_column_family_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
     }
 
     public String updateColumnFamily(final CfDef columnFamilyDefinition) throws Exception {
-    	IManagerOperation<String> operation = new IManagerOperation<String>() {
+    	IManagerOperation<system_update_column_family_call, String> operation = new IManagerOperation<system_update_column_family_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_update_column_family(columnFamilyDefinition);
+            public void execute(AsyncClient conn, AsyncMethodCallback<system_update_column_family_call> callback)
+                    throws Exception {
+                conn.system_update_column_family(columnFamilyDefinition, callback);
+            }
+
+            @Override
+            public String getResult(system_update_column_family_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
     }
 
     public String dropColumnFamily(final String columnFamily) throws Exception {
-    	IManagerOperation<String> operation = new IManagerOperation<String>() {
+    	IManagerOperation<system_drop_column_family_call, String> operation = new IManagerOperation<system_drop_column_family_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_drop_column_family(columnFamily);
+            public void execute(AsyncClient conn, AsyncMethodCallback<system_drop_column_family_call> callback)
+                    throws Exception {
+                conn.system_drop_column_family(columnFamily, callback);
+            }
+
+            @Override
+            public String getResult(system_drop_column_family_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
@@ -89,10 +125,18 @@ public class ColumnFamilyManager extends ManagerOperand {
 
     /* - https://issues.apache.org/jira/browse/CASSANDRA-1630
     public String renameColumnFamily(final String oldName, final String newName) throws Exception {
-    	IManagerOperation<String> operation = new IManagerOperation<String>() {
+    	IManagerOperation<system_rename_column_family_call, String> operation = new IManagerOperation<system_rename_column_family_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_rename_column_family(oldName, newName);
+            public void execute(AsyncClient conn, AsyncMethodCallback<system_rename_column_family_call> callback)
+                    throws Exception {
+                conn.system_rename_column_family(oldName, newName, callback);
+            }
+
+            @Override
+            public String getResult(system_rename_column_family_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);

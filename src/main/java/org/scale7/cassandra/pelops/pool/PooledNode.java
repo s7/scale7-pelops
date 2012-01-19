@@ -24,13 +24,13 @@
 
 package org.scale7.cassandra.pelops.pool;
 
-import org.scale7.cassandra.pelops.JmxMBeanManager;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.scale7.cassandra.pelops.JmxMBeanManager;
+import org.scale7.portability.SystemProxy;
+import org.slf4j.Logger;
 
 /**
 * A pooled node class used by the {@link org.scale7.cassandra.pelops.pool.CommonsBackedPool}.

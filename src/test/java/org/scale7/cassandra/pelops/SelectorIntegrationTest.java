@@ -1,18 +1,44 @@
 package org.scale7.cassandra.pelops;
 
-import com.google.common.collect.Lists;
-import org.apache.cassandra.thrift.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.scale7.cassandra.pelops.Bytes.fromChar;
+import static org.scale7.cassandra.pelops.Bytes.fromLong;
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_BYTES;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_COMPARATOR_LONG;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_STANDARD;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_TYPE_SUPER;
+import static org.scale7.cassandra.pelops.ColumnFamilyManager.CFDEF_VALIDATION_CLASS_COUNTER;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.apache.cassandra.thrift.CfDef;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnDef;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.IndexOperator;
+import org.apache.cassandra.thrift.IndexType;
+import org.apache.cassandra.thrift.SuperColumn;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scale7.cassandra.pelops.exceptions.InvalidRequestException;
 import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
-import java.util.*;
-
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.scale7.cassandra.pelops.Bytes.*;
-import static org.scale7.cassandra.pelops.ColumnFamilyManager.*;
+import com.google.common.collect.Lists;
 
 /**
  * Tests the {@link org.scale7.cassandra.pelops.Selector} class.

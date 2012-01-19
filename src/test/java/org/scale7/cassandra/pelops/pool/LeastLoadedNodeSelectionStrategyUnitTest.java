@@ -1,14 +1,20 @@
 package org.scale7.cassandra.pelops.pool;
 
-import com.google.common.collect.Sets;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.*;
-
-import static org.junit.Assert.*;
+import com.google.common.collect.Sets;
 
 /**
  * Tests the {@link LeastLoadedNodeSelectionStrategy} class.

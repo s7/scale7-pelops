@@ -24,6 +24,15 @@
 
 package org.scale7.cassandra.pelops;
 
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Validation.safeGetRowKey;
+import static org.scale7.cassandra.pelops.Validation.validateColumn;
+import static org.scale7.cassandra.pelops.Validation.validateColumnName;
+import static org.scale7.cassandra.pelops.Validation.validateColumnNames;
+import static org.scale7.cassandra.pelops.Validation.validateColumns;
+import static org.scale7.cassandra.pelops.Validation.validateCounterColumns;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,16 +40,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.thrift.*;
-import org.scale7.cassandra.pelops.exceptions.ModelException;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.batch_mutate_call;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.CounterSuperColumn;
+import org.apache.cassandra.thrift.Deletion;
+import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SuperColumn;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
-
-import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
-import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
-import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -49,10 +60,8 @@ import static org.scale7.cassandra.pelops.Validation.*;
  * object can not be re-used.
  *
  * @author dominicwilliams
- *
  */
 public class Mutator extends Operand {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
@@ -62,6 +71,7 @@ public class Mutator extends Operand {
     public void execute(final ConsistencyLevel cLevel) throws PelopsException {
         execute(cLevel, thrift.getOperandPolicy());
     }
+    
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
      * @param cLevel                    The Cassandra consistency level to be used
@@ -84,15 +94,16 @@ public class Mutator extends Operand {
         IOperation<Void> operation = new IOperation<Void>() {
             @Override
             public Void execute(IThriftPool.IPooledConnection conn) throws Exception {
+                BlockingCallback<batch_mutate_call> batchMutateHandler = new BlockingCallback<batch_mutate_call>();
                 // Send batch mutation job to Thrift connection
-                conn.getAPI().batch_mutate(batch, cLevel);
+                conn.getAPI().batch_mutate(batch, cLevel, batchMutateHandler);
+                batchMutateHandler.getResult().getResult();
                 // Nothing to return
                 return null;
             }
         };
         tryOperation(operation, operandPolicy);
     }
-
 
     /**
      * Write a column value.

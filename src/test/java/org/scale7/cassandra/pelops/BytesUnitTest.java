@@ -1,12 +1,15 @@
 package org.scale7.cassandra.pelops;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link Bytes} class.
@@ -519,6 +522,7 @@ public class BytesUnitTest {
     public void testBuilder() {
         final String utf8Part = "foo";
         final int intPart = 123;
+        @SuppressWarnings("deprecation")
         Bytes bytes = Bytes.composite().addUTF8(utf8Part).addInt(intPart).build();
 
         final ByteBuffer byteBuffer = bytes.getBytes();

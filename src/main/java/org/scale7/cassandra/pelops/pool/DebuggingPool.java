@@ -24,18 +24,18 @@
 
 package org.scale7.cassandra.pelops.pool;
 
-import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.thrift.TException;
-import org.scale7.cassandra.pelops.*;
-import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
-
 import java.net.SocketException;
 import java.util.Random;
 import java.util.Set;
 
-import static java.lang.String.format;
+import org.apache.cassandra.thrift.InvalidRequestException;
+import org.apache.thrift.TException;
+import org.scale7.cassandra.pelops.Cluster;
+import org.scale7.cassandra.pelops.Connection;
+import org.scale7.cassandra.pelops.OperandPolicy;
+import org.scale7.cassandra.pelops.exceptions.NoConnectionsAvailableException;
+import org.scale7.portability.SystemProxy;
+import org.slf4j.Logger;
 
 /**
  * A basic non-pooled pool impl. A new connection is opened each time the {@link #getConnection()} or

@@ -1,9 +1,11 @@
 package org.scale7.cassandra.pelops;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import org.apache.cassandra.thrift.AuthenticationRequest;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests the {@link org.scale7.cassandra.pelops.Cluster} class.

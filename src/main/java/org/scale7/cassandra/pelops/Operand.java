@@ -24,23 +24,18 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.AuthenticationException;
-import org.apache.cassandra.thrift.AuthorizationException;
-import org.apache.cassandra.thrift.InvalidRequestException;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
-import org.apache.thrift.TApplicationException;
-import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransportException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Base class for objects operating against a Cassandra keyspace.

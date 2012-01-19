@@ -24,10 +24,14 @@
 
 package org.scale7.cassandra.pelops;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.SlicePredicate;
-
-import java.util.*;
 
 public abstract class RowIterator<E> implements Iterator<Map.Entry<Bytes, List<E>>> {
     protected final Selector selector;

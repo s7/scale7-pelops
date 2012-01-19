@@ -24,11 +24,13 @@
 
 package org.scale7.cassandra.pelops.pool;
 
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_version_call;
+import org.scale7.cassandra.pelops.BlockingCallback;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
 /**
- * A simple impl. that issues a call to {@link org.apache.cassandra.thrift.Cassandra.Client#describe_version} to
+ * A simple impl. that issues a call to {@link org.apache.cassandra.thrift.Cassandra.AsyncClient#describe_version} to
  * validate that the connection still works.
  */
 public class DescribeVersionConnectionValidator implements CommonsBackedPool.IConnectionValidator {
@@ -40,8 +42,10 @@ public class DescribeVersionConnectionValidator implements CommonsBackedPool.ICo
      */
     @Override
     public boolean validate(CommonsBackedPool.PooledConnection connection) {
+        BlockingCallback<describe_version_call> describeVersionHandler = new BlockingCallback<describe_version_call>();
         try {
-            connection.getAPI().describe_version();
+            connection.getAPI().describe_version(describeVersionHandler);
+            describeVersionHandler.getResult();
         } catch (Exception e) {
             logger.debug("Connection '{}' failed to validate", connection);
             return false;

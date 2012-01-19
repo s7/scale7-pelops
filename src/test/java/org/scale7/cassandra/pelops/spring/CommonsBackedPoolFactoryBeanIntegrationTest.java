@@ -1,15 +1,21 @@
 package org.scale7.cassandra.pelops.spring;
 
-import org.apache.cassandra.thrift.CfDef;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.scale7.cassandra.pelops.*;
-import org.scale7.cassandra.pelops.pool.*;
-import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import org.apache.cassandra.thrift.CfDef;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.scale7.cassandra.pelops.OperandPolicy;
+import org.scale7.cassandra.pelops.pool.CommonsBackedPool;
+import org.scale7.cassandra.pelops.pool.LeastLoadedNodeSelectionStrategy;
+import org.scale7.cassandra.pelops.pool.NoOpConnectionValidator;
+import org.scale7.cassandra.pelops.pool.NoOpNodeSuspensionStrategy;
+import org.scale7.cassandra.pelops.support.AbstractIntegrationTest;
 
 /**
  * Tests the {@link CommonsBackedPoolFactoryBean} class.

@@ -24,18 +24,53 @@
 
 package org.scale7.cassandra.pelops;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import static org.scale7.cassandra.pelops.Bytes.fromByteBuffer;
+import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
+import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
+import static org.scale7.cassandra.pelops.Bytes.toUTF8;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.COUNTER_COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.SUPER_COLUMN;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transform;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformKeySlices;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformKeySlicesUtf8;
+import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.transformUtf8;
+import static org.scale7.cassandra.pelops.Validation.safeGetRowKey;
+import static org.scale7.cassandra.pelops.Validation.validateRowKeys;
+import static org.scale7.cassandra.pelops.Validation.validateRowKeysUtf8;
 
-import org.apache.cassandra.thrift.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.get_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.get_count_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.get_indexed_slices_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.get_range_slices_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.get_slice_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.multiget_slice_call;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ColumnParent;
+import org.apache.cassandra.thrift.ColumnPath;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.CounterColumn;
+import org.apache.cassandra.thrift.IndexClause;
+import org.apache.cassandra.thrift.IndexExpression;
+import org.apache.cassandra.thrift.IndexOperator;
+import org.apache.cassandra.thrift.KeyRange;
+import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SliceRange;
+import org.apache.cassandra.thrift.SuperColumn;
+import org.scale7.cassandra.pelops.exceptions.NotFoundException;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
 import org.scale7.cassandra.pelops.pool.IThriftPool.IPooledConnection;
-import org.scale7.cassandra.pelops.exceptions.NotFoundException;
-
-import static org.scale7.cassandra.pelops.Bytes.*;
-import static org.scale7.cassandra.pelops.ColumnOrSuperColumnHelper.*;
-import static org.scale7.cassandra.pelops.Validation.*;
 
 /**
  * Facilitates the selective retrieval of column data from rows in a Cassandra keyspace.<p/>
@@ -273,7 +308,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<Integer>() {
             @Override
             public Integer execute(IPooledConnection conn) throws Exception {
-                return conn.getAPI().get_count(safeGetRowKey(rowKey), colParent, predicate, cLevel);
+                BlockingCallback<get_count_call> getCountHandler = new BlockingCallback<get_count_call>();
+                conn.getAPI().get_count(safeGetRowKey(rowKey), colParent, predicate, cLevel, getCountHandler);
+                return getCountHandler.getResult().getResult();
             }
         });
     }
@@ -311,7 +348,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<ColumnOrSuperColumn>() {
             @Override
             public ColumnOrSuperColumn execute(IThriftPool.IPooledConnection conn) throws Exception {
-                return conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel);
+                BlockingCallback<get_call> getHandler = new BlockingCallback<get_call>();
+                conn.getAPI().get(safeGetRowKey(rowKey), cp, cLevel, getHandler);
+                return getHandler.getResult().getResult();
             }
         });
     }
@@ -680,7 +719,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<List<ColumnOrSuperColumn>>() {
             @Override
             public List<ColumnOrSuperColumn> execute(IPooledConnection conn) throws Exception {
-                return conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel);
+                BlockingCallback<get_slice_call> getSliceHandler = new BlockingCallback<get_slice_call>();
+                conn.getAPI().get_slice(safeGetRowKey(rowKey), colParent, colPredicate, cLevel, getSliceHandler);
+                return getSliceHandler.getResult().getResult();
             }
         });
     }
@@ -1470,7 +1511,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<Map<ByteBuffer, List<ColumnOrSuperColumn>>>() {
             @Override
             public Map<ByteBuffer, List<ColumnOrSuperColumn>> execute(IPooledConnection conn) throws Exception {
-                return conn.getAPI().multiget_slice(rowKeys, columnParent, colPredicate, cLevel);
+                BlockingCallback<multiget_slice_call> multigetSliceHandler = new BlockingCallback<multiget_slice_call>();
+                conn.getAPI().multiget_slice(rowKeys, columnParent, colPredicate, cLevel, multigetSliceHandler);
+                return multigetSliceHandler.getResult().getResult();
             }
         });
     }
@@ -1764,7 +1807,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<List<KeySlice>>() {
             @Override
             public List<KeySlice> execute(IPooledConnection conn) throws Exception {
-                return conn.getAPI().get_range_slices(columnParent, colPredicate, keyRange, cLevel);
+                BlockingCallback<get_range_slices_call> getRangeSlicesHandler = new BlockingCallback<get_range_slices_call>();
+                conn.getAPI().get_range_slices(columnParent, colPredicate, keyRange, cLevel, getRangeSlicesHandler);
+                return getRangeSlicesHandler.getResult().getResult();
             }
         });
     }
@@ -1877,7 +1922,9 @@ public class Selector extends Operand {
         return tryOperation(new IOperation<List<KeySlice>>() {
             @Override
             public List<KeySlice> execute(IThriftPool.IPooledConnection conn) throws Exception {
-                return conn.getAPI().get_indexed_slices(colParent, indexClause, colPredicate, cLevel);
+                BlockingCallback<get_indexed_slices_call> getIndexedSlicesHandler = new BlockingCallback<get_indexed_slices_call>();
+                conn.getAPI().get_indexed_slices(colParent, indexClause, colPredicate, cLevel, getIndexedSlicesHandler);
+                return getIndexedSlicesHandler.getResult().getResult();
             }
         });
     }

@@ -27,6 +27,7 @@ package org.scale7.cassandra.pelops;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.transport.TTransportException;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
@@ -119,16 +120,44 @@ public class ManagerOperand {
             connection.close();
 	}
 
-	protected interface IManagerOperation<ReturnType> {
-		ReturnType execute(Cassandra.Client conn) throws Exception;
+	protected interface IManagerOperation<Call, ReturnType> {
+	    
+	    /**
+	     * Executes the operation, passing the result (or exception) to the
+	     * given callback
+	     *
+	     * @param conn the client to use for the operation
+	     * @param callback the callback to invoke with the result
+	     * @throws Exception
+	     */
+		void execute(Cassandra.AsyncClient conn, AsyncMethodCallback<Call> callback) throws Exception;
+		
+		/**
+		 * Returns the result of the given call.
+		 * <p>
+		 * Design note: this method is only required because
+		 * {@link org.apache.thrift.async.TAsyncMethodCall} doesn't contain an
+		 * abstract <code>getResult()</code> method. Otherwise, {@link ManagerOperand#tryOperation(IManagerOperation)}
+		 * could call <code>getResult()</code> polymorphically on the
+		 * {@link org.apache.thrift.async.TAsyncMethodCall} it obtains from the
+		 * {@link AsyncMethodCallback}.
+		 *
+		 * @param call the result of the call after {@link #execute} has been
+		 * invoked
+		 * @return the result of the given call
+		 * @throws Exception
+		 */
+		ReturnType getResult(Call call) throws Exception;
 	}
 
-	protected <ReturnType> ReturnType tryOperation(IManagerOperation<ReturnType> operation) throws Exception {
+	protected <CallType, ReturnType> ReturnType tryOperation(IManagerOperation<CallType, ReturnType> operation) throws Exception {
 
 		openClient();
 		try {
-			// Execute operation
-			ReturnType result = operation.execute(connection.getAPI());
+		    // Execute operation
+		    BlockingCallback<CallType> callback = new BlockingCallback<CallType>();
+		    operation.execute(connection.getAPI(), callback);
+			ReturnType result = operation.getResult(callback.getResult());
 			// Close client
 			closeClient();
             // Return result!

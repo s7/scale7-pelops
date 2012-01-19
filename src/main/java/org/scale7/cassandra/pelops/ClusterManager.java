@@ -24,7 +24,10 @@
 
 package org.scale7.cassandra.pelops;
 
-import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_cluster_name_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_version_call;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 public class ClusterManager extends ManagerOperand {
 
@@ -38,10 +41,19 @@ public class ClusterManager extends ManagerOperand {
 	 * @throws Exception
 	 */
     public String getClusterName() throws Exception {
-        IManagerOperation<String> operation = new IManagerOperation<String>() {
+        IManagerOperation<describe_cluster_name_call, String> operation = new IManagerOperation<describe_cluster_name_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.describe_cluster_name();
+            public void execute(AsyncClient conn,
+                    AsyncMethodCallback<describe_cluster_name_call> callback)
+                    throws Exception {
+                conn.describe_cluster_name(callback);
+            }
+
+            @Override
+            public String getResult(describe_cluster_name_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
@@ -53,10 +65,18 @@ public class ClusterManager extends ManagerOperand {
      * @throws Exception
      */
     public String getCassandraVersion() throws Exception {
-        IManagerOperation<String> operation = new IManagerOperation<String>() {
+        IManagerOperation<describe_version_call, String> operation = new IManagerOperation<describe_version_call, String>() {
+            
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.describe_version();
+            public void execute(AsyncClient conn, AsyncMethodCallback<describe_version_call> callback)
+                    throws Exception {
+                conn.describe_version(callback);
+            }
+
+            @Override
+            public String getResult(describe_version_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
