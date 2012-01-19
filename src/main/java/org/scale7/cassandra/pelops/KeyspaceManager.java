@@ -26,9 +26,15 @@ package org.scale7.cassandra.pelops;
 
 import java.util.List;
 
-import org.apache.cassandra.thrift.Cassandra.Client;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_keyspace_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_keyspaces_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.describe_ring_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.system_add_keyspace_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.system_drop_keyspace_call;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.TokenRange;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
@@ -54,41 +60,70 @@ public class KeyspaceManager extends ManagerOperand {
     }
 
     public List<KsDef> getKeyspaceNames() throws Exception {
-        IManagerOperation<List<KsDef>> operation = new IManagerOperation<List<KsDef>>() {
+        IManagerOperation<describe_keyspaces_call, List<KsDef>> operation = new IManagerOperation<describe_keyspaces_call, List<KsDef>>() {
+
             @Override
-            public List<KsDef> execute(Client conn) throws Exception {
-                return conn.describe_keyspaces();
+            public void execute(AsyncClient conn, AsyncMethodCallback<describe_keyspaces_call> callback)
+                    throws Exception {
+                conn.describe_keyspaces(callback);
+            }
+
+            @Override
+            public List<KsDef> getResult(describe_keyspaces_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
     }
 
     public List<TokenRange> getKeyspaceRingMappings(final String keyspace) throws Exception {
-        IManagerOperation<List<TokenRange>> operation = new IManagerOperation<List<TokenRange>>() {
+        IManagerOperation<describe_ring_call, List<TokenRange>> operation = new IManagerOperation<describe_ring_call, List<TokenRange>>() {
+
             @Override
-            public List<TokenRange> execute(Client conn) throws Exception {
-                return conn.describe_ring(keyspace);
+            public void execute(AsyncClient conn, AsyncMethodCallback<describe_ring_call> callback)
+                    throws Exception {
+                conn.describe_ring(keyspace, callback);
+            }
+
+            @Override
+            public List<TokenRange> getResult(describe_ring_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         return tryOperation(operation);
     }
 
     public KsDef getKeyspaceSchema(final String keyspace) throws Exception {
-		IManagerOperation<KsDef> operation = new IManagerOperation<KsDef>() {
+		IManagerOperation<describe_keyspace_call, KsDef> operation = new IManagerOperation<describe_keyspace_call, KsDef>() {
 			@Override
-			public KsDef execute(Client conn) throws Exception {
-				return conn.describe_keyspace(keyspace);
+			public void execute(AsyncClient conn, AsyncMethodCallback<describe_keyspace_call> callback) throws Exception {
+				conn.describe_keyspace(keyspace, callback);
 			}
+
+            @Override
+            public KsDef getResult(describe_keyspace_call call) throws Exception {
+                return call.getResult();
+            }
 		};
 		return tryOperation(operation);
 	}
 
     public String addKeyspace(final KsDef keyspaceDefinition) throws Exception {
         if (logger.isInfoEnabled()) logger.info("Adding keyspace '{}'", keyspaceDefinition.getName());
-        IManagerOperation<String> operation = new IManagerOperation<String>() {
+        IManagerOperation<system_add_keyspace_call, String> operation = new IManagerOperation<system_add_keyspace_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_add_keyspace(keyspaceDefinition);
+            public void execute(AsyncClient conn, AsyncMethodCallback<system_add_keyspace_call> callback)
+                    throws Exception {
+                conn.system_add_keyspace(keyspaceDefinition, callback);
+            }
+
+            @Override
+            public String getResult(system_add_keyspace_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         String schemaVersion = tryOperation(operation);
@@ -99,10 +134,19 @@ public class KeyspaceManager extends ManagerOperand {
 
     public String dropKeyspace(final String keyspace) throws Exception {
         if (logger.isInfoEnabled()) logger.info("Dropping keyspace '{}'", keyspace);
-        IManagerOperation<String> operation = new IManagerOperation<String>() {
+        IManagerOperation<system_drop_keyspace_call, String> operation = new IManagerOperation<system_drop_keyspace_call, String>() {
+
             @Override
-            public String execute(Client conn) throws Exception {
-                return conn.system_drop_keyspace(keyspace);
+            public void execute(AsyncClient conn,
+                    AsyncMethodCallback<system_drop_keyspace_call> callback)
+                    throws Exception {
+                conn.system_drop_keyspace(keyspace, callback);
+            }
+
+            @Override
+            public String getResult(system_drop_keyspace_call call)
+                    throws Exception {
+                return call.getResult();
             }
         };
         String schemaVersion = tryOperation(operation);

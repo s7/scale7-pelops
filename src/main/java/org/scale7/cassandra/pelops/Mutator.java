@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.batch_mutate_call;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ConsistencyLevel;
@@ -93,8 +94,10 @@ public class Mutator extends Operand {
         IOperation<Void> operation = new IOperation<Void>() {
             @Override
             public Void execute(IThriftPool.IPooledConnection conn) throws Exception {
+                BlockingCallback<batch_mutate_call> batchMutateHandler = new BlockingCallback<batch_mutate_call>();
                 // Send batch mutation job to Thrift connection
-                conn.getAPI().batch_mutate(batch, cLevel);
+                conn.getAPI().batch_mutate(batch, cLevel, batchMutateHandler);
+                batchMutateHandler.getResult().getResult();
                 // Nothing to return
                 return null;
             }

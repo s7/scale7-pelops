@@ -27,6 +27,7 @@ package org.scale7.cassandra.pelops;
 import static org.scale7.cassandra.pelops.Bytes.fromUTF8;
 import static org.scale7.cassandra.pelops.Bytes.nullSafeGet;
 
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.remove_call;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
@@ -68,7 +69,9 @@ public class RowDeletor extends Operand {
 		IOperation<Void> operation = new IOperation<Void>() {
 			@Override
 			public Void execute(IPooledConnection conn) throws Exception {
-				conn.getAPI().remove(nullSafeGet(rowKey), path, timestamp, cLevel);
+			    BlockingCallback<remove_call> removeCallHandler = new BlockingCallback<remove_call>();
+			    conn.getAPI().remove(nullSafeGet(rowKey), path, timestamp, cLevel, removeCallHandler);
+				removeCallHandler.getResult().getResult();
 				return null;
 			}
 		};

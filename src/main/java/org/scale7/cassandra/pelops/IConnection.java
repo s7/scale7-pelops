@@ -28,12 +28,13 @@ import org.apache.cassandra.thrift.Cassandra;
 import org.apache.thrift.transport.TTransportException;
 
 public interface IConnection {
+    
     /**
      * Get a reference to the Cassandra Thrift API
      *
      * @return The raw Thrift interface
      */
-    Cassandra.Client getAPI();
+    Cassandra.AsyncClient getAPI();
 
     /**
      * Get a node this instance is connected to.
