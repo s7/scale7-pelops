@@ -920,7 +920,6 @@ public class CommonsBackedPool extends ThriftPoolBase implements CommonsBackedPo
 
         @Override
         public boolean validateObject(Object key, Object obj) {
-            String nodeAddress = (String) key;
             PooledConnection connection = (PooledConnection) obj;
 
             logger.debug("Validating connection '{}'", connection);

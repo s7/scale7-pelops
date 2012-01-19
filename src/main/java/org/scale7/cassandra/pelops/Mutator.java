@@ -51,8 +51,6 @@ import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SuperColumn;
 import org.scale7.cassandra.pelops.exceptions.PelopsException;
 import org.scale7.cassandra.pelops.pool.IThriftPool;
-import org.scale7.portability.SystemProxy;
-import org.slf4j.Logger;
 
 /**
  * Facilitates the mutation of data within a Cassandra keyspace: the desired mutations should first be specified by
@@ -61,10 +59,8 @@ import org.slf4j.Logger;
  * object can not be re-used.
  *
  * @author dominicwilliams
- *
  */
 public class Mutator extends Operand {
-    private static final Logger logger = SystemProxy.getLoggerFromFactory(Mutator.class);
 
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
@@ -74,6 +70,7 @@ public class Mutator extends Operand {
     public void execute(final ConsistencyLevel cLevel) throws PelopsException {
         execute(cLevel, thrift.getOperandPolicy());
     }
+    
     /**
      * Execute the mutations that have been specified by sending them to Cassandra in a single batch.
      * @param cLevel                    The Cassandra consistency level to be used
@@ -104,7 +101,6 @@ public class Mutator extends Operand {
         };
         tryOperation(operation, operandPolicy);
     }
-
 
     /**
      * Write a column value.
