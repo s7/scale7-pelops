@@ -112,11 +112,13 @@ public class PooledNode implements PooledNodeMBean {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public int getNumActive() {
         return pool.getUnderlyingPool().getNumActive(address);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public int getNumIdle() {
         return pool.getUnderlyingPool().getNumIdle(address);
     }
