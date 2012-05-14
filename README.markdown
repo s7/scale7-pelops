@@ -16,7 +16,7 @@ The latest stable release is 1.3-1.0.x, the latest SNAPSHOT is 1.4-1.0.x and can
 
 Using Pelops in a Maven project
 ========================
-To use Pelops with Cassandra 1.0.x use the following:
+To use Pelops with Cassandra 1.1.x use the following:
 
 1. Add the following repository to your project repositories (note, the maven.scale7.org repo isn't nexus friendly):
 
@@ -41,7 +41,7 @@ To use Pelops with Cassandra 1.0.x use the following:
             </repository>
         </repositories>
 
-2a. Add the Pelops dependency to your project (depends on Cassandra 1.0.x):
+2a. Add the Pelops dependency to your project (depends on Cassandra 1.1.x):
 
 		<dependency>
 			<groupId>org.scale7</groupId>
@@ -103,9 +103,9 @@ Pelops requires the following dependencies at runtime.  These dependencies are i
 * org.slf4j:slf4j-api - version: 1.5.11
 * com.eaio.uuid:uuid - version: 3.2
 * org.scale7:scale7-core -version: 1.3
-* org.apache.cassandra:cassandra-thrift - version: 1.0.6
-*   -> org.apache.cassandra:cassandra-thrift - version: 1.0.6
-*   -> org.apache.thrift.libthrift - version: 0.6.1
+* org.apache.cassandra:cassandra-thrift - version: 1.1.0
+*   -> org.apache.cassandra:cassandra-thrift - version: 1.1.0
+*   -> org.apache.thrift.libthrift - version: 0.7.0
 * commons-pool:commons-pool - version: 1.6
 
 Pelops also includes the following **[optional dependencies](http://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html)** that are **not required or included unless you explicitly want/need them**.  The classes and methods that require these optional dependencies are clearly Javadoc'ed so you shouldn't have any trouble figuring out when to include them.
