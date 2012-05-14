@@ -117,3 +117,8 @@ More Resources
 ============
 * [Mailing List](http://groups.google.com/group/scale7)
 * [Introduction on Bits and Bytes](http://ria101.wordpress.com/2010/06/11/pelops-the-beautiful-cassandra-database-client-for-java/)
+
+Projects that use Pelops
+============
+* [Fight My Monster](http://www.fightmymonster.com/)
+* [Digital Pigeon](https://digitalpigeon.com)
