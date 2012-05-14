@@ -201,7 +201,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromChar(char value) {
         return new Bytes(BufferHelper.fromChar(value), false);
@@ -212,7 +212,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromChar(Character value) {
         return value == null ? NULL : fromChar(value.charValue());
@@ -223,7 +223,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromByte(byte value) {
         return new Bytes(BufferHelper.fromByte(value), false);
@@ -234,7 +234,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromByte(Byte value) {
         return value == null ? NULL : fromByte(value.byteValue());
@@ -245,7 +245,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromLong(long value) {
         return new Bytes(BufferHelper.fromLong(value), false);
@@ -256,7 +256,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromLong(Long value) {
         return value == null ? NULL : fromLong(value.longValue());
@@ -267,7 +267,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromInt(int value) {
         return new Bytes(BufferHelper.fromInt(value), false);
@@ -278,7 +278,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromInt(Integer value) {
         return value == null ? NULL : fromInt(value.intValue());
@@ -289,7 +289,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromShort(short value) {
         return new Bytes(BufferHelper.fromShort(value), false);
@@ -300,7 +300,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromShort(Short value) {
         return value == null ? NULL : fromShort(value.shortValue());
@@ -311,7 +311,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromDouble(double value) {
         return new Bytes(BufferHelper.fromDouble(value), false);
@@ -322,7 +322,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromDouble(Double value) {
         return value == null ? NULL : fromDouble(value.doubleValue());
@@ -333,7 +333,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromFloat(float value) {
         return new Bytes(BufferHelper.fromFloat(value), false);
@@ -344,7 +344,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromFloat(Float value) {
         return value == null ? NULL : fromFloat(value.floatValue());
@@ -355,7 +355,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromBoolean(boolean value) {
         return new Bytes(BufferHelper.fromBoolean(value), false);
@@ -366,7 +366,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on serializaion format
+     * @see java.nio.ByteBuffer for details on serialization format
      */
     public static Bytes fromBoolean(Boolean value) {
         return value == null ? NULL : fromBoolean(value.booleanValue());
@@ -378,7 +378,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      */
     public static Bytes fromUuid(UUID value) {
         return value == null ? NULL : new Bytes(BufferHelper.fromUuid(value), false);
@@ -391,7 +391,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      */
     public static Bytes fromUuid(String value) {
         return value == null ? NULL : new Bytes(BufferHelper.fromUuid(value), false);
@@ -404,7 +404,7 @@ public class Bytes {
      * @param msb the msb value
      * @param lsb the lsb value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      */
     public static Bytes fromUuid(long msb, long lsb) {
         return new Bytes(BufferHelper.fromUuid(msb, lsb), false);
@@ -416,7 +416,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      */
     public static Bytes fromTimeUuid(com.eaio.uuid.UUID value) {
         return value == null ? NULL : fromUuid(value.getTime(), value.getClockSeqAndNode());
@@ -427,7 +427,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      * @deprecated use {@link #fromUuid(UUID)} instead
      */
     @Deprecated
@@ -440,7 +440,7 @@ public class Bytes {
      *
      * @param value the value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      * @deprecated use {@link #fromUuid(String)} instead
      */
     @Deprecated
@@ -454,7 +454,7 @@ public class Bytes {
      * @param time            the time value
      * @param clockSeqAndNode the clockSeqAndNode value
      * @return the instance or null if the value provided was null
-     * @see java.nio.ByteBuffer for details on long serializaion format
+     * @see java.nio.ByteBuffer for details on long serialization format
      * @deprecated use {@link #fromUuid(long, long)} instead
      */
     @Deprecated
