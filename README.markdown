@@ -16,7 +16,7 @@ The latest stable release is 1.3-1.1.x, the latest SNAPSHOT is 1.4-1.0.x-SNAPSHO
 
 Using Pelops in a Maven project
 ========================
-To use Pelops with Cassandra 1.1.x use the following:
+To use Pelops with Cassandra 1.1.x or 1.2.x use the following:
 
 1. Add the following repository to your project repositories (note, the maven.scale7.org repo isn't nexus friendly):
 
