@@ -31,6 +31,7 @@ import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -50,13 +51,26 @@ public class Connection implements IConnection {
         this.node = node;
         this.keyspace = keyspace;
 
-        TSocket socket = new TSocket(node.getAddress(), node.getConfig().getThriftPort());
-        transport =  node.getConfig().isFramedTransportRequired() ? new TFramedTransport(socket) : socket;
+        if(node.getConfig().isSSLTransportRequired()) {
+            TSSLTransportFactory.TSSLTransportParameters params =
+                    new TSSLTransportFactory.TSSLTransportParameters();
+            params.setTrustStore(node.getConfig().getTrustStorePath(),
+                                 node.getConfig().getTrustStorePassword());
+            
+            transport = TSSLTransportFactory.getClientSocket(node.getAddress(),
+                node.getConfig().getThriftPort(), node.getConfig().getTimeout(), params);   
+        } else {
+            TSocket socket = new TSocket(node.getAddress(), node.getConfig().getThriftPort());
+        
+            transport =  node.getConfig().isFramedTransportRequired()
+                                    ? new TFramedTransport(socket) : socket;
+
+            if (node.getConfig().isTimeoutSet())
+                socket.setTimeout(node.getConfig().getTimeout());
+        }
+        
         TBinaryProtocol protocol = new TBinaryProtocol(transport);
         client = new Cassandra.Client(protocol);
-
-        if (node.getConfig().isTimeoutSet())
-            socket.setTimeout(node.getConfig().getTimeout());
     }
 
     /**

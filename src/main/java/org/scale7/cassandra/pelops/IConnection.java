@@ -66,7 +66,10 @@ public interface IConnection {
         private final int thriftPort;
         private final boolean framedTransportRequired;
         private final int timeout;
-        private IConnectionAuthenticator connectionAuthenticator;
+        private final IConnectionAuthenticator connectionAuthenticator;
+        private final boolean sslTransportRequired;
+        private final String trustStorePath;
+        private final String trustStorePassword;
 
         /**
          * Config used when opening connections.
@@ -75,10 +78,21 @@ public interface IConnection {
          * @param timeout the timeout (0 or less to use thrift default)
          */
         public Config(int thriftPort, boolean framedTransportRequired, int timeout) {
-            this.thriftPort = thriftPort;
-            this.framedTransportRequired = framedTransportRequired;
-            this.timeout = timeout;
-            this.connectionAuthenticator = null;
+            this(thriftPort, framedTransportRequired, timeout, null, false, null, null);
+        }
+
+        /**
+         * Config used when opening connections.
+         * @param thriftPort the port to connect to
+         * @param framedTransportRequired is framed transport required
+         * @param timeout the timeout (0 or less to use thrift default)
+         * @param sslTransportRequired  is SSL transport required
+         * @param trustStorePath path to trust store
+         * @param trustStorePassword password to the trust store
+         */
+        public Config(int thriftPort, boolean framedTransportRequired, int timeout,
+                        boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+            this(thriftPort, framedTransportRequired, timeout, null, sslTransportRequired, trustStorePath, trustStorePassword);
         }
         
         /**
@@ -88,11 +102,30 @@ public interface IConnection {
          * @param timeout the timeout (0 or less to use thrift default)
          * @param connection authenticator
          */
-        public Config(int thriftPort, boolean framedTransportRequired, int timeout,IConnectionAuthenticator connectionAuthenticator) {
+        public Config(int thriftPort, boolean framedTransportRequired, int timeout, IConnectionAuthenticator connectionAuthenticator) {
+            this(thriftPort, framedTransportRequired, timeout, connectionAuthenticator, false, null, null);
+        }
+        
+        /**
+         * Config used when opening connections.
+         * @param thriftPort the port to connect to
+         * @param framedTransportRequired is framed transport required
+         * @param timeout the timeout (0 or less to use thrift default)
+         * @param connection authenticator
+         * @param sslTransportRequired  is SSL transport required
+         * @param trustStorePath path to trust store
+         * @param trustStorePassword password to the trust store
+         */
+        public Config(int thriftPort, boolean framedTransportRequired, int timeout,
+                        IConnectionAuthenticator connectionAuthenticator, boolean sslTransportRequired,
+                        String trustStorePath, String trustStorePassword) {
             this.thriftPort = thriftPort;
             this.framedTransportRequired = framedTransportRequired;
             this.timeout = timeout;
             this.connectionAuthenticator = connectionAuthenticator;
+            this.sslTransportRequired = sslTransportRequired;
+            this.trustStorePath = trustStorePath;
+            this.trustStorePassword = trustStorePassword;
         }
 
         public int getThriftPort() {
@@ -117,6 +150,29 @@ public interface IConnection {
          */
         public boolean isTimeoutSet() {
             return getTimeout() > 0;
+        }
+
+        boolean isSSLTransportRequired()
+        {
+            return sslTransportRequired;
+        }
+
+        /**
+         * 
+         * @return path to truststore jks
+         */
+        String getTrustStorePath()
+        {
+            return trustStorePath;
+        }
+
+        /**
+         * 
+         * @return truststore jks password
+         */
+        String getTrustStorePassword()
+        {
+            return trustStorePassword;
         }
        
     }
