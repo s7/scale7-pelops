@@ -248,6 +248,7 @@ public class Cluster {
         this.connectionConfig = connectionConfig;
         this.nodeFilter = nodeFilter;
         this.dynamicNodeDiscovery = dynamicNodeDiscovery;
+        
         // make sure there are no duplicates
         this.nodes = new HashSet<String>(Arrays.asList(nodes)).toArray(new String[nodes.length]);
 
