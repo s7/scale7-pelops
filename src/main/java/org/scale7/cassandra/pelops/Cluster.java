@@ -69,6 +69,20 @@ public class Cluster {
     public Cluster(String nodes, int thriftPort) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), false);
     }
+
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT} with dynamic node discovery turned off.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,
+                    null,  sslTransportRequired, trustStorePath, trustStorePassword), false);
+    }
     
     /**
      * Creates a new cluster using the {@link #DEFAULT_TIMEOUT} with dynamic node discovery turned off.
@@ -79,6 +93,21 @@ public class Cluster {
     public Cluster(String nodes, int thriftPort,IConnectionAuthenticator connectionAuthenticator) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator), false);
     }
+    
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT} with dynamic node discovery turned off.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param connectionAuthenticator for node connection authentication
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort,IConnectionAuthenticator connectionAuthenticator,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator,
+                sslTransportRequired, trustStorePath, trustStorePassword), false);
+    }
 
     /**
      * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
@@ -88,6 +117,21 @@ public class Cluster {
      */
     public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT), dynamicNodeDiscovery);
+    }
+
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,
+                sslTransportRequired, trustStorePath, trustStorePassword), dynamicNodeDiscovery);
     }
     
     /**
@@ -100,6 +144,22 @@ public class Cluster {
     public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator), dynamicNodeDiscovery);
     }
+    
+    /**
+     * Creates a new cluster using the {@link #DEFAULT_TIMEOUT}.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param connectionAuthenticator for node connection authentication
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, DEFAULT_TIMEOUT,connectionAuthenticator,
+                sslTransportRequired, trustStorePath, trustStorePassword), dynamicNodeDiscovery);
+    }
 
     /**
      * Creates a new cluster.
@@ -110,6 +170,22 @@ public class Cluster {
      */
     public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout), dynamicNodeDiscovery);
+    }
+
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param timeout the number of milliseconds thrift should wait to complete an operation (zero or less disables the timeout)
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout,
+                sslTransportRequired, trustStorePath, trustStorePassword), dynamicNodeDiscovery);
     }
     
     /**
@@ -122,6 +198,23 @@ public class Cluster {
      */
     public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator) {
         this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout,connectionAuthenticator), dynamicNodeDiscovery);
+    }
+    
+    /**
+     * Creates a new cluster.
+     * @param nodes comma separated list of nodes
+     * @param thriftPort the thrift port
+     * @param timeout the number of milliseconds thrift should wait to complete an operation (zero or less disables the timeout)
+     * @param dynamicNodeDiscovery true if nodes should be discovered dynamically
+     * @param connectionAuthenticator for node connection authentication
+     * @param sslTransportRequired  is SSL transport required
+     * @param trustStorePath path to trust store
+     * @param trustStorePassword password to the trust store
+     */
+    public Cluster(String nodes, int thriftPort, int timeout, boolean dynamicNodeDiscovery,IConnectionAuthenticator connectionAuthenticator,
+                    boolean sslTransportRequired, String trustStorePath, String trustStorePassword) {
+        this(splitAndTrim(nodes), new IConnection.Config(thriftPort, true, timeout,connectionAuthenticator,
+                sslTransportRequired, trustStorePath, trustStorePassword), dynamicNodeDiscovery);
     }
 
     /**
@@ -155,6 +248,7 @@ public class Cluster {
         this.connectionConfig = connectionConfig;
         this.nodeFilter = nodeFilter;
         this.dynamicNodeDiscovery = dynamicNodeDiscovery;
+        
         // make sure there are no duplicates
         this.nodes = new HashSet<String>(Arrays.asList(nodes)).toArray(new String[nodes.length]);
 

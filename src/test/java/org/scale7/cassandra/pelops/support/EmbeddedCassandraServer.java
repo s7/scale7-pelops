@@ -3,7 +3,7 @@ package org.scale7.cassandra.pelops.support;
 import java.io.File;
 
 import org.apache.cassandra.io.util.FileUtils;
-import org.apache.cassandra.thrift.CassandraDaemon;
+import org.apache.cassandra.service.CassandraDaemon;
 import org.scale7.portability.SystemProxy;
 import org.slf4j.Logger;
 
